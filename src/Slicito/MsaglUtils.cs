@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Html;
 using Microsoft.Msagl.Core.Geometry;
 using Microsoft.Msagl.Core.Geometry.Curves;
+using Microsoft.Msagl.Core.Routing;
 using Microsoft.Msagl.Drawing;
 using Microsoft.Msagl.Layout.Layered;
 using Microsoft.Msagl.Miscellaneous;
@@ -29,10 +30,12 @@ public static class MsaglUtils
 
     private static void EnsureLayout(Graph graph)
     {
-        if (graph.GeometryGraph == null)
+        if (graph.GeometryGraph != null)
         {
-            graph.CreateGeometryGraph();
+            return;
         }
+
+        graph.CreateGeometryGraph();
 
         foreach (var n in graph.Nodes)
         {
@@ -57,7 +60,13 @@ public static class MsaglUtils
             }
         }
 
-        LayoutHelpers.CalculateLayout(graph.GeometryGraph, new SugiyamaLayoutSettings(), null);
+        var layoutSettings = new SugiyamaLayoutSettings
+        {
+            Transformation = PlaneTransformation.Rotation(Math.PI / 2),
+            EdgeRoutingSettings = { EdgeRoutingMode = EdgeRoutingMode.Spline }
+        };
+
+        LayoutHelpers.CalculateLayout(graph.GeometryGraph, layoutSettings, null);
     }
 
     private static void EnsureLabelDimensions(Label label)
