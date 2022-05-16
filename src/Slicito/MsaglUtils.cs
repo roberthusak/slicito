@@ -4,18 +4,17 @@ using Microsoft.Msagl.Core.Geometry.Curves;
 using Microsoft.Msagl.Drawing;
 using Microsoft.Msagl.Layout.Layered;
 using Microsoft.Msagl.Miscellaneous;
-using System.Diagnostics;
+using System.Drawing;
 
 namespace Slicito;
 
 public static class MsaglUtils
 {
+    private const int Padding = 4;
+
     public static IHtmlContent RenderSvg(Graph graph)
     {
-        if (graph.GeometryGraph == null)
-        {
-            CalculateDefaultLayout(graph);
-        }
+        EnsureLayout(graph);
 
         using var ms = new MemoryStream();
         var svgWriter = new SvgGraphWriter(ms, graph);
@@ -28,27 +27,52 @@ public static class MsaglUtils
         return new HtmlString(svgString);
     }
 
-    private static void CalculateDefaultLayout(Graph graph)
+    private static void EnsureLayout(Graph graph)
     {
-        Debug.Assert(graph.GeometryGraph == null);
-
-        graph.CreateGeometryGraph();
+        if (graph.GeometryGraph == null)
+        {
+            graph.CreateGeometryGraph();
+        }
 
         foreach (var n in graph.Nodes)
         {
-            n.GeometryNode.BoundaryCurve = CurveFactory.CreateRectangleWithRoundedCorners(60, 40, 3, 2, new Point(0, 0));
+            if (n.Label.Text == null)
+            {
+                n.Label.Text = n.Id;
+            }
 
-            n.Label.Width = n.Width * 0.6;
-            n.Label.Height = 40;
-            n.Label.Text = n.Id;
+            EnsureLabelDimensions(n.Label);
+
+            if (n.GeometryNode.BoundaryCurve == null)
+            {
+                n.GeometryNode.BoundaryCurve = CurveFactory.CreateRectangleWithRoundedCorners(n.Label.Width + 2 * Padding, n.Label.Height + 2 * Padding, 3, 2, new (0, 0));
+            }
         }
 
         foreach (var e in graph.Edges)
         {
-            e.Label.GeometryLabel.Width = 140;
-            e.Label.GeometryLabel.Height = 60;
+            if (e.Label != null)
+            {
+                EnsureLabelDimensions(e.Label);
+            }
         }
 
         LayoutHelpers.CalculateLayout(graph.GeometryGraph, new SugiyamaLayoutSettings(), null);
+    }
+
+    private static void EnsureLabelDimensions(Label label)
+    {
+        // TODO: Use cross-platform library (see https://stackoverflow.com/questions/69907690/using-c-sharp-to-measure-the-width-of-a-string-in-pixels-in-a-cross-platform-way)
+        //       and take into account the DPI, SVG dimensions etc.
+
+        using var bmp = new Bitmap(1, 1);
+        using var graphics = Graphics.FromImage(bmp);
+
+        var font = new Font(label.FontName, (float)label.FontSize);
+
+        var measurements = graphics.MeasureString(label.Text, font);
+
+        label.Width = measurements.Width;
+        label.Height = measurements.Height;
     }
 }
