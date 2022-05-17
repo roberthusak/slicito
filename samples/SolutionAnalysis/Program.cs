@@ -3,18 +3,18 @@ using Microsoft.Msagl.Drawing;
 using Slicito;
 using System.Diagnostics;
 using System.Text.Encodings.Web;
+using System.Web;
 
 var project = await RoslynUtils.OpenProjectAsync(@"C:\datamole\repos\personal\benchmarkdotnet-sample\BenchmarkDotNetSample.csproj");
 var compilation = await project.GetCompilationAsync();
 
 var graph = new Graph("graph");
 
-// FIXME
 string GetNodeIdFromSymbol(ISymbol symbol) =>
-    symbol.GetHashCode().ToString();
+    symbol.ToDisplayString();
 
 string GetLabelFromSymbol(ISymbol symbol) =>
-    string.IsNullOrEmpty(symbol.MetadataName) ? symbol.GetType().Name : symbol.MetadataName;
+    HttpUtility.HtmlEncode(string.IsNullOrEmpty(symbol.Name) ? symbol.ToDisplayString() : symbol.Name);
 
 foreach (var symbol in compilation!.GetSymbolsWithName(_ => true, SymbolFilter.All))
 {

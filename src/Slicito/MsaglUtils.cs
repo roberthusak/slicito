@@ -6,6 +6,7 @@ using Microsoft.Msagl.Drawing;
 using Microsoft.Msagl.Layout.Layered;
 using Microsoft.Msagl.Miscellaneous;
 using System.Drawing;
+using System.Web;
 
 namespace Slicito;
 
@@ -79,7 +80,10 @@ public static class MsaglUtils
 
         var font = new Font(label.FontName, (float)label.FontSize);
 
-        var measurements = graphics.MeasureString(label.Text, font);
+        // The text may contain escaped characters, e.g. '<' and '>'
+        var text = HttpUtility.HtmlDecode(label.Text);
+
+        var measurements = graphics.MeasureString(text, font);
 
         label.Width = measurements.Width;
         label.Height = measurements.Height;
