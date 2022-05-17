@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Text.Encodings.Web;
 using System.Web;
 
-var project = await RoslynUtils.OpenProjectAsync(@"C:\datamole\repos\personal\benchmarkdotnet-sample\BenchmarkDotNetSample.csproj");
+var project = await RoslynUtils.OpenProjectAsync(args[0]);
 var compilation = await project.GetCompilationAsync();
 
 var graph = new Graph("graph");
