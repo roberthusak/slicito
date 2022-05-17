@@ -10,11 +10,11 @@ using System.Web;
 
 namespace Slicito;
 
-public static class MsaglUtils
+public static class GraphExtensions
 {
     private const int Padding = 4;
 
-    public static IHtmlContent RenderSvg(Graph graph)
+    public static IHtmlContent RenderToSvg(this Graph graph)
     {
         EnsureLayout(graph);
 

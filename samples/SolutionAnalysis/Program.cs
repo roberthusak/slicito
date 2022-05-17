@@ -32,7 +32,7 @@ foreach (var symbol in compilation!.GetSymbolsWithName(_ => true, SymbolFilter.A
 
 // Display SVG in the default application
 
-var svg = MsaglUtils.RenderSvg(graph);
+var svg = graph.RenderToSvg();
 
 var svgPath = Path.GetFullPath("schema.svg");
 using (var writer = new StreamWriter(svgPath))
