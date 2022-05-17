@@ -7,17 +7,15 @@ class SymbolGraphVisitor : SymbolVisitor
 {
     public Graph Graph { get; } = new Graph("graph");
 
-    private Stack<ISymbol> SymbolStack { get; } = new();
-
     public override void DefaultVisit(ISymbol symbol)
     {
         var node = Graph.AddNode(GetNodeIdFromSymbol(symbol));
         node.LabelText = GetLabelFromSymbol(symbol);
 
-        if (SymbolStack.Count > 0)
+        if (symbol.ContainingSymbol != null)
         {
             Graph.AddEdge(
-                GetNodeIdFromSymbol(SymbolStack.Peek()),
+                GetNodeIdFromSymbol(symbol.ContainingSymbol),
                 "",
                 GetNodeIdFromSymbol(symbol));
         }
@@ -27,27 +25,21 @@ class SymbolGraphVisitor : SymbolVisitor
     {
         DefaultVisit(symbol);
 
-        SymbolStack.Push(symbol);
         symbol.GlobalNamespace.Accept(this);
-        SymbolStack.Pop();
     }
 
     public override void VisitNamedType(INamedTypeSymbol symbol)
     {
         DefaultVisit(symbol);
 
-        SymbolStack.Push(symbol);
         VisitAll(symbol.GetMembers());
-        SymbolStack.Pop();
     }
 
     public override void VisitNamespace(INamespaceSymbol symbol)
     {
         DefaultVisit(symbol);
 
-        SymbolStack.Push(symbol);
         VisitAll(symbol.GetMembers());
-        SymbolStack.Pop();
     }
 
     private void VisitAll(IEnumerable<ISymbol> symbols)
