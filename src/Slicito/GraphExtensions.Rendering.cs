@@ -10,7 +10,7 @@ using System.Web;
 
 namespace Slicito;
 
-public static class GraphExtensions
+public static partial class GraphExtensions
 {
     private const int Padding = 4;
 

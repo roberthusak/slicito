@@ -12,15 +12,11 @@ var graph = new Graph("graph");
 
 foreach (var symbol in compilation!.GetSymbolsWithName(_ => true, SymbolFilter.All))
 {
-    var node = graph.AddNode(symbol.GetNodeId());
-    node.LabelText = symbol.GetNodeLabelText();
+    graph.AddSymbolAsNode(symbol);
 
     if (symbol.ContainingSymbol != null)
     {
-        graph.AddEdge(
-            symbol.ContainingSymbol.GetNodeId(),
-            "",
-            symbol.GetNodeId());
+        graph.AddEdgeBetweenSymbols(symbol.ContainingSymbol, symbol);
     }
 }
 
