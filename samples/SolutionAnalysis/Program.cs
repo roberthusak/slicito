@@ -10,23 +10,17 @@ var compilation = await project.GetCompilationAsync();
 
 var graph = new Graph("graph");
 
-string GetNodeIdFromSymbol(ISymbol symbol) =>
-    symbol.ToDisplayString();
-
-string GetLabelFromSymbol(ISymbol symbol) =>
-    HttpUtility.HtmlEncode(string.IsNullOrEmpty(symbol.Name) ? symbol.ToDisplayString() : symbol.Name);
-
 foreach (var symbol in compilation!.GetSymbolsWithName(_ => true, SymbolFilter.All))
 {
-    var node = graph.AddNode(GetNodeIdFromSymbol(symbol));
-    node.LabelText = GetLabelFromSymbol(symbol);
+    var node = graph.AddNode(symbol.GetNodeId());
+    node.LabelText = symbol.GetNodeLabelText();
 
     if (symbol.ContainingSymbol != null)
     {
         graph.AddEdge(
-            GetNodeIdFromSymbol(symbol.ContainingSymbol),
+            symbol.ContainingSymbol.GetNodeId(),
             "",
-            GetNodeIdFromSymbol(symbol));
+            symbol.GetNodeId());
     }
 }
 
