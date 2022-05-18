@@ -19,7 +19,7 @@ public static partial class GraphExtensions
         EnsureLayout(graph);
 
         using var ms = new MemoryStream();
-        var svgWriter = new SvgGraphWriter(ms, graph);
+        var svgWriter = new CustomSvgGraphWriter(ms, graph);
         svgWriter.Write();
 
         ms.Position = 0;
