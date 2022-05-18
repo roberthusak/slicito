@@ -87,6 +87,7 @@ namespace Slicito
                 Open();
                 WriteGraphAttr(_graph.Attr);
                 WriteLabel(_graph.Label);
+                WriteSubgraphs();
                 WriteEdges();
                 WriteNodes();
                 
@@ -253,6 +254,13 @@ namespace Slicito
             xmlWriter.WriteEndDocument();
             xmlWriter.Flush();
             xmlWriter.Close();
+        }
+
+        protected void WriteSubgraphs() {
+            WriteComment("subgraphs");
+            foreach (Subgraph subgraph in _graph.RootSubgraph.AllSubgraphsDepthFirstExcludingSelf())
+                WriteNode(subgraph);
+            WriteComment("end of subgraphs");
         }
 
         protected void WriteEdges() {
@@ -942,6 +950,11 @@ namespace Slicito
         public void TransformGraphByFlippingY() {
             var matrix = new PlaneTransformation(1, 0, 0, 0, -1, 0);
             _graph.GeometryGraph.Transform(matrix);
+
+            // Hotfix of this issue (it would be better to fix it in GeometryGraph.Transform):
+            // https://github.com/microsoft/automatic-graph-layout/issues/81
+            foreach (var cluster in _graph.GeometryGraph.RootCluster.AllClustersDepthFirst())
+                cluster.Transform(matrix);
         }
         /// <summary>
         /// writes a black line
