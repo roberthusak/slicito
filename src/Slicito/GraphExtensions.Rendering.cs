@@ -5,6 +5,7 @@ using Microsoft.Msagl.Core.Routing;
 using Microsoft.Msagl.Drawing;
 using Microsoft.Msagl.Layout.Layered;
 using Microsoft.Msagl.Miscellaneous;
+using System.Diagnostics;
 using System.Drawing;
 using System.Web;
 
@@ -13,11 +14,17 @@ using LabelPlacement = Microsoft.Msagl.Core.Layout.LgNodeInfo.LabelPlacement;
 
 namespace Slicito;
 
+public enum LayoutOrientation
+{
+    Vertical,
+    Horizontal
+}
+
 public static partial class GraphExtensions
 {
-    public static IHtmlContent RenderToSvg(this Graph graph)
+    public static IHtmlContent RenderToSvg(this Graph graph, LayoutOrientation orientation = LayoutOrientation.Vertical)
     {
-        EnsureLayout(graph);
+        EnsureLayout(graph, orientation);
 
         using var ms = new MemoryStream();
         var svgWriter = new CustomSvgGraphWriter(ms, graph);
@@ -30,7 +37,7 @@ public static partial class GraphExtensions
         return new HtmlString(svgString);
     }
 
-    private static void EnsureLayout(Graph graph)
+    private static void EnsureLayout(Graph graph, LayoutOrientation orientation)
     {
         if (graph.GeometryGraph != null)
         {
@@ -47,7 +54,7 @@ public static partial class GraphExtensions
             }
 
             EnsureLabelDimensions(subgraph.Label);
-            EnsureSubgraphBoundary(subgraph);
+            EnsureSubgraphBoundary(subgraph, orientation);
         }
 
         foreach (var node in graph.Nodes)
@@ -71,7 +78,10 @@ public static partial class GraphExtensions
 
         var layoutSettings = new SugiyamaLayoutSettings
         {
-            Transformation = PlaneTransformation.Rotation(Math.PI / 2),
+            Transformation =
+                orientation == LayoutOrientation.Horizontal
+                ? PlaneTransformation.Rotation(Math.PI / 2)
+                : PlaneTransformation.UnitTransformation,
             EdgeRoutingSettings = { EdgeRoutingMode = EdgeRoutingMode.Spline }
         };
 
@@ -97,33 +107,41 @@ public static partial class GraphExtensions
         label.Height = measurements.Height;
     }
 
-    private static void EnsureSubgraphBoundary(Subgraph subgraph)
+    private static void EnsureSubgraphBoundary(Subgraph subgraph, LayoutOrientation orientation)
     {
         var cluster = (Cluster)subgraph.GeometryNode;
         if (cluster.RectangularBoundary == null)
         {
+            var width = subgraph.Label.Width + subgraph.Attr.LabelMargin + subgraph.Attr.Padding;
+            var height = subgraph.Label.Height + subgraph.Attr.LabelMargin + subgraph.Attr.Padding;
             var labelPlacement = subgraph.Attr.ClusterLabelMargin;
-            cluster.RectangularBoundary = new RectangularClusterBoundary
+
+            if (orientation == LayoutOrientation.Vertical)
             {
-                BottomMargin =
-                    labelPlacement == LabelPlacement.Bottom
-                    ? subgraph.Label.Height + subgraph.Attr.LabelMargin + subgraph.Attr.Padding
-                    : 0,
-                LeftMargin =
-                    labelPlacement == LabelPlacement.Left
-                    ? subgraph.Label.Width + subgraph.Attr.LabelMargin + subgraph.Attr.Padding
-                    : 0,
-                RightMargin =
-                    labelPlacement == LabelPlacement.Right
-                    ? subgraph.Label.Width + subgraph.Attr.LabelMargin + subgraph.Attr.Padding
-                    : 0,
-                TopMargin =
-                    labelPlacement == LabelPlacement.Top
-                    ? subgraph.Label.Height + subgraph.Attr.LabelMargin + subgraph.Attr.Padding
-                    : 0,
-                MinWidth = subgraph.Label.Width,
-                MinHeight = subgraph.Label.Height
-            };
+                cluster.RectangularBoundary = new RectangularClusterBoundary
+                {
+                    BottomMargin = (labelPlacement == LabelPlacement.Bottom) ? height : 0,
+                    LeftMargin = (labelPlacement == LabelPlacement.Left) ? width : 0,
+                    RightMargin = (labelPlacement == LabelPlacement.Right) ? width : 0,
+                    TopMargin = (labelPlacement == LabelPlacement.Top) ? height : 0,
+                    MinWidth = width,
+                    MinHeight = height
+                };
+            }
+            else
+            {
+                Debug.Assert(orientation == LayoutOrientation.Horizontal);
+
+                cluster.RectangularBoundary = new RectangularClusterBoundary
+                {
+                    BottomMargin = (labelPlacement == LabelPlacement.Right) ? width : 0,
+                    LeftMargin = (labelPlacement == LabelPlacement.Bottom) ? height : 0,
+                    RightMargin = (labelPlacement == LabelPlacement.Top) ? height : 0,
+                    TopMargin = (labelPlacement == LabelPlacement.Left) ? width : 0,
+                    MinWidth = height,
+                    MinHeight = width
+                };
+            }
         }
     }
 
