@@ -17,6 +17,8 @@ using Microsoft.Msagl.DebugHelpers;
 using LineSegment = Microsoft.Msagl.Core.Geometry.Curves.LineSegment;
 using System.Text.RegularExpressions;
 
+using LabelPlacement = Microsoft.Msagl.Core.Layout.LgNodeInfo.LabelPlacement;
+
 namespace Slicito
 {
     ///<summary>
@@ -166,6 +168,31 @@ namespace Slicito
 
             var x = label.Center.X - label.Width / 2;
             var y = label.Center.Y + label.Height / (2 * yScaleAdjustment);
+
+            // Shift the label to its proper positions in case of a subgraph
+            var subgraph = label.Owner as Subgraph;
+            if (subgraph != null) {
+                double xOffsetFromCenter = subgraph.Width / 2 - label.Width / 2 - subgraph.Attr.LabelMargin - subgraph.Attr.Padding;
+                double yOffsetFromCenter = subgraph.Height / 2 - label.Height / 2 - subgraph.Attr.LabelMargin - subgraph.Attr.Padding;
+
+                var labelPlacement = subgraph.Attr.ClusterLabelMargin;
+                switch (labelPlacement)
+                {
+                    case LabelPlacement.Top:
+                        y -= yOffsetFromCenter;
+                        break;
+                    case LabelPlacement.Bottom:
+                        y += yOffsetFromCenter;
+                        break;
+                    case LabelPlacement.Left:
+                        x -= xOffsetFromCenter;
+                        break;
+                    case LabelPlacement.Right:
+                        x += xOffsetFromCenter;
+                        break;
+                }
+            }
+
             var fontSize = 16;
             WriteStartElement("text");
             WriteAttribute("x", x);

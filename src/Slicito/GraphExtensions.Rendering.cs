@@ -8,12 +8,13 @@ using Microsoft.Msagl.Miscellaneous;
 using System.Drawing;
 using System.Web;
 
+using Cluster = Microsoft.Msagl.Core.Layout.Cluster;
+using LabelPlacement = Microsoft.Msagl.Core.Layout.LgNodeInfo.LabelPlacement;
+
 namespace Slicito;
 
 public static partial class GraphExtensions
 {
-    private const int Padding = 4;
-
     public static IHtmlContent RenderToSvg(this Graph graph)
     {
         EnsureLayout(graph);
@@ -38,26 +39,33 @@ public static partial class GraphExtensions
 
         graph.CreateGeometryGraph();
 
-        foreach (var n in graph.Nodes)
+        foreach (var subgraph in graph.RootSubgraph.AllSubgraphsDepthFirstExcludingSelf())
         {
-            if (n.Label.Text == null)
+            if (subgraph.Label.Text == null)
             {
-                n.Label.Text = n.Id;
+                subgraph.Label.Text = subgraph.Id;
             }
 
-            EnsureLabelDimensions(n.Label);
-
-            if (n.GeometryNode.BoundaryCurve == null)
-            {
-                n.GeometryNode.BoundaryCurve = CurveFactory.CreateRectangleWithRoundedCorners(n.Label.Width + 2 * Padding, n.Label.Height + 2 * Padding, 3, 2, new (0, 0));
-            }
+            EnsureLabelDimensions(subgraph.Label);
+            EnsureSubgraphBoundary(subgraph);
         }
 
-        foreach (var e in graph.Edges)
+        foreach (var node in graph.Nodes)
         {
-            if (e.Label != null)
+            if (node.Label.Text == null)
             {
-                EnsureLabelDimensions(e.Label);
+                node.Label.Text = node.Id;
+            }
+
+            EnsureLabelDimensions(node.Label);
+            EnsureNodeBoundary(node);
+        }
+
+        foreach (var edge in graph.Edges)
+        {
+            if (edge.Label != null)
+            {
+                EnsureLabelDimensions(edge.Label);
             }
         }
 
@@ -87,5 +95,46 @@ public static partial class GraphExtensions
 
         label.Width = measurements.Width;
         label.Height = measurements.Height;
+    }
+
+    private static void EnsureSubgraphBoundary(Subgraph subgraph)
+    {
+        var cluster = (Cluster)subgraph.GeometryNode;
+        if (cluster.RectangularBoundary == null)
+        {
+            var labelPlacement = subgraph.Attr.ClusterLabelMargin;
+            cluster.RectangularBoundary = new RectangularClusterBoundary
+            {
+                BottomMargin =
+                    labelPlacement == LabelPlacement.Bottom
+                    ? subgraph.Label.Height + subgraph.Attr.LabelMargin + subgraph.Attr.Padding
+                    : 0,
+                LeftMargin =
+                    labelPlacement == LabelPlacement.Left
+                    ? subgraph.Label.Width + subgraph.Attr.LabelMargin + subgraph.Attr.Padding
+                    : 0,
+                RightMargin =
+                    labelPlacement == LabelPlacement.Right
+                    ? subgraph.Label.Width + subgraph.Attr.LabelMargin + subgraph.Attr.Padding
+                    : 0,
+                TopMargin =
+                    labelPlacement == LabelPlacement.Top
+                    ? subgraph.Label.Height + subgraph.Attr.LabelMargin + subgraph.Attr.Padding
+                    : 0,
+                MinWidth = subgraph.Label.Width,
+                MinHeight = subgraph.Label.Height
+            };
+        }
+    }
+
+    private static void EnsureNodeBoundary(Node node)
+    {
+        if (node.GeometryNode.BoundaryCurve == null)
+        {
+            node.GeometryNode.BoundaryCurve = NodeBoundaryCurves.GetNodeBoundaryCurve(
+                node,
+                node.Label.Width + 2 * node.Attr.LabelMargin + 2 * node.Attr.Padding,
+                node.Label.Height + 2 * node.Attr.LabelMargin + 2 * node.Attr.Padding);
+        }
     }
 }
