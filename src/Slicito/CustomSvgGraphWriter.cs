@@ -982,6 +982,9 @@ namespace Slicito
             // https://github.com/microsoft/automatic-graph-layout/issues/81
             foreach (var cluster in _graph.GeometryGraph.RootCluster.AllClustersDepthFirst())
                 cluster.Transform(matrix);
+            
+            // Take into account the transformation of clusters
+            _graph.GeometryGraph.UpdateBoundingBox();
         }
         /// <summary>
         /// writes a black line
