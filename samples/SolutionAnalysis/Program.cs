@@ -2,7 +2,6 @@
 using Microsoft.Msagl.Drawing;
 using Slicito;
 using SolutionAnalysis;
-using System.Diagnostics;
 
 var project = await RoslynUtils.OpenProjectAsync(args[0]);
 var compilation = await project.GetCompilationAsync();

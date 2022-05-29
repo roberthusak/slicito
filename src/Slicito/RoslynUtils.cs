@@ -1,8 +1,8 @@
-﻿namespace Slicito;
-
-using Microsoft.Build.Locator;
+﻿using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
+
+namespace Slicito;
 
 public static class RoslynUtils
 {
