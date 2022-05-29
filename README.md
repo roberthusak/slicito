@@ -18,7 +18,7 @@ Compile the _Debug_ version of _Slicito.csproj_:
 dotnet build src/Slicito/Slicito.csproj
 ```
 
-Install the extension [.NET Interactive Notebooks](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.dotnet-interactive-vscode) to VS Code and open the notebook `samples/notebooks/NamespaceHierarchy.ipynb`.
+Install the extension [.NET Interactive Notebooks](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.dotnet-interactive-vscode) to VS Code and open the notebook [`samples/notebooks/NamespaceHierarchy.ipynb`](samples/notebooks/NamespaceHierarchy.ipynb).
 When you execute its first and only cell, an image similar to this should appear:
 
 ![Sample hierarchy of Slicito itself](docs/hierarchy_sample.svg)
@@ -47,4 +47,4 @@ Therefore, the public interface is currently under rapid development, and as suc
 Contact me
 ----------
 
-If you have any questions, ideas or concerns, [e-mail me](http://robert@husak.cloud), [create an issue](issues/new/choose) or [start a discussion](discussions/new).
+If you have any questions, ideas or concerns, [e-mail me](http://robert@husak.cloud), [create an issue](https://github.com/roberthusak/slicito/issues/new/choose) or [start a discussion](https://github.com/roberthusak/slicito/discussions/new).
