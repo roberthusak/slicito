@@ -47,4 +47,4 @@ Therefore, the public interface is currently under rapid development, and as suc
 Contact me
 ----------
 
-If you have any questions, ideas or concerns, [e-mail me](http://robert@husak.cloud), [create an issue](https://github.com/roberthusak/slicito/issues/new/choose) or [start a discussion](https://github.com/roberthusak/slicito/discussions/new).
+If you have any questions, ideas or concerns, [e-mail me](mailto:robert@husak.cloud), [create an issue](https://github.com/roberthusak/slicito/issues/new/choose) or [start a discussion](https://github.com/roberthusak/slicito/discussions/new).
