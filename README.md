@@ -28,7 +28,7 @@ Replace the reference to `Slicito.csproj` with your C# project to see its struct
 Next steps:
 
 * Use the power of [Microsoft Roslyn](https://github.com/dotnet/roslyn) to analyse your C# projects. Extract interesting parts of the code and their relations.
-* Create customized and well-arranged graphs using [Microsoft Automated Graph Layout (MSAGL)](https://github.com/microsoft/automatic-graph-layout).
+* Create customised and well-arranged graphs using [Microsoft Automated Graph Layout (MSAGL)](https://github.com/microsoft/automatic-graph-layout).
 
 Plans
 -----
