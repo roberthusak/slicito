@@ -12,16 +12,20 @@ public static class RoslynUtils
         {
             var sdks = MSBuildLocator.QueryVisualStudioInstances();
 
-            var firstNet5sdk = sdks.FirstOrDefault(sdk => sdk.Version.Major == 5);
-            if (firstNet5sdk != null)
+            var net6_0_100sdk = sdks.FirstOrDefault(sdk =>
+                sdk.Version.Major == 6
+                && sdk.Version.Minor == 0
+                && sdk.Version.Build == 100);
+            if (net6_0_100sdk != null)
             {
-                // Currently, .NET 5 SDK is needed (as explained in https://github.com/dotnet/interactive/issues/1985)
-                MSBuildLocator.RegisterInstance(firstNet5sdk);
+                // Currently, .NET 6.0.100 SDK is needed (as explained in https://github.com/dotnet/interactive/issues/1985)
+                MSBuildLocator.RegisterInstance(net6_0_100sdk);
             }
             else if (sdks.Any())
             {
                 var bestSdk = sdks.First();
-                Console.WriteLine($"Warning: No .NET 5 SDK found, registering '{bestSdk.MSBuildPath}' instead.");
+                Console.WriteLine($"Warning: The .NET 6.0.100 SDK found, registering '{bestSdk.MSBuildPath}' instead.");
+                MSBuildLocator.RegisterInstance(bestSdk);
             }
             else
             {

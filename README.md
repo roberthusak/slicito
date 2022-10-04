@@ -1,4 +1,4 @@
-_Work in progress_
+_Work in progress._ The [paper from the doctoral consortium at ICSOFT 2022](docs/icsoft_dc_2022_paper.pdf) explains the motivation behind the project.
 
 Slicito
 =======
