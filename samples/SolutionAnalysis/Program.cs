@@ -11,8 +11,6 @@ var graph = new Graph("graph");
 foreach (var symbol in compilation!.GetSymbolsWithName(_ => true, SymbolFilter.Namespace | SymbolFilter.Type))
 {
     var subgraph = graph.AddSymbolWithHierarchy(symbol);
-
-    subgraph.Attr.Uri = "https://localhost:7032/WeatherForecast?nodeId=" + Uri.EscapeDataString(subgraph.Id);
 }
 
 var svg = graph.RenderToSvg(LayoutOrientation.Vertical);

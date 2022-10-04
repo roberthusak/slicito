@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.CodeAnalysis;
 using System.Web;
 
 namespace Slicito;
@@ -18,5 +19,30 @@ public static class SymbolExtensions
 
         // E.g. for "<global namespace>"
         return HttpUtility.HtmlEncode(label);
+    }
+
+    public static string? GetFileOpenUri(this ISymbol symbol)
+    {
+        var location = symbol.Locations.FirstOrDefault();
+        if (location is null || !location.IsInSource)
+        {
+            return null;
+        }
+
+        var position = location.GetMappedLineSpan();
+
+        // Both line and character offset usually start at 1 in IDEs
+        var line = position.Span.Start.Line + 1;
+        var offset = position.Span.Start.Character + 1;
+
+        var endpointUri = "https://localhost:7032/open";
+        var query = new Dictionary<string, string>()
+        {
+            { "path", position.Path },
+            { "line", line.ToString() },
+            { "offset", offset.ToString() }
+        };
+
+        return QueryHelpers.AddQueryString(endpointUri, query);
     }
 }

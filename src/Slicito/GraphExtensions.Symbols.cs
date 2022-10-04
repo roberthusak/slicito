@@ -18,6 +18,8 @@ public static partial class GraphExtensions
                 LabelText = symbol.GetNodeLabelText()
             };
 
+            subgraph.Attr.Uri = symbol.GetFileOpenUri();
+
             containingSubgraph.AddSubgraph(subgraph);
 
             // FIXME Hack to force SubgraphMap refresh
