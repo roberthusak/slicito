@@ -22,13 +22,20 @@ public enum LayoutOrientation
 
 public static partial class GraphExtensions
 {
-    public static IHtmlContent RenderToSvg(this Graph graph, LayoutOrientation orientation = LayoutOrientation.Vertical)
+    public static IHtmlContent RenderToSvg(
+        this Graph graph,
+        LayoutOrientation orientation = LayoutOrientation.Vertical,
+        bool useAjaxLinks = true)
     {
         EnsureLayout(graph, orientation);
 
         using var ms = new MemoryStream();
         var svgWriter = new CustomSvgGraphWriter(ms, graph);
-        svgWriter.Write();
+
+        if (useAjaxLinks)
+        {
+            svgWriter.Write(Resources.SvgEmbeddedJavaScript);
+        }
 
         ms.Position = 0;
         var reader = new StreamReader(ms);

@@ -78,7 +78,7 @@ namespace Slicito
         /// <summary>
         /// Writes the graph to a file
         /// </summary>
-        public void Write()
+        public void Write(string? embeddedJavascript = null)
         {
             CultureInfo currentCulture = Thread.CurrentThread.CurrentCulture;
             Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
@@ -92,6 +92,11 @@ namespace Slicito
                 WriteSubgraphs();
                 WriteEdges();
                 WriteNodes();
+
+                if (embeddedJavascript is not null)
+                {
+                    WriteJavascript(embeddedJavascript);
+                }
                 
 #if TEST_MSAGL
                 WriteDebugCurves();
@@ -766,6 +771,14 @@ namespace Slicito
         protected void WriteStartElement(string s)
         {
             xmlWriter.WriteStartElement(s);
+        }
+
+        protected void WriteJavascript(string code)
+        {
+            WriteStartElement("script");
+            WriteAttribute("type", "text/javascript");
+            xmlWriter.WriteCData(code);
+            WriteEndElement();
         }
 
         ///<summary>
