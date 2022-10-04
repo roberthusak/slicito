@@ -25,7 +25,12 @@ document.onclick = function(e) {
 
     let a = tryFindLinkEventTarget(e);
     if (a) {
-        window.alert(extractLinkHref(a));
-        return false; // prevent default action and stop event propagation
+        // Send the request in the background
+        let xhttp = new XMLHttpRequest();
+        xhttp.open("GET", extractLinkHref(a), true);
+        xhttp.send();
+
+        // Prevent the redirection of the whole page
+        return false;
     }
 };
