@@ -23,11 +23,11 @@ internal static class Utils
         process.Start();
     }
 
-    public static void OpenUri(Uri uri)
+    public static void OpenUri(string uri)
     {
         var process = new Process
         {
-            StartInfo = new ProcessStartInfo(uri.ToString())
+            StartInfo = new ProcessStartInfo(uri)
             {
                 UseShellExecute = true
             }

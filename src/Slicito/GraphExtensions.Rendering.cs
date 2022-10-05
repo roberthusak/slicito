@@ -47,7 +47,7 @@ public static partial class GraphExtensions
             $"<iframe src=\"{fileUri}\" width=\"{iframeWidth}\" height=\"{iframeHeight}\"></iframe>");
     }
 
-    public static async Task<Uri> RenderToSvgUriAsync(
+    public static async Task<string> RenderToSvgUriAsync(
         this Graph graph,
         LayoutOrientation orientation = LayoutOrientation.Vertical,
         string filename = "schema.svg")
