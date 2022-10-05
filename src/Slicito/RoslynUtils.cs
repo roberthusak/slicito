@@ -23,8 +23,12 @@ public static class RoslynUtils
             }
             else if (sdks.Any())
             {
-                var bestSdk = sdks.First();
-                Console.WriteLine($"Warning: The .NET 6.0.100 SDK found, registering '{bestSdk.MSBuildPath}' instead.");
+                // Check if there isn't at least something like 6.0.109 present
+                var bestSdk = 
+                    sdks.FirstOrDefault(sdk => sdk.Version.Major == 6 && sdk.Version.Minor == 0 && sdk.Version.Build > 100 && sdk.Version.Build < 200)
+                    ?? sdks.First();
+
+                Console.WriteLine($"Warning: The .NET 6.0.100 SDK not found, registering '{bestSdk.MSBuildPath}' instead.");
                 MSBuildLocator.RegisterInstance(bestSdk);
             }
             else
