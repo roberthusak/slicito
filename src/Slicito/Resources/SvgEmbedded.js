@@ -24,10 +24,17 @@ document.onclick = function(e) {
     e = e ||  window.event;
 
     let a = tryFindLinkEventTarget(e);
-    if (a) {
-        // Send the request in the background
+    if (!a) {
+        return true;
+    }
+
+    var href = extractLinkHref(a);
+
+    var url = new URL(href);
+    if (url.pathname == '/open') {
+        // Send the request to open a document in an IDE in the background
         let xhttp = new XMLHttpRequest();
-        xhttp.open("GET", extractLinkHref(a), true);
+        xhttp.open("GET", href, true);
         xhttp.send();
 
         // Prevent the redirection of the whole page

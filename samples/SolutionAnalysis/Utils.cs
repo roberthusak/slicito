@@ -22,4 +22,16 @@ internal static class Utils
         };
         process.Start();
     }
+
+    public static void OpenUri(Uri uri)
+    {
+        var process = new Process
+        {
+            StartInfo = new ProcessStartInfo(uri.ToString())
+            {
+                UseShellExecute = true
+            }
+        };
+        process.Start();
+    }
 }
