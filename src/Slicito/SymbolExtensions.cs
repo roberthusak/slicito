@@ -35,14 +35,6 @@ public static class SymbolExtensions
         var line = position.Span.Start.Line + 1;
         var offset = position.Span.Start.Character + 1;
 
-        var endpointUri = "https://localhost:7032/open";
-        var query = new Dictionary<string, string>()
-        {
-            { "path", position.Path },
-            { "line", line.ToString() },
-            { "offset", offset.ToString() }
-        };
-
-        return QueryHelpers.AddQueryString(endpointUri, query);
+        return ServerUtils.GetOpenFileEndpointUri(position.Path, line, offset);
     }
 }

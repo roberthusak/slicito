@@ -22,26 +22,50 @@ public enum LayoutOrientation
 
 public static partial class GraphExtensions
 {
-    public static IHtmlContent RenderToSvg(
+    public static IHtmlContent RenderToStaticSvg(
         this Graph graph,
-        LayoutOrientation orientation = LayoutOrientation.Vertical,
-        bool useAjaxLinks = true)
+        LayoutOrientation orientation = LayoutOrientation.Vertical)
     {
-        EnsureLayout(graph, orientation);
+        var ms = RenderSvgToStream(graph, orientation);
 
-        using var ms = new MemoryStream();
-        var svgWriter = new CustomSvgGraphWriter(ms, graph);
-
-        if (useAjaxLinks)
-        {
-            svgWriter.Write(Resources.SvgEmbeddedJavaScript);
-        }
-
-        ms.Position = 0;
         var reader = new StreamReader(ms);
         var svgString = reader.ReadToEnd();
 
         return new HtmlString(svgString);
+    }
+
+    public static async Task<IHtmlContent> RenderToSvgAsync(
+        this Graph graph,
+        LayoutOrientation orientation = LayoutOrientation.Vertical,
+        string filename = "schema.svg",
+        int iframeWidth = 800,
+        int iframeHeight = 600)
+    {
+        var fileUri = await RenderToSvgUriAsync(graph, orientation, filename);
+
+        return new HtmlString(
+            $"<iframe src=\"{fileUri}\" width=\"{iframeWidth}\" height=\"{iframeHeight}\"></iframe>");
+    }
+
+    public static async Task<Uri> RenderToSvgUriAsync(
+        this Graph graph,
+        LayoutOrientation orientation = LayoutOrientation.Vertical,
+        string filename = "schema.svg")
+    {
+        var ms = RenderSvgToStream(graph, orientation);
+
+        return await ServerUtils.UploadFileAsync(filename, ms);
+    }
+
+    private static MemoryStream RenderSvgToStream(Graph graph, LayoutOrientation orientation)
+    {
+        EnsureLayout(graph, orientation);
+        var ms = new MemoryStream();
+        var svgWriter = new CustomSvgGraphWriter(ms, graph);
+        svgWriter.Write(Resources.SvgEmbeddedJavaScript);
+
+        ms.Position = 0;
+        return ms;
     }
 
     private static void EnsureLayout(Graph graph, LayoutOrientation orientation)

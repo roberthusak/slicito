@@ -13,5 +13,5 @@ foreach (var symbol in compilation!.GetSymbolsWithName(_ => true, SymbolFilter.N
     var subgraph = graph.AddSymbolWithHierarchy(symbol);
 }
 
-var svg = graph.RenderToSvg(LayoutOrientation.Vertical);
+var svg = graph.RenderToStaticSvg(LayoutOrientation.Vertical);
 Utils.SaveSvgAndOpen(svg);
