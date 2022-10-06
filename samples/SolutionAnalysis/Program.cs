@@ -39,20 +39,33 @@ async Task<Graph> CreateGraphFromSymbolsAsync(IEnumerable<ISymbol> symbols, ISym
 
         if (symbol is IMethodSymbol methodSymbol)
         {
-            AddEdgesToCallees(graph, symbolSubgraph, methodSymbol);
+            AddEdgesToCallees(graph, symbolSubgraph, methodSymbol, topLevelSymbol);
         }
     }
 
     return graph;
 }
 
-void AddEdgesToCallees(Graph graph, Subgraph callerSubgraph, IMethodSymbol callerSymbol)
+void AddEdgesToCallees(Graph graph, Subgraph callerSubgraph, IMethodSymbol callerSymbol, ISymbol? topLevelSymbol = null)
 {
     foreach (var invocation in callerSymbol.FindCallees(compilation))
     {
-        var calleeSubgraph = graph.AddSymbolWithHierarchy(invocation.Callee);
+        Node edgeFrom;
+        Node edgeTo;
 
-        var edge = callerSubgraph.Edges.FirstOrDefault(edge => edge.Target == calleeSubgraph.Id);
+        if (topLevelSymbol is not null && !SymbolEqualityComparer.Default.Equals(invocation.Callee.ContainingType, topLevelSymbol))
+        {
+            // Reference to an outside dependency, display only the edge from the current type to its type
+            edgeFrom = graph.AddSymbol(topLevelSymbol);
+            edgeTo = graph.AddSymbolWithHierarchy(invocation.Callee.ContainingType);
+        }
+        else
+        {
+            edgeFrom = callerSubgraph;
+            edgeTo = graph.AddSymbolWithHierarchy(invocation.Callee);
+        }
+
+        var edge = edgeFrom.Edges.FirstOrDefault(edge => edge.Target == edgeTo.Id);
         if (edge is not null)
         {
             // Only increase the thickness (up to a maximum) but not add another edge between the two
@@ -61,7 +74,7 @@ void AddEdgesToCallees(Graph graph, Subgraph callerSubgraph, IMethodSymbol calle
             continue;
         }
 
-        edge = graph.AddEdge(callerSubgraph.Id, calleeSubgraph.Id);
+        edge = graph.AddEdge(edgeFrom.Id, edgeTo.Id);
 
         var callSite = invocation.CallSite;
         var position = callSite.SyntaxTree.GetMappedLineSpan(callSite.Span);
