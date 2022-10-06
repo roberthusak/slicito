@@ -7,8 +7,11 @@ namespace Slicito;
 
 public static class SymbolExtensions
 {
+    private static readonly SymbolDisplayFormat _symbolDisplay = new(
+        extensionMethodStyle: SymbolDisplayExtensionMethodStyle.StaticMethod);
+
     public static string GetNodeId(this ISymbol symbol)
-        => symbol.ToDisplayString();
+        => symbol.ToDisplayString(_symbolDisplay);
 
     public static string GetNodeLabelText(this ISymbol symbol)
     {
