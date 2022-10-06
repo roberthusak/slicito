@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.CodeAnalysis;
 
 namespace Slicito;
 
@@ -6,11 +7,15 @@ public static class ServerUtils
 {
     public const string BaseUri = "https://localhost:7032";
 
-    public static string GetOpenFileEndpointUri(string filepath, int line, int offset)
+    public static string GetOpenFileEndpointUri(FileLinePositionSpan position)
     {
+        // Both line and character offset usually start at 1 in IDEs
+        var line = position.Span.Start.Line + 1;
+        var offset = position.Span.Start.Character + 1;
+
         var query = new Dictionary<string, string>()
         {
-            { "path", filepath },
+            { "path", position.Path },
             { "line", line.ToString() },
             { "offset", offset.ToString() }
         };

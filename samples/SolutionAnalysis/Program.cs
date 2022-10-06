@@ -1,9 +1,18 @@
-﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis;
 using Microsoft.Msagl.Drawing;
 using Slicito;
 using SolutionAnalysis;
 
-static async Task<Graph> CreateGraphFromSymbols(IEnumerable<ISymbol> symbols, ISymbol? topLevelSymbol = null)
+var project = await RoslynUtils.OpenProjectAsync(args[0]);
+var compilation = await project.GetCompilationAsync();
+
+var graph = await CreateGraphFromSymbolsAsync(compilation!.GetSymbolsWithName(_ => true, SymbolFilter.Namespace | SymbolFilter.Type));
+
+var uri = await graph.RenderToSvgUriAsync();
+Utils.OpenUri(uri);
+
+
+async Task<Graph> CreateGraphFromSymbolsAsync(IEnumerable<ISymbol> symbols, ISymbol? topLevelSymbol = null)
 {
     var graph = new Graph();
 
@@ -14,23 +23,44 @@ static async Task<Graph> CreateGraphFromSymbols(IEnumerable<ISymbol> symbols, IS
 
     foreach (var symbol in symbols)
     {
-        var subgraph = graph.AddSymbolWithHierarchy(symbol);
+        var symbolSubgraph = graph.AddSymbolWithHierarchy(symbol);
 
         if (symbol is ITypeSymbol typeSymbol)
         {
-            var detailGraph = await CreateGraphFromSymbols(typeSymbol.GetMembers(), typeSymbol);
+            var detailGraph = await CreateGraphFromSymbolsAsync(typeSymbol.GetMembers(), typeSymbol);
 
-            subgraph.Attr.Uri = await detailGraph.RenderToSvgUriAsync(filename: $"schema_{typeSymbol.GetNodeId()}.svg");
+            symbolSubgraph.Attr.Uri = await detailGraph.RenderToSvgUriAsync(filename: $"schema_{typeSymbol.GetNodeId()}.svg");
+        }
+
+        if (symbol is IMethodSymbol methodSymbol)
+        {
+            AddEdgesToCallees(graph, symbolSubgraph, methodSymbol);
         }
     }
 
     return graph;
 }
 
-var project = await RoslynUtils.OpenProjectAsync(args[0]);
-var compilation = await project.GetCompilationAsync();
+void AddEdgesToCallees(Graph graph, Subgraph callerSubgraph, IMethodSymbol callerSymbol)
+{
+    foreach (var invocation in callerSymbol.FindCallees(compilation))
+    {
+        var calleeSubgraph = graph.AddSymbolWithHierarchy(invocation.Callee);
 
-var graph = await CreateGraphFromSymbols(compilation!.GetSymbolsWithName(_ => true, SymbolFilter.Namespace | SymbolFilter.Type));
+        var edge = callerSubgraph.Edges.FirstOrDefault(edge => edge.Target == calleeSubgraph.Id);
+        if (edge is not null)
+        {
+            // Only increase the thickness (up to a maximum) but not add another edge between the two
+            edge.Attr.LineWidth = Math.Min(5.0, edge.Attr.LineWidth * 1.2);
 
-var uri = await graph.RenderToSvgUriAsync();
-Utils.OpenUri(uri);
+            continue;
+        }
+
+        edge = graph.AddEdge(callerSubgraph.Id, calleeSubgraph.Id);
+
+        var callSite = invocation.CallSite;
+        var position = callSite.SyntaxTree.GetMappedLineSpan(callSite.Span);
+
+        edge.Attr.Uri = ServerUtils.GetOpenFileEndpointUri(position);
+    }
+}

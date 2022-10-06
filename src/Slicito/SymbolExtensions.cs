@@ -1,5 +1,6 @@
-﻿using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Slicito.Roslyn;
 using System.Web;
 
 namespace Slicito;
@@ -29,12 +30,24 @@ public static class SymbolExtensions
             return null;
         }
 
-        var position = location.GetMappedLineSpan();
+        return ServerUtils.GetOpenFileEndpointUri(location.GetMappedLineSpan());
+    }
 
-        // Both line and character offset usually start at 1 in IDEs
-        var line = position.Span.Start.Line + 1;
-        var offset = position.Span.Start.Character + 1;
+    public static IEnumerable<InvocationInfo> FindCallees(this IMethodSymbol methodSymbol, Compilation compilation)
+    {
+        var syntaxReference = methodSymbol.DeclaringSyntaxReferences.FirstOrDefault();
+        if (syntaxReference is null)
+        {
+            return Enumerable.Empty<InvocationInfo>();
+        }
 
-        return ServerUtils.GetOpenFileEndpointUri(position.Path, line, offset);
+        if (syntaxReference.GetSyntax() is not BaseMethodDeclarationSyntax declaration)
+        {
+            return Enumerable.Empty<InvocationInfo>();
+        }
+
+        var semanticModel = compilation.GetSemanticModel(syntaxReference.SyntaxTree);
+
+        return InvocationWalker.FindInvocations(methodSymbol, declaration, semanticModel);
     }
 }
