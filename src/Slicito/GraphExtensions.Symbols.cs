@@ -1,4 +1,4 @@
-﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis;
 using Microsoft.Msagl.Drawing;
 using System.Diagnostics;
 
@@ -32,7 +32,7 @@ public static partial class GraphExtensions
 
     public static Subgraph AddSymbolWithHierarchy(this Graph graph, ISymbol symbol)
     {
-        if (symbol.ContainingSymbol == null)
+        if (symbol.ContainingSymbol == null || symbol.ContainingSymbol is INamespaceSymbol { IsGlobalNamespace: true })
         {
             return graph.AddSymbol(symbol);
         }

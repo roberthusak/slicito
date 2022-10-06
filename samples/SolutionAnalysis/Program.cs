@@ -23,6 +23,11 @@ async Task<Graph> CreateGraphFromSymbolsAsync(IEnumerable<ISymbol> symbols, ISym
 
     foreach (var symbol in symbols)
     {
+        if (symbol is INamespaceSymbol { IsGlobalNamespace: true })
+        {
+            continue;
+        }
+
         var symbolSubgraph = graph.AddSymbolWithHierarchy(symbol);
 
         if (symbol is ITypeSymbol typeSymbol)
