@@ -1,4 +1,4 @@
-﻿// The base of this file was downloaded from Microsoft MSAGL (MIT licence):
+// The base of this file was downloaded from Microsoft MSAGL (MIT licence):
 // https://github.com/microsoft/automatic-graph-layout/blob/7bc805605ff879793b9695560421d899d8a42e7e/GraphLayout/Drawing/SvgGraphWriter.cs
 
 using System;
@@ -304,6 +304,14 @@ namespace Slicito
 
         protected virtual void WriteEdge(Edge edge)
         {
+            var attr = edge.Attr;
+            var hasUri = !String.IsNullOrEmpty(attr.Uri);
+            if (hasUri && AllowedToWriteUri)
+            {
+                WriteStartElement("a");
+                WriteAttributeWithPrefix("xlink", "href", attr.Uri);
+            }
+
             WriteStartElement("path");
             WriteAttribute("fill", "none");
             var geometryEdge = edge.GeometryEdge;
@@ -317,6 +325,9 @@ namespace Slicito
                 AddArrow(iCurve.End, geometryEdge.EdgeGeometry.TargetArrowhead.TipPosition, edge);
             if (edge.Label != null && edge.Label.GeometryLabel != null)
                 WriteLabel(edge.Label);
+
+            if (hasUri && AllowedToWriteUri)
+                WriteEndElement();
         }
 
         protected void AddArrow(Point start, Point end, Edge edge)
