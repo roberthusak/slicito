@@ -55,9 +55,12 @@ void AddEdgesToCallees(Graph graph, Subgraph callerSubgraph, IMethodSymbol calle
 
         if (topLevelSymbol is not null && !SymbolEqualityComparer.Default.Equals(invocation.Callee.ContainingType, topLevelSymbol))
         {
-            // Reference to an outside dependency, display only the edge from the current type to its type
+            // Reference to an outside dependency, display only the edge from the current type to the top namespace of its type
+
             edgeFrom = graph.AddSymbol(topLevelSymbol);
-            edgeTo = graph.AddSymbolWithHierarchy(invocation.Callee.ContainingType);
+
+            graph.AddSymbolWithHierarchy(invocation.Callee);
+            edgeTo = graph.AddSymbol(invocation.Callee.FindTopNamespace()!);
         }
         else
         {

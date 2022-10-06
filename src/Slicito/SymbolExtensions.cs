@@ -33,6 +33,22 @@ public static class SymbolExtensions
         return ServerUtils.GetOpenFileEndpointUri(location.GetMappedLineSpan());
     }
 
+    public static INamespaceSymbol? FindTopNamespace(this ISymbol symbol)
+    {
+        var namespaceSymbol = (symbol as INamespaceSymbol) ?? symbol.ContainingNamespace;
+        if (namespaceSymbol is null || namespaceSymbol.IsGlobalNamespace)
+        {
+            return null;
+        }
+
+        while (namespaceSymbol.ContainingNamespace is not null && !namespaceSymbol.ContainingNamespace.IsGlobalNamespace)
+        {
+            namespaceSymbol = namespaceSymbol.ContainingNamespace;
+        }
+
+        return namespaceSymbol;
+    }
+
     public static IEnumerable<InvocationInfo> FindCallees(this IMethodSymbol methodSymbol, Compilation compilation)
     {
         var syntaxReference = methodSymbol.DeclaringSyntaxReferences.FirstOrDefault();
