@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Html;
 using Microsoft.Msagl.Core.Geometry;
 using Microsoft.Msagl.Core.Geometry.Curves;
 using Microsoft.Msagl.Core.Routing;
@@ -75,6 +75,16 @@ public static partial class GraphExtensions
             return;
         }
 
+        // Set it before the geometry graph is generated since it can extract certain values from it (e.g. constraints)
+        graph.LayoutAlgorithmSettings = new SugiyamaLayoutSettings
+        {
+            Transformation =
+                orientation == LayoutOrientation.Horizontal
+                ? PlaneTransformation.Rotation(Math.PI / 2)
+                : PlaneTransformation.UnitTransformation,
+            EdgeRoutingSettings = { EdgeRoutingMode = EdgeRoutingMode.Spline }
+        };
+
         graph.CreateGeometryGraph();
 
         foreach (var subgraph in graph.RootSubgraph.AllSubgraphsDepthFirstExcludingSelf())
@@ -107,16 +117,7 @@ public static partial class GraphExtensions
             }
         }
 
-        var layoutSettings = new SugiyamaLayoutSettings
-        {
-            Transformation =
-                orientation == LayoutOrientation.Horizontal
-                ? PlaneTransformation.Rotation(Math.PI / 2)
-                : PlaneTransformation.UnitTransformation,
-            EdgeRoutingSettings = { EdgeRoutingMode = EdgeRoutingMode.Spline }
-        };
-
-        LayoutHelpers.CalculateLayout(graph.GeometryGraph, layoutSettings, null);
+        LayoutHelpers.CalculateLayout(graph.GeometryGraph, graph.LayoutAlgorithmSettings, null);
     }
 
     private static void EnsureLabelDimensions(Label label)
