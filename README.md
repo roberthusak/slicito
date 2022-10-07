@@ -32,7 +32,7 @@ Next steps:
 
 * Use the power of [Microsoft Roslyn](https://github.com/dotnet/roslyn) to analyse your C# projects. Extract interesting parts of the code and their relations.
 * Create customised and well-arranged graphs using [Microsoft Automated Graph Layout (MSAGL)](https://github.com/microsoft/automatic-graph-layout).
-* Generate multiple schemas and connect them via hyperlinks - see the [`SolutionAnalysis` sample](samples/SolutionAnalysis/Program.cs).
+* Generate multiple schemas, connect them via hyperlinks and show dependencies between different entities - see the [`SolutionAnalysis` sample](samples/SolutionAnalysis/Program.cs).
 
 Plans
 -----
