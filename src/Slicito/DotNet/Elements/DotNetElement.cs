@@ -1,8 +1,10 @@
+using Microsoft.CodeAnalysis;
+
 using Slicito.Abstractions;
 
 namespace Slicito.DotNet.Elements;
 
-public class DotNetElement : IElement
+public abstract class DotNetElement : IElement
 {
     internal DotNetElement(string id)
     {
@@ -12,51 +14,83 @@ public class DotNetElement : IElement
     public string Id { get; }
 }
 
-public class DotNetNamespace : DotNetElement
+public class DotNetProject : DotNetElement
 {
-    internal DotNetNamespace(string id) : base(id)
+    internal DotNetProject(Project project, Compilation compilation, string id) : base(id)
+    {
+        Project = project;
+        Compilation = compilation;
+    }
+
+    public Project Project { get; }
+    public Compilation Compilation { get; }
+}
+
+public abstract class DotNetSymbolElement : DotNetElement
+{
+    internal DotNetSymbolElement(ISymbol symbol, string id) : base(id)
+    {
+        Symbol = symbol;
+    }
+
+    public ISymbol Symbol { get; }
+}
+
+public class DotNetNamespace : DotNetSymbolElement
+{
+    internal DotNetNamespace(INamespaceSymbol symbol, string id) : base(symbol, id)
+    {
+    }
+
+    public new INamespaceSymbol Symbol => (INamespaceSymbol) base.Symbol;
+}
+
+public class DotNetType : DotNetSymbolElement
+{
+    internal DotNetType(ITypeSymbol symbol, string id) : base(symbol, id)
+    {
+    }
+
+    public new ITypeSymbol Symbol => (ITypeSymbol) base.Symbol;
+}
+
+public abstract class DotNetTypeMember : DotNetSymbolElement
+{
+    internal DotNetTypeMember(ISymbol symbol, string id) : base(symbol, id)
     {
     }
 }
 
-public class DotNetType : DotNetElement
+public class DotNetMethod : DotNetSymbolElement
 {
-    internal DotNetType(string id) : base(id)
+    internal DotNetMethod(IMethodSymbol symbol, string id) : base(symbol, id)
+    {
+    }
+
+    public new IMethodSymbol Symbol => (IMethodSymbol) base.Symbol;
+}
+
+public abstract class DotNetStorageMember : DotNetSymbolElement
+{
+    internal DotNetStorageMember(ISymbol symbol, string id) : base(symbol, id)
     {
     }
 }
 
-public class DotNetTypeMember : DotNetElement
+public class DotNetProperty : DotNetSymbolElement
 {
-    internal DotNetTypeMember(string id) : base(id)
+    internal DotNetProperty(IPropertySymbol symbol, string id) : base(symbol, id)
     {
     }
+
+    public new IPropertySymbol Symbol => (IPropertySymbol) base.Symbol;
 }
 
-public class DotNetMethod : DotNetTypeMember
+public class DotNetField : DotNetSymbolElement
 {
-    internal DotNetMethod(string id) : base(id)
+    internal DotNetField(IFieldSymbol symbol, string id) : base(symbol, id)
     {
     }
-}
 
-public class DotNetStorageMember : DotNetTypeMember
-{
-    internal DotNetStorageMember(string id) : base(id)
-    {
-    }
-}
-
-public class DotNetProperty : DotNetStorageMember
-{
-    internal DotNetProperty(string id) : base(id)
-    {
-    }
-}
-
-public class DotNetField : DotNetStorageMember
-{
-    internal DotNetField(string id) : base(id)
-    {
-    }
+    public new IFieldSymbol Symbol => (IFieldSymbol) base.Symbol;
 }

@@ -1,10 +1,10 @@
-﻿using Microsoft.Build.Locator;
+using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
 
-namespace Slicito;
+namespace Slicito.DotNet;
 
-public static class RoslynUtils
+internal static class RoslynUtils
 {
     static RoslynUtils()
     {
@@ -24,7 +24,7 @@ public static class RoslynUtils
             else if (sdks.Any())
             {
                 // Check if there isn't at least something like 6.0.109 present
-                var bestSdk = 
+                var bestSdk =
                     sdks.FirstOrDefault(sdk => sdk.Version.Major == 6 && sdk.Version.Minor == 0 && sdk.Version.Build > 100 && sdk.Version.Build < 200)
                     ?? sdks.First();
 
