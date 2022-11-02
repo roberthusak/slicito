@@ -12,7 +12,7 @@ using Slicito.DotNet.Relations;
 
 namespace Slicito.DotNet;
 
-public class DotNetContext : IContext<DotNetElement, EmptyStruct>
+public partial class DotNetContext : IContext<DotNetElement, EmptyStruct>
 {
     private readonly Dictionary<ISymbol, DotNetElement> _symbolsToElements;
 

@@ -25,7 +25,7 @@ public static class SymbolExtensions
         return HttpUtility.HtmlEncode(label);
     }
 
-    public static string? GetFileOpenUri(this ISymbol symbol)
+    public static Uri? GetFileOpenUri(this ISymbol symbol)
     {
         var location = symbol.Locations.FirstOrDefault();
         if (location is null || !location.IsInSource)

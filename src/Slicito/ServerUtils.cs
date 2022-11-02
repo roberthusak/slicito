@@ -7,7 +7,7 @@ public static class ServerUtils
 {
     public const string BaseUri = "https://localhost:7032";
 
-    public static string GetOpenFileEndpointUri(FileLinePositionSpan position)
+    public static Uri GetOpenFileEndpointUri(FileLinePositionSpan position)
     {
         // Both line and character offset usually start at 1 in IDEs
         var line = position.Span.Start.Line + 1;
@@ -20,7 +20,7 @@ public static class ServerUtils
             { "offset", offset.ToString() }
         };
 
-        return QueryHelpers.AddQueryString($"{BaseUri}/open", query);
+        return new(QueryHelpers.AddQueryString($"{BaseUri}/open", query));
     }
 
     public static async Task<string> UploadFileAsync(string filename, Stream content)

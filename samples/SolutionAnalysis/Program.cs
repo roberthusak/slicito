@@ -1,9 +1,7 @@
-using Microsoft.Msagl.Drawing;
-
-using Slicito;
 using Slicito.Abstractions.Relations;
 using Slicito.DotNet;
 using Slicito.DotNet.Elements;
+using Slicito.Presentation;
 
 using SolutionAnalysis;
 
@@ -12,23 +10,23 @@ var globalContext = await new DotNetContext.Builder()
     .BuildAsync();
 
 var dependencyRelations = globalContext.ExtractDependencyRelations();
-var dependsOnRelation = Relation.Merge(dependencyRelations);
-var typeDependsOnRelation = dependsOnRelation
+
+var namespaceDependsOnRelation = Relation.Merge(dependencyRelations)
     .MoveUpHierarchy(globalContext.Hierarchy, (_, hierarchyPair) =>
-        hierarchyPair.Target is not DotNetType and not DotNetNamespace)
-    .MakeUnique();
+        hierarchyPair.Target is not DotNetNamespace)
+    .MakeUnique()
+    .Filter(pair =>
+        pair.Source != pair.Target
+        && !globalContext.Hierarchy.GetAncestors(pair.Source).Contains(pair.Target)
+        && !globalContext.Hierarchy.GetAncestors(pair.Target).Contains(pair.Source));
 
-var graph = new Graph();
+var schema = new Schema.Builder()
+    .AddUriProvider(globalContext.IdeDetailUriProvider)
+    .AddNodes(
+        globalContext.Elements.Where(e => e is not DotNetType and not DotNetTypeMember),
+        globalContext.Hierarchy)
+    .AddEdges(namespaceDependsOnRelation)
+    .BuildSvg();
 
-foreach (var element in globalContext.Elements.OfType<DotNetType>())
-{
-    graph.AddNode(element.Id);
-}
-
-foreach (var pair in typeDependsOnRelation.Pairs)
-{
-    graph.AddEdge(pair.Source.Id, pair.Target.Id);
-}
-
-var uri = await graph.RenderToSvgUriAsync();
+var uri = await schema.UploadToServerAsync();
 Utils.OpenUri(uri);

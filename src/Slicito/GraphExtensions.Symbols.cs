@@ -18,7 +18,7 @@ public static partial class GraphExtensions
                 LabelText = symbol.GetNodeLabelText()
             };
 
-            subgraph.Attr.Uri = symbol.GetFileOpenUri();
+            subgraph.Attr.Uri = symbol.GetFileOpenUri()?.ToString();
 
             containingSubgraph.AddSubgraph(subgraph);
 

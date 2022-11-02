@@ -57,7 +57,7 @@ public static partial class GraphExtensions
         return await ServerUtils.UploadFileAsync(filename, ms);
     }
 
-    private static MemoryStream RenderSvgToStream(Graph graph, LayoutOrientation orientation)
+    public static MemoryStream RenderSvgToStream(this Graph graph, LayoutOrientation orientation)
     {
         EnsureLayout(graph, orientation);
         var ms = new MemoryStream();
