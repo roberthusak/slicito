@@ -38,10 +38,5 @@ internal static class RoslynUtils
         }
     }
 
-    public static Task<Project> OpenProjectAsync(string path)
-    {
-        using var workspace = MSBuildWorkspace.Create();
-
-        return workspace.OpenProjectAsync(path);
-    }
+    public static MSBuildWorkspace CreateMSBuildWorkspace() => MSBuildWorkspace.Create();
 }

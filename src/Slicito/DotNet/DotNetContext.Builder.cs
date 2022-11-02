@@ -40,12 +40,14 @@ public partial class DotNetContext : IContext<DotNetElement, EmptyStruct>
 
         public async Task<DotNetContext> BuildAsync()
         {
+            using var workspace = RoslynUtils.CreateMSBuildWorkspace();
+
             foreach (var path in _pathsToAdd)
             {
                 // We currently support only C# projects
                 Debug.Assert(Path.GetExtension(path) == ".csproj");
 
-                var project = await RoslynUtils.OpenProjectAsync(path);
+                var project = await workspace.OpenProjectAsync(path);
 
                 var compilation = await project.GetCompilationAsync();
                 if (compilation is null)
@@ -59,7 +61,7 @@ public partial class DotNetContext : IContext<DotNetElement, EmptyStruct>
 
                 foreach (var member in compilation.GlobalNamespace.GetMembers())
                 {
-                    ProcessSymbolRecursively(projectElement, member);
+                    ProcessSymbolRecursively(projectElement, member, projectElement);
                 }
             }
 
@@ -69,9 +71,10 @@ public partial class DotNetContext : IContext<DotNetElement, EmptyStruct>
                 new Dictionary<ISymbol, DotNetElement>(_symbolsToElements, SymbolEqualityComparer.Default));
         }
 
-        private void ProcessSymbolRecursively(DotNetElement parent, ISymbol symbol)
+        private void ProcessSymbolRecursively(DotNetElement parent, ISymbol symbol, DotNetProject projectElement)
         {
-            if (!symbol.Locations.Any(location => location.IsInSource)
+            if (symbol.Locations.FirstOrDefault(l => l.IsInSource)?.SourceTree is not SyntaxTree syntaxTree
+                || !projectElement.Compilation.ContainsSyntaxTree(syntaxTree)
                 || string.IsNullOrEmpty(symbol.Name)
                 || symbol.IsImplicitlyDeclared
                 || (!symbol.CanBeReferencedByName && symbol.Name != ".ctor"))
@@ -107,7 +110,7 @@ public partial class DotNetContext : IContext<DotNetElement, EmptyStruct>
 
             foreach (var member in symbolWithMembers.GetMembers())
             {
-                ProcessSymbolRecursively(element, member);
+                ProcessSymbolRecursively(element, member, projectElement);
             }
         }
     }
