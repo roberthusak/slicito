@@ -131,4 +131,25 @@ public static class Relation
 
         return builder.Build();
     }
+
+    /// <remarks>
+    /// Works only on hierarchies, i.e. relations where each element is a target of at most one pair.
+    /// </remarks>
+    public static IEnumerable<TElement> GetAncestors<TElement, TData>(
+        this IBinaryRelation<TElement, TElement, TData> hierarchy,
+        TElement element)
+        where TElement : class, IElement
+    {
+        var current = element;
+        while (true)
+        {
+            current = hierarchy.GetIncoming(current).SingleOrDefault()?.Source;
+            if (current is null)
+            {
+                yield break;
+            }
+
+            yield return current;
+        }
+    }
 }

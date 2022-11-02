@@ -61,7 +61,7 @@ public abstract class DotNetTypeMember : DotNetSymbolElement
     }
 }
 
-public class DotNetMethod : DotNetSymbolElement
+public class DotNetMethod : DotNetTypeMember
 {
     internal DotNetMethod(IMethodSymbol symbol, string id) : base(symbol, id)
     {
@@ -70,14 +70,14 @@ public class DotNetMethod : DotNetSymbolElement
     public new IMethodSymbol Symbol => (IMethodSymbol) base.Symbol;
 }
 
-public abstract class DotNetStorageMember : DotNetSymbolElement
+public abstract class DotNetStorageTypeMember : DotNetTypeMember
 {
-    internal DotNetStorageMember(ISymbol symbol, string id) : base(symbol, id)
+    internal DotNetStorageTypeMember(ISymbol symbol, string id) : base(symbol, id)
     {
     }
 }
 
-public class DotNetProperty : DotNetSymbolElement
+public class DotNetProperty : DotNetStorageTypeMember
 {
     internal DotNetProperty(IPropertySymbol symbol, string id) : base(symbol, id)
     {
@@ -86,7 +86,7 @@ public class DotNetProperty : DotNetSymbolElement
     public new IPropertySymbol Symbol => (IPropertySymbol) base.Symbol;
 }
 
-public class DotNetField : DotNetSymbolElement
+public class DotNetField : DotNetStorageTypeMember
 {
     internal DotNetField(IFieldSymbol symbol, string id) : base(symbol, id)
     {

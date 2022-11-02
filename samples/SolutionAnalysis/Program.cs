@@ -7,12 +7,12 @@ using Slicito.DotNet.Elements;
 
 using SolutionAnalysis;
 
-var globalContext = new DotNetContext.Builder()
+var globalContext = await new DotNetContext.Builder()
     .AddProject(args[0])
-    .Build();
+    .BuildAsync();
 
-var inteproceduralRelations = globalContext.ExtractInterproceduralRelations();
-var dependsOnRelation = Relation.Merge(inteproceduralRelations);
+var dependencyRelations = globalContext.ExtractDependencyRelations();
+var dependsOnRelation = Relation.Merge(dependencyRelations);
 var typeDependsOnRelation = dependsOnRelation
     .MoveUpHierarchy(globalContext.Hierarchy, (_, hierarchyPair) =>
         hierarchyPair.Target is not DotNetType and not DotNetNamespace)
