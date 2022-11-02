@@ -92,6 +92,13 @@ public class DotNetContext : IContext<DotNetElement, EmptyStruct>
             return;
         }
 
+        var overridenMethodSymbol = methodSymbol.OverriddenMethod;
+        if (overridenMethodSymbol is not null
+            && TryGetElementFromSymbol(overridenMethodSymbol) is DotNetMethod overridenMethodElement)
+        {
+            builder.Overrides.Add(methodElement, overridenMethodElement, default);
+        }
+
         var projectElement = Hierarchy.GetAncestors(methodElement).OfType<DotNetProject>().First();
 
         var semanticModel = projectElement.Compilation.GetSemanticModel(syntaxReference.SyntaxTree);
@@ -193,7 +200,8 @@ public class DotNetContext : IContext<DotNetElement, EmptyStruct>
         {
             if (!symbol.Locations.Any(location => location.IsInSource)
                 || string.IsNullOrEmpty(symbol.Name)
-                || !symbol.CanBeReferencedByName)
+                || symbol.IsImplicitlyDeclared
+                || (!symbol.CanBeReferencedByName && symbol.Name != ".ctor"))
             {
                 return;
             }

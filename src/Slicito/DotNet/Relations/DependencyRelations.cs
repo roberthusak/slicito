@@ -49,6 +49,7 @@ public class DependencyRelations : IEnumerable<IBinaryRelation<DotNetElement, Do
         yield return Stores;
         yield return Loads;
         yield return ReferencesType;
+        yield return IsOfType.TransformData(_ => (SyntaxNode?) null);
     }
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
