@@ -125,7 +125,11 @@ public class Schema : IHtmlContent
 
             var stack = new Stack<TElement>();
 
-            foreach (var root in elementSet.Where(e => !hierarchy.GetIncoming(e).Any()))
+            var roots =
+                elementSet.Where(e =>
+                    !hierarchy.GetIncoming(e).Any(pair => elementSet.Contains(pair.Source)));
+
+            foreach (var root in roots)
             {
                 AddNode(root, null, nodeCustomizer);
                 stack.Push(root);
