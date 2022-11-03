@@ -14,10 +14,18 @@ public partial class Schema
         private readonly Graph _graph = new();
 
         private readonly List<IUriProvider> _uriProviders = new();
+        private readonly List<ILabelProvider> _labelProviders = new();
 
         public Builder AddUriProvider(IUriProvider uriProvider)
         {
             _uriProviders.Add(uriProvider);
+
+            return this;
+        }
+
+        public Builder AddLabelProvider(ILabelProvider labelProvider)
+        {
+            _labelProviders.Add(labelProvider);
 
             return this;
         }
@@ -36,6 +44,10 @@ public partial class Schema
             var containingSubgraph = GetContainingSubgraph();
 
             var subgraph = new Subgraph(element.Id);
+
+            subgraph.LabelText = _labelProviders
+                .Select(p => p.TryGetLabelForElement(element))
+                .FirstOrDefault(label => label is not null);
 
             subgraph.Attr.Uri = _uriProviders
                 .Select(p => p.TryGetUriForElement(element))
@@ -147,6 +159,10 @@ public partial class Schema
             }
 
             var edge = _graph.AddEdge(pair.Source.Id, pair.Target.Id);
+
+            edge.LabelText = _labelProviders
+                .Select(p => p.TryGetLabelForPair(pair))
+                .FirstOrDefault(label => label is not null);
 
             edge.Attr.Uri = _uriProviders
                 .Select(p => p.TryGetUriForPair(pair))

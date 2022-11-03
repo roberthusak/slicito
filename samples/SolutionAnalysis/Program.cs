@@ -21,6 +21,7 @@ var namespaceDependsOnRelation = Relation.Merge(dependencyRelations)
         && !globalContext.Hierarchy.GetAncestors(pair.Target).Contains(pair.Source));
 
 var schema = new Schema.Builder()
+    .AddLabelProvider(globalContext.LabelProvider)
     .AddUriProvider(globalContext.OpenInIdeUriProvider)
     .AddNodes(
         globalContext.Elements.Where(e => e is not DotNetType and not DotNetTypeMember),
