@@ -9,9 +9,9 @@ namespace Slicito.DotNet;
 
 public partial class DotNetContext
 {
-    public IUriProvider IdeDetailUriProvider { get; } = new IdeUriProvider();
+    public IUriProvider OpenInIdeUriProvider { get; } = new OpenInIdeUriProviderImplementation();
 
-    private class IdeUriProvider : IUriProvider
+    private class OpenInIdeUriProviderImplementation : IUriProvider
     {
         public Uri? TryGetUriForElement(IElement element)
         {
