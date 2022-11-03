@@ -132,13 +132,101 @@ public static class Relation
         return builder.Build();
     }
 
+    public static IBinaryRelation<TElement, TElement, TData>
+        CompactPaths<TElement, TData>(
+            this IBinaryRelation<TElement, TElement, TData> relation,
+            Predicate<IEnumerable<IPair<TElement, TElement, TData>>>? filter = null,
+            Func<IEnumerable<IPair<TElement, TElement, TData>>, TData>? dataProvider = null)
+        where TElement : class, IElement
+    {
+        var builder = new BinaryRelation<TElement, TElement, TData>.Builder();
+
+        var processedCompactablePairs = new HashSet<IPair<TElement, TElement, TData>>();
+
+        foreach (var pair in relation.Pairs)
+        {
+            if (pair.Source == pair.Target)
+            {
+                builder.Add(pair);
+                continue;
+            }
+
+            if (processedCompactablePairs.Contains(pair))
+            {
+                continue;
+            }
+
+            var canExtendFromSource = IsReducibleElement(pair.Source);
+            var canExtendFromTarget = IsReducibleElement(pair.Target);
+
+            if (!canExtendFromSource && !canExtendFromTarget)
+            {
+                builder.Add(pair);
+                continue;
+            }
+
+            var path = new List<IPair<TElement, TElement, TData>> { pair };
+
+            for (var firstPair = pair; canExtendFromSource; canExtendFromSource = IsReducibleElement(firstPair.Source))
+            {
+                firstPair = relation.GetIncoming(firstPair.Source).Single();
+                if (firstPair.Source == path.Last().Target)
+                {
+                    // Don't compact loops
+                    break;
+                }
+
+                path.Insert(0, firstPair);
+            }
+
+            for (var lastPair = path.Last(); canExtendFromTarget; canExtendFromTarget = IsReducibleElement(lastPair.Target))
+            {
+                lastPair = relation.GetOutgoing(lastPair.Target).Single();
+                if (lastPair.Target == path.First().Source)
+                {
+                    // Don't compact loops
+                    break;
+                }
+
+                path.Add(lastPair);
+            }
+
+            processedCompactablePairs.UnionWith(path);
+
+            if (filter is not null && !filter(path))
+            {
+                builder.AddRange(path);
+                continue;
+            }
+
+            var data = dataProvider is not null
+                ? dataProvider(path)
+                : path.First().Data;
+
+            builder.Add(path.First().Source, path.Last().Target, data);
+        }
+
+        return builder.Build();
+
+        bool IsReducibleElement(TElement element) =>
+            relation.GetIncoming(element).Count() == 1
+            && relation.GetOutgoing(element).Count() == 1;
+    }
+
+    public static bool Contains<TElement, TData>(
+        this IBinaryRelation<TElement, TElement, TData> relation,
+        TElement element)
+    where TElement : class, IElement
+    =>
+        relation.Pairs.Any(pair => element == pair.Source || element == pair.Target);
+
     /// <remarks>
     /// Works only on hierarchies, i.e. relations where each element is a target of at most one pair.
     /// </remarks>
     public static IEnumerable<TElement> GetAncestors<TElement, TData>(
         this IBinaryRelation<TElement, TElement, TData> hierarchy,
         TElement element)
-        where TElement : class, IElement
+    where TElement : class, IElement
     {
         var current = element;
         while (true)

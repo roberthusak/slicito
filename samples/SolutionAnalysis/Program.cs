@@ -20,12 +20,18 @@ var namespaceDependsOnRelation = Relation.Merge(dependencyRelations)
         && !globalContext.Hierarchy.GetAncestors(pair.Source).Contains(pair.Target)
         && !globalContext.Hierarchy.GetAncestors(pair.Target).Contains(pair.Source));
 
+var compactedHierarchy = globalContext.Hierarchy
+    .Filter(pair => pair.Target is not DotNetType and not DotNetTypeMember)
+    .CompactPaths();
+var filteredElements = globalContext.Elements
+    .Where(e => compactedHierarchy.Contains(e));
+
 var schema = new Schema.Builder()
     .AddLabelProvider(globalContext.LabelProvider)
     .AddUriProvider(globalContext.OpenInIdeUriProvider)
     .AddNodes(
-        globalContext.Elements.Where(e => e is not DotNetType and not DotNetTypeMember),
-        globalContext.Hierarchy)
+        filteredElements,
+        compactedHierarchy)
     .AddEdges(namespaceDependsOnRelation)
     .BuildSvg();
 
