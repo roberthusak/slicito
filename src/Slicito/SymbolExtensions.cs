@@ -7,22 +7,49 @@ namespace Slicito;
 
 public static class SymbolExtensions
 {
-    private static readonly SymbolDisplayFormat _symbolDisplay = new(
-        extensionMethodStyle: SymbolDisplayExtensionMethodStyle.StaticMethod);
+    private static readonly SymbolDisplayFormat _projectUniqueFormat = new(
+        typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
+        genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
+        memberOptions: SymbolDisplayMemberOptions.IncludeParameters | SymbolDisplayMemberOptions.IncludeContainingType,
+        parameterOptions: SymbolDisplayParameterOptions.IncludeType,
+        extensionMethodStyle: SymbolDisplayExtensionMethodStyle.StaticMethod,
+        miscellaneousOptions:
+            SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers |
+            SymbolDisplayMiscellaneousOptions.UseSpecialTypes);
 
-    public static string GetNodeId(this ISymbol symbol)
-        => symbol.ToDisplayString(_symbolDisplay);
+    private static readonly SymbolDisplayFormat _displayFormat =  new(
+        typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameOnly,
+        genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
+        memberOptions: SymbolDisplayMemberOptions.IncludeParameters,
+        parameterOptions: SymbolDisplayParameterOptions.IncludeType,
+        extensionMethodStyle: SymbolDisplayExtensionMethodStyle.StaticMethod,
+        miscellaneousOptions:
+            SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers |
+            SymbolDisplayMiscellaneousOptions.UseSpecialTypes);
 
-    public static string GetNodeLabelText(this ISymbol symbol)
+    public static string GetUniqueNameWithinProject(this ISymbol symbol) => symbol.ToDisplayString(_projectUniqueFormat);
+
+    public static string GetShortName(this ISymbol symbol, ISymbol? containingNodeSymbol = null)
     {
-        var label = symbol.Name;
-        if (string.IsNullOrEmpty(label))
+        var label = symbol.ToDisplayString(_displayFormat);
+
+        // If the node of this symbol is placed under a different node than then one of its containing symbol,
+        // prepend its name with all the "missed" symbols up to the top namespace
+        if (containingNodeSymbol is not null)
         {
-            label = symbol.ToDisplayString();
+            var ancestorSymbol = symbol.ContainingSymbol;
+            while (
+                ancestorSymbol != null
+                && !SymbolEqualityComparer.Default.Equals(ancestorSymbol, containingNodeSymbol)
+                && ancestorSymbol is not INamespaceSymbol { IsGlobalNamespace: true })
+            {
+                label = $"{ancestorSymbol.GetShortName()}.{label}";
+
+                ancestorSymbol = ancestorSymbol.ContainingSymbol;
+            }
         }
 
-        // E.g. for "<global namespace>"
-        return HttpUtility.HtmlEncode(label);
+        return label;
     }
 
     public static Uri? GetFileOpenUri(this ISymbol symbol)

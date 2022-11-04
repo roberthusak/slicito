@@ -45,9 +45,13 @@ public partial class Schema
 
             var subgraph = new Subgraph(element.Id);
 
-            subgraph.LabelText = _labelProviders
-                .Select(p => p.TryGetLabelForElement(element))
+            var label = _labelProviders
+                .Select(p => p.TryGetLabelForElement(element, containingElement))
                 .FirstOrDefault(label => label is not null);
+            if (label is not null)
+            {
+                subgraph.LabelText = label;
+            }
 
             subgraph.Attr.Uri = _uriProviders
                 .Select(p => p.TryGetUriForElement(element))

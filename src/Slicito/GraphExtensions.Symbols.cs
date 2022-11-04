@@ -11,11 +11,11 @@ public static partial class GraphExtensions
 
     public static Subgraph AddSymbol(this Graph graph, ISymbol symbol, Subgraph containingSubgraph)
     {
-        if (!graph.SubgraphMap.TryGetValue(symbol.GetNodeId(), out var subgraph))
+        if (!graph.SubgraphMap.TryGetValue(symbol.GetUniqueNameWithinProject(), out var subgraph))
         {
-            subgraph = new Subgraph(symbol.GetNodeId())
+            subgraph = new Subgraph(symbol.GetUniqueNameWithinProject())
             {
-                LabelText = symbol.GetNodeLabelText()
+                LabelText = symbol.GetShortName()
             };
 
             subgraph.Attr.Uri = symbol.GetFileOpenUri()?.ToString();
@@ -38,7 +38,7 @@ public static partial class GraphExtensions
         }
         else
         {
-            if (!graph.SubgraphMap.TryGetValue(symbol.ContainingSymbol.GetNodeId(), out var containingSubgraph))
+            if (!graph.SubgraphMap.TryGetValue(symbol.ContainingSymbol.GetUniqueNameWithinProject(), out var containingSubgraph))
             {
                 containingSubgraph = graph.AddSymbolWithHierarchy(symbol.ContainingSymbol);
             }
@@ -49,7 +49,7 @@ public static partial class GraphExtensions
 
     public static Edge AddEdgeBetweenSymbols(this Graph graph, ISymbol source, ISymbol target, string? label = null)
     {
-        var edge = graph.AddEdge(source.GetNodeId(), target.GetNodeId());
+        var edge = graph.AddEdge(source.GetUniqueNameWithinProject(), target.GetUniqueNameWithinProject());
 
         if (label != null)
         {

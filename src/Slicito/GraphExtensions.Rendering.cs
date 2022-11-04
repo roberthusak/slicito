@@ -60,8 +60,13 @@ public static partial class GraphExtensions
     public static MemoryStream RenderSvgToStream(this Graph graph, LayoutOrientation orientation)
     {
         EnsureLayout(graph, orientation);
+
         var ms = new MemoryStream();
-        var svgWriter = new CustomSvgGraphWriter(ms, graph);
+        var svgWriter = new CustomSvgGraphWriter(ms, graph)
+        {
+            NodeSanitizer = (n => HttpUtility.HtmlEncode(n))
+        };
+
         svgWriter.Write(Resources.SvgEmbeddedJavaScript);
 
         ms.Position = 0;
@@ -130,10 +135,7 @@ public static partial class GraphExtensions
 
         var font = new Font(label.FontName, (float)label.FontSize);
 
-        // The text may contain escaped characters, e.g. '<' and '>'
-        var text = HttpUtility.HtmlDecode(label.Text);
-
-        var measurements = graphics.MeasureString(text, font);
+        var measurements = graphics.MeasureString(label.Text, font);
 
         label.Width = measurements.Width;
         label.Height = measurements.Height;

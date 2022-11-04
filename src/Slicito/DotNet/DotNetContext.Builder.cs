@@ -12,7 +12,7 @@ using Slicito.DotNet.Relations;
 
 namespace Slicito.DotNet;
 
-public partial class DotNetContext : IContext<DotNetElement, EmptyStruct>
+public partial class DotNetContext
 {
     public class Builder
     {
@@ -56,10 +56,10 @@ public partial class DotNetContext : IContext<DotNetElement, EmptyStruct>
                         $"The project '{path}' could not be loaded into a Roslyn Compilation.");
                 }
 
-                var projectElement = new DotNetProject(project, compilation, $"{project.AssemblyName}.dll");
+                var projectElement = new DotNetProject(project, compilation, path);
                 _elements.Add(projectElement);
 
-                foreach (var member in compilation.GlobalNamespace.GetMembers())
+                foreach (var member in compilation.SourceModule.GlobalNamespace.GetMembers())
                 {
                     ProcessSymbolRecursively(projectElement, member, projectElement);
                 }
@@ -73,16 +73,14 @@ public partial class DotNetContext : IContext<DotNetElement, EmptyStruct>
 
         private void ProcessSymbolRecursively(DotNetElement parent, ISymbol symbol, DotNetProject projectElement)
         {
-            if (symbol.Locations.FirstOrDefault(l => l.IsInSource)?.SourceTree is not SyntaxTree syntaxTree
-                || !projectElement.Compilation.ContainsSyntaxTree(syntaxTree)
-                || string.IsNullOrEmpty(symbol.Name)
+            if (string.IsNullOrEmpty(symbol.Name)
                 || symbol.IsImplicitlyDeclared
                 || (!symbol.CanBeReferencedByName && symbol.Name != ".ctor"))
             {
                 return;
             }
 
-            var id = HttpUtility.HtmlEncode($"{parent.Id}.{symbol.Name}");
+            var id = $"{projectElement.Id}.{symbol.GetUniqueNameWithinProject()}";
 
             DotNetElement? element = symbol switch
             {

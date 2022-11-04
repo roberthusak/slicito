@@ -1,7 +1,6 @@
 using Microsoft.CodeAnalysis;
 
 using Slicito.Abstractions;
-using Slicito.Abstractions.Relations;
 using Slicito.DotNet.Elements;
 using Slicito.Presentation;
 
@@ -13,14 +12,25 @@ public partial class DotNetContext
 
     private class DotNetLabelProvider : ILabelProvider
     {
-        public string? TryGetLabelForElement(IElement element) =>
+        public string? TryGetLabelForElement(IElement element, IElement? containingElement) =>
             element switch
             {
-                DotNetProject projectElement => Path.GetFileName(projectElement.Project.FilePath),
-                DotNetSymbolElement symbolElement => symbolElement.Symbol.GetNodeLabelText(),
-                _ => null
+                DotNetProject projectElement =>
+                    Path.GetFileName(projectElement.Project.FilePath),
+                DotNetSymbolElement { Symbol: var symbol } =>
+                    symbol.GetShortName(TryGetContainingElementSymbol(containingElement)),
+                _ =>
+                    null
             };
 
         public string? TryGetLabelForPair(object pair) => null;
+
+        private static ISymbol? TryGetContainingElementSymbol(IElement? element) =>
+            element switch
+            {
+                DotNetProject projectElement => projectElement.Compilation.GlobalNamespace,
+                DotNetSymbolElement { Symbol: var symbol } => symbol,
+                _ => null
+            };
     }
 }
