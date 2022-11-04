@@ -1,14 +1,9 @@
 using System.Collections.Immutable;
-using System.Diagnostics;
-using System.Web;
 
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-using Slicito.Abstractions;
 using Slicito.Abstractions.Relations;
 using Slicito.DotNet.Elements;
-using Slicito.DotNet.Relations;
 
 namespace Slicito.DotNet;
 
@@ -23,13 +18,28 @@ public partial class DotNetContext
 
         private readonly List<string> _pathsToAdd = new();
 
+        public Builder AddSolution(string solutionPath)
+        {
+            var fileExtension = Path.GetExtension(solutionPath);
+            if (fileExtension != ".sln")
+            {
+                throw new ArgumentException(
+                    $"Invalid solution extension '{fileExtension}' of solution file '{solutionPath}'.",
+                    nameof(solutionPath));
+            }
+
+            _pathsToAdd.Add(solutionPath);
+
+            return this;
+        }
+
         public Builder AddProject(string projectPath)
         {
             var fileExtension = Path.GetExtension(projectPath);
             if (fileExtension != ".csproj")
             {
                 throw new ArgumentException(
-                    $"Unsupported extension '{fileExtension}' of project file '{projectPath}'",
+                    $"Unsupported extension '{fileExtension}' of project file '{projectPath}'.",
                     nameof(projectPath));
             }
 
@@ -44,24 +54,18 @@ public partial class DotNetContext
 
             foreach (var path in _pathsToAdd)
             {
-                // We currently support only C# projects
-                Debug.Assert(Path.GetExtension(path) == ".csproj");
-
-                var project = await workspace.OpenProjectAsync(path);
-
-                var compilation = await project.GetCompilationAsync();
-                if (compilation is null)
+                switch (Path.GetExtension(path))
                 {
-                    throw new InvalidOperationException(
-                        $"The project '{path}' could not be loaded into a Roslyn Compilation.");
-                }
+                    case ".sln":
+                        await ProcessSolutionAsync(await workspace.OpenSolutionAsync(path));
+                        break;
 
-                var projectElement = new DotNetProject(project, compilation, path);
-                _elements.Add(projectElement);
+                    case ".csproj":
+                        await ProcessProjectAsync(await workspace.OpenProjectAsync(path));
+                        break;
 
-                foreach (var member in compilation.SourceModule.GlobalNamespace.GetMembers())
-                {
-                    ProcessSymbolRecursively(projectElement, member, projectElement);
+                    default:
+                        throw new Exception($"Unknown path '{path}'");
                 }
             }
 
@@ -71,7 +75,33 @@ public partial class DotNetContext
                 new Dictionary<ISymbol, DotNetElement>(_symbolsToElements, SymbolEqualityComparer.Default));
         }
 
-        private void ProcessSymbolRecursively(DotNetElement parent, ISymbol symbol, DotNetProject projectElement)
+        private async Task ProcessSolutionAsync(Solution solution)
+        {
+            foreach (var project in solution.Projects)
+            {
+                await ProcessProjectAsync(project);
+            }
+        }
+
+        private async Task ProcessProjectAsync(Project project)
+        {
+            var compilation = await project.GetCompilationAsync();
+            if (compilation is null)
+            {
+                throw new InvalidOperationException(
+                    $"The project '{project.FilePath}' could not be loaded into a Roslyn Compilation.");
+            }
+
+            var projectElement = new DotNetProject(project, compilation, project.FilePath!);
+            _elements.Add(projectElement);
+
+            foreach (var member in compilation.SourceModule.GlobalNamespace.GetMembers())
+            {
+                ProcessSymbolsRecursively(projectElement, member, projectElement);
+            }
+        }
+
+        private void ProcessSymbolsRecursively(DotNetElement parent, ISymbol symbol, DotNetProject projectElement)
         {
             if (string.IsNullOrEmpty(symbol.Name)
                 || symbol.IsImplicitlyDeclared
@@ -108,7 +138,7 @@ public partial class DotNetContext
 
             foreach (var member in symbolWithMembers.GetMembers())
             {
-                ProcessSymbolRecursively(element, member, projectElement);
+                ProcessSymbolsRecursively(element, member, projectElement);
             }
         }
     }

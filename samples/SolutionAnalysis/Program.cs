@@ -6,7 +6,7 @@ using Slicito.Presentation;
 using SolutionAnalysis;
 
 var globalContext = await new DotNetContext.Builder()
-    .AddProject(args[0])
+    .AddSolution(args[0])
     .BuildAsync();
 
 var dependencyRelations = globalContext.ExtractDependencyRelations();
