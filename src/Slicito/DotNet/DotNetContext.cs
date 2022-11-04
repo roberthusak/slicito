@@ -15,6 +15,7 @@ namespace Slicito.DotNet;
 public partial class DotNetContext : IContext<DotNetElement, EmptyStruct>
 {
     private readonly Dictionary<ISymbol, DotNetElement> _symbolsToElements;
+    private readonly Dictionary<string, DotNetProject> _moduleMetadataNamesToProjects;
 
     public IEnumerable<DotNetElement> Elements { get; }
 
@@ -23,14 +24,41 @@ public partial class DotNetContext : IContext<DotNetElement, EmptyStruct>
     private DotNetContext(
         ImmutableArray<DotNetElement> elements,
         BinaryRelation<DotNetElement, DotNetElement, EmptyStruct> hierarchy,
-        Dictionary<ISymbol, DotNetElement> symbolsToElements)
+        Dictionary<ISymbol, DotNetElement> symbolsToElements,
+        Dictionary<string, DotNetProject> moduleMetadataNamesToProjects)
     {
         Elements = elements;
         Hierarchy = hierarchy;
         _symbolsToElements = symbolsToElements;
+        _moduleMetadataNamesToProjects = moduleMetadataNamesToProjects;
     }
 
-    public DotNetElement? TryGetElementFromSymbol(ISymbol symbol) => _symbolsToElements.GetValueOrDefault(symbol);
+    public DotNetElement? TryGetElementFromSymbol(ISymbol symbol)
+    {
+        var element = _symbolsToElements.GetValueOrDefault(symbol);
+
+        if (element is null
+            && symbol.Name != ""
+            && symbol.DeclaringSyntaxReferences.Length > 0
+            && _moduleMetadataNamesToProjects.TryGetValue(symbol.ContainingModule.MetadataName, out var projectElement))
+        {
+            // Reload the proper source symbol, since certain symbols might as as proxies ("retargeting"), without the equality working
+
+            var symbolUniqueName = symbol.GetUniqueNameWithinProject();
+
+            var reloadedSymbol = projectElement.Compilation
+                .GetSymbolsWithName(symbol.Name)
+                .Where(s => s.GetUniqueNameWithinProject() == symbolUniqueName)
+                .SingleOrDefault();
+
+            if (reloadedSymbol is not null)
+            {
+                element = _symbolsToElements.GetValueOrDefault(reloadedSymbol);
+            }
+        }
+
+        return element;
+    }
 
     public DependencyRelations ExtractDependencyRelations(Predicate<DotNetElement>? filter = null)
     {

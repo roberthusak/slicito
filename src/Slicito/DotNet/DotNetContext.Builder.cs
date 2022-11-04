@@ -15,6 +15,7 @@ public partial class DotNetContext
         private readonly BinaryRelation<DotNetElement, DotNetElement, EmptyStruct>.Builder _hierarchyBuilder = new();
 
         private readonly Dictionary<ISymbol, DotNetElement> _symbolsToElements = new(SymbolEqualityComparer.Default);
+        private readonly Dictionary<string, DotNetProject> _moduleMetadataNamesToProjects = new();
 
         private readonly List<string> _pathsToAdd = new();
 
@@ -72,7 +73,8 @@ public partial class DotNetContext
             return new DotNetContext(
                 _elements.ToImmutableArray(),
                 _hierarchyBuilder.Build(),
-                new Dictionary<ISymbol, DotNetElement>(_symbolsToElements, SymbolEqualityComparer.Default));
+                new Dictionary<ISymbol, DotNetElement>(_symbolsToElements, SymbolEqualityComparer.Default),
+                new Dictionary<string, DotNetProject>(_moduleMetadataNamesToProjects));
         }
 
         private async Task ProcessSolutionAsync(Solution solution)
@@ -94,6 +96,7 @@ public partial class DotNetContext
 
             var projectElement = new DotNetProject(project, compilation, project.FilePath!);
             _elements.Add(projectElement);
+            _moduleMetadataNamesToProjects.Add(compilation.SourceModule.MetadataName, projectElement);
 
             foreach (var member in compilation.SourceModule.GlobalNamespace.GetMembers())
             {

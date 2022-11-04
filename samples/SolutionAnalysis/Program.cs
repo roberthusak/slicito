@@ -13,7 +13,7 @@ var dependencyRelations = globalContext.ExtractDependencyRelations();
 
 var namespaceDependsOnRelation = Relation.Merge(dependencyRelations)
     .MoveUpHierarchy(globalContext.Hierarchy, (_, hierarchyPair) =>
-        hierarchyPair.Target is not DotNetNamespace)
+        hierarchyPair.Target is DotNetTypeMember or DotNetType)
     .MakeUnique()
     .Filter(pair =>
         pair.Source != pair.Target
@@ -21,7 +21,7 @@ var namespaceDependsOnRelation = Relation.Merge(dependencyRelations)
         && !globalContext.Hierarchy.GetAncestors(pair.Target).Contains(pair.Source));
 
 var compactedHierarchy = globalContext.Hierarchy
-    .Filter(pair => pair.Target is not DotNetType and not DotNetTypeMember)
+    .Filter(pair => pair.Target is not DotNetTypeMember)
     .CompactPaths(pair => pair.Target is DotNetNamespace);
 
 var schema = new Schema.Builder()
