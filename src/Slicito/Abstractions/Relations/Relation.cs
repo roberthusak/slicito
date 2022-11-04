@@ -135,7 +135,8 @@ public static class Relation
     public static IBinaryRelation<TElement, TElement, TData>
         CompactPaths<TElement, TData>(
             this IBinaryRelation<TElement, TElement, TData> relation,
-            Predicate<IEnumerable<IPair<TElement, TElement, TData>>>? filter = null,
+            Predicate<IPair<TElement, TElement, TData>>? pairFilter = null,
+            Predicate<IEnumerable<IPair<TElement, TElement, TData>>>? pathFilter = null,
             Func<IEnumerable<IPair<TElement, TElement, TData>>, TData>? dataProvider = null)
         where TElement : class, IElement
     {
@@ -147,6 +148,7 @@ public static class Relation
         {
             if (pair.Source == pair.Target)
             {
+                // Don't remove loops
                 builder.Add(pair);
                 continue;
             }
@@ -156,10 +158,7 @@ public static class Relation
                 continue;
             }
 
-            var canExtendFromSource = IsReducibleElement(pair.Source);
-            var canExtendFromTarget = IsReducibleElement(pair.Target);
-
-            if (!canExtendFromSource && !canExtendFromTarget)
+            if (!IsReducibleElement(pair.Source) && !IsReducibleElement(pair.Target))
             {
                 builder.Add(pair);
                 continue;
@@ -167,33 +166,13 @@ public static class Relation
 
             var path = new List<IPair<TElement, TElement, TData>> { pair };
 
-            for (var firstPair = pair; canExtendFromSource; canExtendFromSource = IsReducibleElement(firstPair.Source))
-            {
-                firstPair = relation.GetIncoming(firstPair.Source).Single();
-                if (firstPair.Source == path.Last().Target)
-                {
-                    // Don't compact loops
-                    break;
-                }
-
-                path.Insert(0, firstPair);
-            }
-
-            for (var lastPair = path.Last(); canExtendFromTarget; canExtendFromTarget = IsReducibleElement(lastPair.Target))
-            {
-                lastPair = relation.GetOutgoing(lastPair.Target).Single();
-                if (lastPair.Target == path.First().Source)
-                {
-                    // Don't compact loops
-                    break;
-                }
-
-                path.Add(lastPair);
-            }
+            ExtendPathStart(path);
+            ExtendPathEnd(path);
 
             processedCompactablePairs.UnionWith(path);
 
-            if (filter is not null && !filter(path))
+            if (path.Count == 1
+                || !(pathFilter?.Invoke(path) ?? true))
             {
                 builder.AddRange(path);
                 continue;
@@ -207,6 +186,57 @@ public static class Relation
         }
 
         return builder.Build();
+
+        void ExtendPathStart(List<IPair<TElement, TElement, TData>> path)
+        {
+            for (var pair = path.First(); IsReducibleElement(pair.Source); )
+            {
+                pair = relation.GetIncoming(pair.Source).Single();
+
+                if (pair.Source == path.Last().Target           // Don't compact cycles
+                    || !ProcessPathExtensionPair(path, pair))
+                {
+                    
+                    break;
+                }
+
+                path.Insert(0, pair);
+            }
+        }
+
+        void ExtendPathEnd(List<IPair<TElement, TElement, TData>> path)
+        {
+            for (var pair = path.Last(); IsReducibleElement(pair.Target);)
+            {
+                pair = relation.GetOutgoing(pair.Target).Single();
+
+                if (pair.Target == path.First().Source          // Don't compact cycles
+                    || !ProcessPathExtensionPair(path, pair))
+                {
+                    break;
+                }
+
+                path.Add(pair);
+            }
+        }
+
+        bool ProcessPathExtensionPair(List<IPair<TElement, TElement, TData>> path, IPair<TElement, TElement, TData> pair)
+        {
+            if (processedCompactablePairs.Contains(pair))
+            {
+                return false;
+            }
+
+            if (!(pairFilter?.Invoke(pair) ?? true))
+            {
+                // Ensure that the filter is called on each pair at most once
+                builder.Add(pair);
+                processedCompactablePairs.Add(pair);
+                return false;
+            }
+
+            return true;
+        }
 
         bool IsReducibleElement(TElement element) =>
             relation.GetIncoming(element).Count() == 1
