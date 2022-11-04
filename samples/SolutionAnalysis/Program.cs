@@ -23,15 +23,11 @@ var namespaceDependsOnRelation = Relation.Merge(dependencyRelations)
 var compactedHierarchy = globalContext.Hierarchy
     .Filter(pair => pair.Target is not DotNetType and not DotNetTypeMember)
     .CompactPaths(pair => pair.Target is DotNetNamespace);
-var filteredElements = globalContext.Elements
-    .Where(e => compactedHierarchy.Contains(e));
 
 var schema = new Schema.Builder()
     .AddLabelProvider(globalContext.LabelProvider)
     .AddUriProvider(globalContext.OpenInIdeUriProvider)
-    .AddNodes(
-        filteredElements,
-        compactedHierarchy)
+    .AddNodes(compactedHierarchy)
     .AddEdges(namespaceDependsOnRelation)
     .BuildSvg();
 

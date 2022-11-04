@@ -189,14 +189,14 @@ public static class Relation
 
         void ExtendPathStart(List<IPair<TElement, TElement, TData>> path)
         {
-            for (var pair = path.First(); IsReducibleElement(pair.Source); )
+            for (var pair = path.First(); IsReducibleElement(pair.Source);)
             {
                 pair = relation.GetIncoming(pair.Source).Single();
 
                 if (pair.Source == path.Last().Target           // Don't compact cycles
                     || !ProcessPathExtensionPair(path, pair))
                 {
-                    
+
                     break;
                 }
 
@@ -249,6 +249,16 @@ public static class Relation
     where TElement : class, IElement
     =>
         relation.Pairs.Any(pair => element == pair.Source || element == pair.Target);
+
+    public static ISet<TElement> GetElements<TElement, TData>(
+        this IBinaryRelation<TElement, TElement, TData> relation)
+    where TElement : class, IElement
+    {
+        var set = new HashSet<TElement>(relation.Sources);
+        set.UnionWith(relation.Targets);
+
+        return set;
+    }
 
     /// <remarks>
     /// Works only on hierarchies, i.e. relations where each element is a target of at most one pair.

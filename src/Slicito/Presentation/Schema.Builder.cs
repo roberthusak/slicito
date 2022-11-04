@@ -150,6 +150,14 @@ public partial class Schema
             return this;
         }
 
+        public Builder AddNodes<TElement, THierarchyData>(
+            IBinaryRelation<TElement, TElement, THierarchyData> hierarchy,
+            Action<TElement, Node>? nodeCustomizer = null)
+            where TElement: class, IElement
+        =>
+            AddNodes(hierarchy.GetElements(), hierarchy, nodeCustomizer);
+
+
         public Builder AddEdge<TSourceElement, TTargetElement, TData>(
             IPair<TSourceElement, TTargetElement, TData> pair,
             Action<IPair<TSourceElement, TTargetElement, TData>, Edge>? edgeCustomizer = null)
