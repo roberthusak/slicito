@@ -280,4 +280,20 @@ public static class Relation
             yield return current;
         }
     }
+
+    /// <remarks>
+    /// Works only on hierarchies, i.e. relations where each element is a target of at most one pair.
+    /// </remarks>
+    public static IEnumerable<TElement> GetAncestorsOrSelf<TElement, TData>(
+        this IBinaryRelation<TElement, TElement, TData> hierarchy,
+        TElement element)
+    where TElement : class, IElement
+    {
+        yield return element;
+
+        foreach (var ancestor in hierarchy.GetAncestors(element))
+        {
+            yield return ancestor;
+        }
+    }
 }
