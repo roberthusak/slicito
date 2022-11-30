@@ -57,20 +57,28 @@ public static partial class GraphExtensions
         return await ServerUtils.UploadFileAsync(filename, ms);
     }
 
-    public static MemoryStream RenderSvgToStream(this Graph graph, LayoutOrientation orientation)
+    public static MemoryStream RenderSvgToStream(this Graph graph, LayoutOrientation orientation, bool embedJs = true)
     {
         EnsureLayout(graph, orientation);
 
         var ms = new MemoryStream();
-        var svgWriter = new CustomSvgGraphWriter(ms, graph)
+
+        RenderSvgToStream(graph, ms, orientation, embedJs);
+
+        ms.Position = 0;
+        return ms;
+    }
+
+    public static void RenderSvgToStream(this Graph graph, Stream stream, LayoutOrientation orientation, bool embedJs = true)
+    {
+        EnsureLayout(graph, orientation);
+
+        var svgWriter = new CustomSvgGraphWriter(stream, graph)
         {
             NodeSanitizer = (n => HttpUtility.HtmlEncode(n))
         };
 
-        svgWriter.Write(Resources.SvgEmbeddedJavaScript);
-
-        ms.Position = 0;
-        return ms;
+        svgWriter.Write(embedJs ? Resources.SvgEmbeddedJavaScript : null);
     }
 
     private static void EnsureLayout(Graph graph, LayoutOrientation orientation)

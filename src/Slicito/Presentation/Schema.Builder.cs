@@ -223,5 +223,27 @@ public partial class Schema
 
             return new Schema(ms.ToArray(), ".svg");
         }
+
+        public Schema BuildHtml(LayoutOrientation orientation = LayoutOrientation.Vertical)
+        {
+            var ms = new MemoryStream();
+
+            using (var writer = new StreamWriter(ms))
+            {
+                writer.WriteLine("<!DOCTYPE html>");
+                writer.WriteLine("<html><body>");
+                writer.Flush();
+
+                _graph.RenderSvgToStream(ms, orientation, embedJs: false);
+
+                writer.WriteLine("<script type=\"text/javascript\">");
+                writer.Write(Resources.SvgEmbeddedJavaScript);
+                writer.WriteLine("</script>");
+
+                writer.WriteLine("</body></html>");
+            }
+
+            return new Schema(ms.ToArray(), ".html");
+        }
     }
 }
