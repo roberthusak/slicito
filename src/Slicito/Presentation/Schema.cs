@@ -9,9 +9,12 @@ public partial class Schema : IHtmlContent
 {
     private readonly byte[] _contents;
 
-    private Schema(byte[] contents)
+    private readonly string _fileExtension;
+
+    private Schema(byte[] contents, string fileExtension)
     {
         _contents = contents;
+        _fileExtension = fileExtension;
     }
 
     public Stream GetContents() => new MemoryStream(_contents);
@@ -22,6 +25,10 @@ public partial class Schema : IHtmlContent
         writer.Write(contentsString);
     }
 
-    public Task<string> UploadToServerAsync(string name = "schema") =>
-        ServerUtils.UploadFileAsync(name + ".svg", GetContents());
+    public async Task<SchemaReference> UploadToServerAsync(string name = "schema")
+    {
+        var uri = await ServerUtils.UploadFileAsync(name + _fileExtension, GetContents());
+
+        return new SchemaReference(uri);
+    }
 }

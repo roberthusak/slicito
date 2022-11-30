@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.CodeAnalysis;
+using Microsoft.Msagl.Drawing;
 
 namespace Slicito;
 
@@ -23,9 +25,9 @@ public static class ServerUtils
         return new(QueryHelpers.AddQueryString($"{BaseUri}/open", query));
     }
 
-    public static async Task<string> UploadFileAsync(string filename, Stream content)
+    public static async Task<Uri> UploadFileAsync(string filename, Stream content)
     {
-        var fileUri = $"{BaseUri}/files/{Uri.EscapeDataString(filename)}";
+        var fileUri = new Uri($"{BaseUri}/files/{Uri.EscapeDataString(filename)}");
 
         using var httpClient = new HttpClient();
 

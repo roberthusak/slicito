@@ -221,7 +221,7 @@ public partial class Schema
         {
             var ms = _graph.RenderSvgToStream(orientation);
 
-            return new Schema(ms.ToArray());
+            return new Schema(ms.ToArray(), ".svg");
         }
     }
 }

@@ -3,8 +3,6 @@ using Slicito.DotNet;
 using Slicito.DotNet.Elements;
 using Slicito.Presentation;
 
-using SolutionAnalysis;
-
 var globalContext = await new DotNetContext.Builder()
     .AddSolution(args[0])
     .BuildAsync();
@@ -31,5 +29,5 @@ var schema = new Schema.Builder()
     .AddEdges(namespaceDependsOnRelation)
     .BuildSvg();
 
-var uri = await schema.UploadToServerAsync();
-Utils.OpenUri(uri);
+var schemaReference = await schema.UploadToServerAsync();
+schemaReference.Open();
