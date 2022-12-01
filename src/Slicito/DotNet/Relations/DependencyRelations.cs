@@ -43,13 +43,13 @@ public partial class DependencyRelations : IEnumerable<IBinaryRelation<DotNetEle
 
     public IEnumerator<IBinaryRelation<DotNetElement, DotNetElement, SyntaxNode?>> GetEnumerator()
     {
-        yield return InheritsFrom.TransformData(_ => (SyntaxNode?) null);
-        yield return Overrides.TransformData(_ => (SyntaxNode?) null);
+        yield return InheritsFrom.SetData((SyntaxNode?) null);
+        yield return Overrides.SetData((SyntaxNode?) null);
         yield return Calls;
         yield return Stores;
         yield return Loads;
         yield return ReferencesType;
-        yield return IsOfType.TransformData(_ => (SyntaxNode?) null);
+        yield return IsOfType.SetData((SyntaxNode?) null);
     }
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

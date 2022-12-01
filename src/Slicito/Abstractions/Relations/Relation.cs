@@ -60,19 +60,45 @@ public static class Relation
     }
 
     public static IBinaryRelation<TSourceElement, TTargetElement, TDataTo>
+        Transform<TSourceElement, TTargetElement, TDataFrom, TDataTo>(
+            this IBinaryRelation<TSourceElement, TTargetElement, TDataFrom> relation,
+            Func<IPair<TSourceElement, TTargetElement, TDataFrom>, IPair<TSourceElement, TTargetElement, TDataTo>> transformer)
+        where TSourceElement : class, IElement
+        where TTargetElement : class, IElement
+    =>
+        new BinaryRelation<TSourceElement, TTargetElement, TDataTo>.Builder()
+        .AddRange(
+            relation.Pairs.Select(pair => transformer(pair)))
+        .Build();
+
+    public static IBinaryRelation<TSourceElement, TTargetElement, TDataTo>
         TransformData<TSourceElement, TTargetElement, TDataFrom, TDataTo>(
             this IBinaryRelation<TSourceElement, TTargetElement, TDataFrom> relation,
             Func<TDataFrom, TDataTo> dataTransformer)
         where TSourceElement : class, IElement
         where TTargetElement : class, IElement
-    {
-        return
-            new BinaryRelation<TSourceElement, TTargetElement, TDataTo>.Builder()
+    =>
+        relation.Transform(pair => Pair.Create(pair.Source, pair.Target, dataTransformer(pair.Data)));
+
+    public static IBinaryRelation<TSourceElement, TTargetElement, TDataTo>
+        SetData<TSourceElement, TTargetElement, TDataFrom, TDataTo>(
+            this IBinaryRelation<TSourceElement, TTargetElement, TDataFrom> relation,
+            TDataTo dataValue)
+        where TSourceElement : class, IElement
+        where TTargetElement : class, IElement
+    =>
+        relation.Transform(pair => Pair.Create(pair.Source, pair.Target, dataValue));
+
+    public static IBinaryRelation<TTargetElement, TSourceElement, TData>
+        Invert<TSourceElement, TTargetElement, TData>(
+            this IBinaryRelation<TSourceElement, TTargetElement, TData> relation)
+        where TSourceElement : class, IElement
+        where TTargetElement : class, IElement
+    =>
+        new BinaryRelation<TTargetElement, TSourceElement, TData>.Builder()
             .AddRange(
-                relation.Pairs.Select(pair =>
-                    Pair.Create(pair.Source, pair.Target, dataTransformer(pair.Data))))
+            relation.Pairs.Select(pair => Pair.Create(pair.Target, pair.Source, pair.Data)))
             .Build();
-    }
 
     public static IBinaryRelation<TElement, TElement, TData>
         MoveUpHierarchy<TElement, TData, THierarchyData>(
