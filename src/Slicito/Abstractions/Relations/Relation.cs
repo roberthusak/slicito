@@ -96,9 +96,9 @@ public static class Relation
         where TTargetElement : class, IElement
     =>
         new BinaryRelation<TTargetElement, TSourceElement, TData>.Builder()
-            .AddRange(
+        .AddRange(
             relation.Pairs.Select(pair => Pair.Create(pair.Target, pair.Source, pair.Data)))
-            .Build();
+        .Build();
 
     public static IBinaryRelation<TElement, TElement, TData>
         MoveUpHierarchy<TElement, TData, THierarchyData>(
@@ -322,4 +322,46 @@ public static class Relation
             yield return ancestor;
         }
     }
+
+    public static IBinaryRelation<TElement, TElement, TData> SliceForward<TElement, TData>(
+        this IBinaryRelation<TElement, TElement, TData> relation,
+        IEnumerable<TElement> sourceElements)
+    where TElement : class, IElement
+    {
+        var builder = new BinaryRelation<TElement, TElement, TData>.Builder();
+
+        var stack = new Stack<TElement>();
+        foreach (var element in sourceElements)
+        {
+            stack.Push(element);
+        }
+
+        var visited = new HashSet<TElement>();
+
+        while (stack.Count > 0)
+        {
+            var current = stack.Pop();
+
+            if (!visited.Add(current))
+            {
+                continue;
+            }
+
+            foreach (var pair in relation.GetOutgoing(current))
+            {
+                builder.Add(pair);
+                stack.Push(pair.Target);
+            }
+        }
+
+        return builder.Build();
+    }
+
+    public static IBinaryRelation<TElement, TElement, TData>
+        SliceForward<TElement, TData>(
+            this IBinaryRelation<TElement, TElement, TData> relation,
+            TElement sourceElement)
+        where TElement : class, IElement
+    =>
+        relation.SliceForward(new[] { sourceElement });
 }
