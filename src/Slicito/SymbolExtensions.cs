@@ -1,6 +1,8 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Slicito.Roslyn;
+
+using System.Collections.Immutable;
 using System.Web;
 
 namespace Slicito;
@@ -95,5 +97,25 @@ public static class SymbolExtensions
         var semanticModel = compilation.GetSemanticModel(syntaxReference.SyntaxTree);
 
         return InvocationWalker.FindInvocations(methodSymbol, declaration, semanticModel);
+    }
+
+    /// <remarks>
+    /// Copied from Roslyn:
+    /// https://github.com/dotnet/roslyn/blob/main/src/Workspaces/SharedUtilitiesAndExtensions/Compiler/Core/Extensions/ISymbolExtensions.cs
+    /// </remarks>
+    public static ImmutableArray<ISymbol> FindExplicitOrImplicitInterfaceImplementations(this ISymbol symbol)
+    {
+        if (symbol.Kind is not SymbolKind.Method and not SymbolKind.Property and not SymbolKind.Event)
+        {
+            return ImmutableArray<ISymbol>.Empty;
+        }
+
+        var containingType = symbol.ContainingType;
+        var query = from iface in containingType.AllInterfaces
+                    from interfaceMember in iface.GetMembers()
+                    let impl = containingType.FindImplementationForInterfaceMember(interfaceMember)
+                    where symbol.Equals(impl, SymbolEqualityComparer.Default)
+                    select interfaceMember;
+        return query.ToImmutableArray();
     }
 }

@@ -127,6 +127,14 @@ public partial class DotNetContext : IContext<DotNetElement, EmptyStruct>
             builder.Overrides.Add(methodElement, overridenMethodElement, default);
         }
 
+        foreach (var implementedInterfaceMethod in methodSymbol.FindExplicitOrImplicitInterfaceImplementations())
+        {
+            if (TryGetElementFromSymbol(implementedInterfaceMethod) is DotNetMethod implementedInterfaceMethodElement)
+            {
+                builder.Overrides.Add(methodElement, implementedInterfaceMethodElement, default);
+            }
+        }
+
         var projectElement = Hierarchy.GetAncestors(methodElement).OfType<DotNetProject>().First();
 
         var semanticModel = projectElement.Compilation.GetSemanticModel(syntaxReference.SyntaxTree);
