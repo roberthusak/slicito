@@ -99,6 +99,31 @@ public class DotNetField : DotNetStorageTypeMember
     public new IFieldSymbol Symbol => (IFieldSymbol) base.Symbol;
 }
 
+public abstract class DotNetVariable : DotNetSymbolElement
+{
+    internal DotNetVariable(ISymbol symbol, string id) : base(symbol, id)
+    {
+    }
+}
+
+public class DotNetParameter : DotNetVariable
+{
+    internal DotNetParameter(IParameterSymbol symbol, string id) : base(symbol, id)
+    {
+    }
+
+    public new IParameterSymbol Symbol => (IParameterSymbol) base.Symbol;
+}
+
+public class DotNetLocal : DotNetVariable
+{
+    internal DotNetLocal(ILocalSymbol symbol, string id) : base(symbol, id)
+    {
+    }
+
+    public new ILocalSymbol Symbol => (ILocalSymbol) base.Symbol;
+}
+
 public class DotNetOperation : DotNetElement
 {
     internal DotNetOperation(IOperation operation, string id) : base(id)

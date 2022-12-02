@@ -19,7 +19,7 @@ public static class SymbolExtensions
             SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers |
             SymbolDisplayMiscellaneousOptions.UseSpecialTypes);
 
-    private static readonly SymbolDisplayFormat _displayFormat =  new(
+    private static readonly SymbolDisplayFormat _defaultDisplayFormat =  new(
         typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameOnly,
         genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
         memberOptions: SymbolDisplayMemberOptions.IncludeParameters,
@@ -29,11 +29,22 @@ public static class SymbolExtensions
             SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers |
             SymbolDisplayMiscellaneousOptions.UseSpecialTypes);
 
+    private static readonly SymbolDisplayFormat _variableDisplayFormat = new(
+        parameterOptions: SymbolDisplayParameterOptions.IncludeType | SymbolDisplayParameterOptions.IncludeName,
+        localOptions: SymbolDisplayLocalOptions.IncludeType,
+        miscellaneousOptions:
+            SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers |
+            SymbolDisplayMiscellaneousOptions.UseSpecialTypes);
+
     public static string GetUniqueNameWithinProject(this ISymbol symbol) => symbol.ToDisplayString(_projectUniqueFormat);
 
     public static string GetShortName(this ISymbol symbol, ISymbol? containingNodeSymbol = null)
     {
-        var label = symbol.ToDisplayString(_displayFormat);
+        var label = symbol switch
+        {
+            IParameterSymbol or ILocalSymbol => symbol.ToDisplayString(_variableDisplayFormat),
+            _ => symbol.ToDisplayString(_defaultDisplayFormat)
+        };
 
         // If the node of this symbol is placed under a different node than then one of its containing symbol,
         // prepend its name with all the "missed" symbols up to the top namespace

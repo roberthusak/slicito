@@ -170,10 +170,14 @@ public partial class DotNetContext
 
         private void ProcessMethodContents(DotNetMethod methodElement)
         {
+            CreateParameterElements(methodElement.Symbol.Parameters);
+
             if (methodElement.ControlFlowGraph == null)
             {
                 return;
             }
+
+            ProcessRegionsRecursively(methodElement.ControlFlowGraph.Root);
 
             var operationBuilder = new OperationBuilder(this, methodElement);
 
@@ -185,6 +189,54 @@ public partial class DotNetContext
                 }
 
                 operationBuilder.Visit(block.BranchValue);
+            }
+
+            void ProcessRegionsRecursively(ControlFlowRegion region)
+            {
+                CreateLocalElements(region.Locals);
+
+                foreach (var nestedRegion in region.NestedRegions)
+                {
+                    ProcessRegionsRecursively(nestedRegion);
+                }
+            }
+
+            void CreateParameterElements(ImmutableArray<IParameterSymbol> parameterSymbols)
+            {
+                foreach (var parameterSymbol in parameterSymbols)
+                {
+                    if (string.IsNullOrEmpty(parameterSymbol.Name)
+                        || parameterSymbol.IsImplicitlyDeclared
+                        || !parameterSymbol.CanBeReferencedByName)
+                    {
+                        return;
+                    }
+
+                    var parameterElement = new DotNetParameter(parameterSymbol, $"{methodElement.Id}#{parameterSymbol.Name}");
+
+                    _elements.Add(parameterElement);
+                    _symbolsToElements.Add(parameterSymbol, parameterElement);
+                    _hierarchyBuilder.Add(methodElement, parameterElement, default);
+                }
+            }
+
+            void CreateLocalElements(ImmutableArray<ILocalSymbol> localSymbols)
+            {
+                foreach (var localSymbol in localSymbols)
+                {
+                    if (string.IsNullOrEmpty(localSymbol.Name)
+                        || localSymbol.IsImplicitlyDeclared
+                        || !localSymbol.CanBeReferencedByName)
+                    {
+                        return;
+                    }
+
+                    var localElement = new DotNetLocal(localSymbol, $"{methodElement.Id}#{localSymbol.Name}");
+
+                    _elements.Add(localElement);
+                    _symbolsToElements.Add(localSymbol, localElement);
+                    _hierarchyBuilder.Add(methodElement, localElement, default);
+                }
             }
         }
     }
