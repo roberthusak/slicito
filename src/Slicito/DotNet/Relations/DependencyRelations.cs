@@ -12,9 +12,9 @@ public partial class DependencyRelations : IEnumerable<IBinaryRelation<DotNetEle
     internal DependencyRelations(
         IBinaryRelation<DotNetType, DotNetType, EmptyStruct> inheritsFrom,
         IBinaryRelation<DotNetMethod, DotNetMethod, EmptyStruct> overrides,
-        IBinaryRelation<DotNetMethod, DotNetMethod, SyntaxNode> calls,
-        IBinaryRelation<DotNetMethod, DotNetStorageTypeMember, SyntaxNode> stores,
-        IBinaryRelation<DotNetMethod, DotNetStorageTypeMember, SyntaxNode> loads,
+        IBinaryRelation<DotNetOperation, DotNetMethod, SyntaxNode> calls,
+        IBinaryRelation<DotNetOperation, DotNetStorageTypeMember, SyntaxNode> stores,
+        IBinaryRelation<DotNetOperation, DotNetStorageTypeMember, SyntaxNode> loads,
         IBinaryRelation<DotNetElement, DotNetType, SyntaxNode> referencesType,
         IBinaryRelation<DotNetStorageTypeMember, DotNetType, EmptyStruct> isOfType)
     {
@@ -31,11 +31,11 @@ public partial class DependencyRelations : IEnumerable<IBinaryRelation<DotNetEle
 
     public IBinaryRelation<DotNetMethod, DotNetMethod, EmptyStruct> Overrides { get; }
 
-    public IBinaryRelation<DotNetMethod, DotNetMethod, SyntaxNode> Calls { get; }
+    public IBinaryRelation<DotNetOperation, DotNetMethod, SyntaxNode> Calls { get; }
 
-    public IBinaryRelation<DotNetMethod, DotNetStorageTypeMember, SyntaxNode> Stores { get; }
+    public IBinaryRelation<DotNetOperation, DotNetStorageTypeMember, SyntaxNode> Stores { get; }
 
-    public IBinaryRelation<DotNetMethod, DotNetStorageTypeMember, SyntaxNode> Loads { get; }
+    public IBinaryRelation<DotNetOperation, DotNetStorageTypeMember, SyntaxNode> Loads { get; }
 
     public IBinaryRelation<DotNetElement, DotNetType, SyntaxNode> ReferencesType { get; }
 

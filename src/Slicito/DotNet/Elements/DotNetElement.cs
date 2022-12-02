@@ -1,4 +1,5 @@
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.FlowAnalysis;
 
 using Slicito.Abstractions;
 
@@ -63,11 +64,14 @@ public abstract class DotNetTypeMember : DotNetSymbolElement
 
 public class DotNetMethod : DotNetTypeMember
 {
-    internal DotNetMethod(IMethodSymbol symbol, string id) : base(symbol, id)
+    internal DotNetMethod(IMethodSymbol symbol, ControlFlowGraph? controlFlowGraph, string id) : base(symbol, id)
     {
+        ControlFlowGraph = controlFlowGraph;
     }
 
     public new IMethodSymbol Symbol => (IMethodSymbol) base.Symbol;
+
+    public ControlFlowGraph? ControlFlowGraph { get; }
 }
 
 public abstract class DotNetStorageTypeMember : DotNetTypeMember
@@ -93,4 +97,14 @@ public class DotNetField : DotNetStorageTypeMember
     }
 
     public new IFieldSymbol Symbol => (IFieldSymbol) base.Symbol;
+}
+
+public class DotNetOperation : DotNetElement
+{
+    internal DotNetOperation(IOperation operation, string id) : base(id)
+    {
+        Operation = operation;
+    }
+
+    public IOperation Operation { get; }
 }

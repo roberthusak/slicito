@@ -13,15 +13,13 @@ public partial class DotNetContext
 
     private class OpenInIdeUriProviderImplementation : IUriProvider
     {
-        public Uri? TryGetUriForElement(IElement element)
-        {
-            if (element is not DotNetSymbolElement symbolElement)
+        public Uri? TryGetUriForElement(IElement element) =>
+            element switch
             {
-                return null;
-            }
-
-            return symbolElement.Symbol.GetFileOpenUri();
-        }
+                DotNetSymbolElement { Symbol: var symbol } => symbol.GetFileOpenUri(),
+                DotNetOperation { Operation: var operation } => operation.GetFileOpenUri(),
+                _ => null
+            };
 
         public Uri? TryGetUriForPair(object pair)
         {

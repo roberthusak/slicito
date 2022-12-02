@@ -155,6 +155,18 @@ public partial class DotNetContext : IContext<DotNetElement, EmptyStruct>
             }
         }
 
+        var operationVisitor = new OperationDependencyRelationsVisitor(this, builder);
+
+        var operationsQuery =
+            (from pair in Hierarchy.GetOutgoing(methodElement)
+             select pair.Target)
+            .OfType<DotNetOperation>();
+
+        foreach (var operationElement in operationsQuery)
+        {
+            operationVisitor.Visit(operationElement.Operation, operationElement);
+        }
+
         var methodWalker = new MethodDependencyRelationsWalker(this, builder, methodElement, semanticModel);
         methodWalker.Visit(declaration);
     }

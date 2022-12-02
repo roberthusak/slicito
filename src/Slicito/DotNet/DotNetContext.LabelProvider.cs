@@ -19,6 +19,8 @@ public partial class DotNetContext
                     Path.GetFileName(projectElement.Project.FilePath),
                 DotNetSymbolElement { Symbol: var symbol } =>
                     symbol.GetShortName(TryGetContainingElementSymbol(containingElement)),
+                DotNetOperation { Operation: var operation } =>
+                    operation.Kind.ToString(),
                 _ =>
                     null
             };

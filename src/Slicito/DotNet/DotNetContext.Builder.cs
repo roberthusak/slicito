@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.FlowAnalysis;
 
 using Slicito.Abstractions.Relations;
 using Slicito.DotNet.Elements;
@@ -9,7 +10,7 @@ namespace Slicito.DotNet;
 
 public partial class DotNetContext
 {
-    public class Builder
+    public partial class Builder
     {
         private readonly List<DotNetElement> _elements = new();
         private readonly BinaryRelation<DotNetElement, DotNetElement, EmptyStruct>.Builder _hierarchyBuilder = new();
@@ -119,7 +120,7 @@ public partial class DotNetContext
             {
                 INamespaceSymbol namespaceSymbol => new DotNetNamespace(namespaceSymbol, id),
                 ITypeSymbol typeSymbol => new DotNetType(typeSymbol, id),
-                IMethodSymbol methodSymbol => new DotNetMethod(methodSymbol, id),
+                IMethodSymbol methodSymbol => new DotNetMethod(methodSymbol, CreateControlFlowGraph(methodSymbol), id),
                 IPropertySymbol propertySymbol => new DotNetProperty(propertySymbol, id),
                 IFieldSymbol fieldSymbol => new DotNetField(fieldSymbol, id),
                 _ => null
@@ -134,14 +135,56 @@ public partial class DotNetContext
             _symbolsToElements.Add(symbol, element);
             _hierarchyBuilder.Add(parent, element, default);
 
-            if (symbol is not INamespaceOrTypeSymbol symbolWithMembers)
+            if (symbol is INamespaceOrTypeSymbol symbolWithMembers)
+            {
+                foreach (var member in symbolWithMembers.GetMembers())
+                {
+                    ProcessSymbolsRecursively(element, member, projectElement);
+                }
+            }
+            else if (element is DotNetMethod methodElement)
+            {
+                ProcessMethodContents(methodElement);
+            }
+
+            ControlFlowGraph? CreateControlFlowGraph(IMethodSymbol methodSymbol)
+            {
+                var location = methodSymbol.Locations.FirstOrDefault();
+                if (location is null || !location.IsInSource)
+                {
+                    return null;
+                }
+
+                var syntaxTree = location.SourceTree;
+                var syntaxNode = syntaxTree?.GetRoot().FindNode(location.SourceSpan);
+                if (syntaxTree is null || syntaxNode is null)
+                {
+                    return null;
+                }
+
+                var semanticModel = projectElement.Compilation.GetSemanticModel(syntaxTree);
+
+                return ControlFlowGraph.Create(syntaxNode, semanticModel);
+            }
+        }
+
+        private void ProcessMethodContents(DotNetMethod methodElement)
+        {
+            if (methodElement.ControlFlowGraph == null)
             {
                 return;
             }
 
-            foreach (var member in symbolWithMembers.GetMembers())
+            var operationBuilder = new OperationBuilder(this, methodElement);
+
+            foreach (var block in methodElement.ControlFlowGraph.Blocks)
             {
-                ProcessSymbolsRecursively(element, member, projectElement);
+                foreach (var operation in block.Operations)
+                {
+                    operationBuilder.Visit(operation);
+                }
+
+                operationBuilder.Visit(block.BranchValue);
             }
         }
     }

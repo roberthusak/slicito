@@ -33,25 +33,6 @@ internal class MethodDependencyRelationsWalker : CSharpSyntaxWalker
         var symbol = _semanticModel.GetSymbolInfo(node).Symbol;
 
         HandleTypeReference(node, symbol);
-        HandleStorageMemberAccess(node, symbol);
-    }
-
-    public override void VisitMemberAccessExpression(MemberAccessExpressionSyntax node)
-    {
-        base.VisitMemberAccessExpression(node);
-
-        var symbol = _semanticModel.GetSymbolInfo(node).Symbol;
-
-        HandleStorageMemberAccess(node, symbol);
-    }
-
-    public override void VisitInvocationExpression(InvocationExpressionSyntax node)
-    {
-        base.VisitInvocationExpression(node);
-
-        var symbol = _semanticModel.GetSymbolInfo(node).Symbol;
-
-        HandleInvocation(node, symbol);
     }
 
     private void HandleTypeReference(SyntaxNode node, ISymbol? symbol)
@@ -63,35 +44,5 @@ internal class MethodDependencyRelationsWalker : CSharpSyntaxWalker
         }
 
         _builder.ReferencesType.Add(_methodElement, typeElement, node);
-    }
-
-    private void HandleStorageMemberAccess(SyntaxNode node, ISymbol? symbol)
-    {
-        if (symbol is not IFieldSymbol and not IPropertySymbol
-            || _context.TryGetElementFromSymbol(symbol) is not DotNetStorageTypeMember storageElement)
-        {
-            return;
-        }
-
-        if (node.Parent is AssignmentExpressionSyntax assignment && assignment.Left == node)
-        {
-            _builder.Stores.Add(_methodElement, storageElement, node);
-        }
-        else
-        {
-            _builder.Loads.Add(_methodElement, storageElement, node);
-        }
-    }
-
-    private void HandleInvocation(InvocationExpressionSyntax node, ISymbol? symbol)
-    {
-
-        if (symbol is not IMethodSymbol calleeSymbol
-            || _context.TryGetElementFromSymbol(calleeSymbol) is not DotNetMethod calleeElement)
-        {
-            return;
-        }
-
-        _builder.Calls.Add(_methodElement, calleeElement, node);
     }
 }
