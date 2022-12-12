@@ -41,6 +41,27 @@ public partial class DotNetContext
                 AddOperationElement(operation);
             }
 
+            public override void VisitSimpleAssignment(ISimpleAssignmentOperation operation)
+            {
+                base.VisitSimpleAssignment(operation);
+
+                AddOperationElement(operation);
+            }
+
+            public override void VisitParameterReference(IParameterReferenceOperation operation)
+            {
+                base.VisitParameterReference(operation);
+
+                AddOperationElement(operation);
+            }
+
+            public override void VisitLocalReference(ILocalReferenceOperation operation)
+            {
+                base.VisitLocalReference(operation);
+
+                AddOperationElement(operation);
+            }
+
             private void AddOperationElement(IOperation operation)
             {
                 var id = $"{_methodElement.Id}#{operation.Syntax.SpanStart}-{operation.Syntax.Span.End}";
@@ -48,6 +69,7 @@ public partial class DotNetContext
                 var element = new DotNetOperation(operation, id);
 
                 _builder._elements.Add(element);
+                _builder._operationsToElements.Add(operation, element);
                 _builder._hierarchyBuilder.Add(_methodElement, element, default);
             }
         }

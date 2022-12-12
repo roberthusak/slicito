@@ -15,7 +15,10 @@ namespace Slicito.DotNet;
 public partial class DotNetContext : IContext<DotNetElement, EmptyStruct>
 {
     private readonly Dictionary<ISymbol, DotNetElement> _symbolsToElements;
+    private readonly Dictionary<IOperation, DotNetOperation> _operationsToElements;
     private readonly Dictionary<string, DotNetProject> _moduleMetadataNamesToProjects;
+
+    private DependencyRelations? _cachedDependencyRelations;
 
     public IEnumerable<DotNetElement> Elements { get; }
 
@@ -25,11 +28,13 @@ public partial class DotNetContext : IContext<DotNetElement, EmptyStruct>
         ImmutableArray<DotNetElement> elements,
         BinaryRelation<DotNetElement, DotNetElement, EmptyStruct> hierarchy,
         Dictionary<ISymbol, DotNetElement> symbolsToElements,
+        Dictionary<IOperation, DotNetOperation> operationsToElements,
         Dictionary<string, DotNetProject> moduleMetadataNamesToProjects)
     {
         Elements = elements;
         Hierarchy = hierarchy;
         _symbolsToElements = symbolsToElements;
+        _operationsToElements = operationsToElements;
         _moduleMetadataNamesToProjects = moduleMetadataNamesToProjects;
     }
 
@@ -60,34 +65,73 @@ public partial class DotNetContext : IContext<DotNetElement, EmptyStruct>
         return element;
     }
 
+    public DotNetOperation? TryGetElementFromOperation(IOperation operation) =>
+        _operationsToElements.GetValueOrDefault(operation);
+
     public DependencyRelations ExtractDependencyRelations(Predicate<DotNetElement>? filter = null)
     {
-        var builder = new DependencyRelations.Builder();
+        if (filter == null)
+        {
+            _cachedDependencyRelations ??= Compute();
+
+            return _cachedDependencyRelations;
+        }
+        else
+        {
+            return Compute(); 
+        }
+
+        DependencyRelations Compute()
+        {
+            var builder = new DependencyRelations.Builder();
+
+            foreach (var element in Elements)
+            {
+                if (filter is not null && !filter(element))
+                {
+                    continue;
+                }
+
+                switch (element)
+                {
+                    case DotNetType typeElement:
+                        ExtractTypeDependencies(typeElement, builder);
+                        break;
+
+                    case DotNetMethod methodElement:
+                        ExtractMethodDependencies(methodElement, builder);
+                        break;
+
+                    case DotNetStorageTypeMember storageElement:
+                        ExtractStorageMemberDependencies(storageElement, builder);
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+
+            return builder.Build();
+        }
+    }
+
+    public FlowRelations ExtractFlowRelations(Predicate<DotNetElement>? filter = null)
+    {
+        var dependencyRelations = ExtractDependencyRelations(filter);
+
+        var builder = new FlowRelations.Builder(dependencyRelations);
+
+        var operationVisitor = new OperationFlowRelationsVisitor(this, builder);
 
         foreach (var element in Elements)
         {
-            if (filter is not null && !filter(element))
+            if ((filter is not null && !filter(element))
+                || element is not DotNetOperation operationElement)
             {
                 continue;
             }
 
-            switch (element)
-            {
-                case DotNetType typeElement:
-                    ExtractTypeDependencies(typeElement, builder);
-                    break;
-
-                case DotNetMethod methodElement:
-                    ExtractMethodDependencies(methodElement, builder);
-                    break;
-
-                case DotNetStorageTypeMember storageElement:
-                    ExtractStorageMemberDependencies(storageElement, builder);
-                    break;
-
-                default:
-                    break;
-            }
+            operationVisitor.Visit(operationElement.Operation, operationElement);
         }
 
         return builder.Build();

@@ -16,6 +16,7 @@ public partial class DotNetContext
         private readonly BinaryRelation<DotNetElement, DotNetElement, EmptyStruct>.Builder _hierarchyBuilder = new();
 
         private readonly Dictionary<ISymbol, DotNetElement> _symbolsToElements = new(SymbolEqualityComparer.Default);
+        private readonly Dictionary<IOperation, DotNetOperation> _operationsToElements = new();
         private readonly Dictionary<string, DotNetProject> _moduleMetadataNamesToProjects = new();
 
         private readonly List<string> _pathsToAdd = new();
@@ -75,6 +76,7 @@ public partial class DotNetContext
                 _elements.ToImmutableArray(),
                 _hierarchyBuilder.Build(),
                 new Dictionary<ISymbol, DotNetElement>(_symbolsToElements, SymbolEqualityComparer.Default),
+                new Dictionary<IOperation, DotNetOperation>(_operationsToElements),
                 new Dictionary<string, DotNetProject>(_moduleMetadataNamesToProjects));
         }
 
