@@ -46,13 +46,15 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
 
     private void HandleInvocation(IInvocationOperation operation, DotNetOperation operationElement)
     {
-        var baseCallTargetsQuery = _builder.DependencyRelations.Calls
-                    .GetOutgoing(operationElement)
-                    .Select(m => m.Target);
+        var baseCallTargets = _builder.DependencyRelations.Calls
+            .GetOutgoing(operationElement)
+            .Select(m => m.Target)
+            .ToArray();
 
-        var potentialCallTargets = _isOverridenByRelation
-            .SliceForward(baseCallTargetsQuery)
-            .GetElements()
+        var potentialCallTargets = baseCallTargets
+            .Concat(_isOverridenByRelation
+                .SliceForward(baseCallTargets)
+                .GetElements())
             .Where(e => !e.Symbol.IsAbstract)
             .ToHashSet();
 
