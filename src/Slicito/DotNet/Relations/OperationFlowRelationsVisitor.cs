@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Operations;
 using Slicito.Abstractions.Relations;
@@ -75,6 +77,15 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
         return default;
     }
 
+    public override EmptyStruct VisitObjectCreation(IObjectCreationOperation operation, DotNetOperation operationElement)
+    {
+        base.VisitObjectCreation(operation, operationElement);
+
+        HandleObjectCreation(operation, operationElement);
+
+        return default;
+    }
+
     public override EmptyStruct VisitSimpleAssignment(ISimpleAssignmentOperation operation, DotNetOperation operationElement)
     {
         base.VisitSimpleAssignment(operation, operationElement);
@@ -116,7 +127,38 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
             }
         }
 
-        foreach (var argument in operation.Arguments)
+        HandleArgumentList(operationElement, potentialCallTargets, operation.Arguments);
+    }
+
+    private void HandleMemberReference(IMemberReferenceOperation operation, DotNetOperation operationElement)
+    {
+        if (operation.Instance is not null
+            && _context.TryGetElementFromOperation(operation.Instance) is DotNetOperation instanceElement)
+        {
+            HandleRead(instanceElement, operationElement, isCopy: false);
+        }
+    }
+
+    private void HandleObjectCreation(IObjectCreationOperation operation, DotNetOperation operationElement)
+    {
+        if (operation.Constructor is null
+            || _context.TryGetElementFromSymbol(operation.Constructor) is not DotNetMethod constructorElement)
+        {
+            return;
+        }
+
+        HandleArgumentList(operationElement, new[] { constructorElement }, operation.Arguments);
+    }
+
+    private void HandleAssignment(IAssignmentOperation operation, DotNetOperation operationElement)
+    {
+        HandleRead(operation.Value, operationElement, isCopy: true);
+        HandleWrite(operation.Target, operationElement, isCopy: true);
+    }
+
+    private void HandleArgumentList(DotNetOperation operationElement, IEnumerable<DotNetMethod> potentialCallTargets, ImmutableArray<IArgumentOperation> arguments)
+    {
+        foreach (var argument in arguments)
         {
             var value = argument.Value;
 
@@ -149,21 +191,6 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
                 _builder.IsPassedAs.Add(argumentElement, parameterElement, argument.Syntax);
             }
         }
-    }
-
-    private void HandleMemberReference(IMemberReferenceOperation operation, DotNetOperation operationElement)
-    {
-        if (operation.Instance is not null
-            && _context.TryGetElementFromOperation(operation.Instance) is DotNetOperation instanceElement)
-        {
-            HandleRead(instanceElement, operationElement, isCopy: false);
-        }
-    }
-
-    private void HandleAssignment(IAssignmentOperation operation, DotNetOperation operationElement)
-    {
-        HandleRead(operation.Value, operationElement, isCopy: true);
-        HandleWrite(operation.Target, operationElement, isCopy: true);
     }
 
     private void HandleRead(IOperation? value, DotNetOperation operationElement, bool isCopy)
