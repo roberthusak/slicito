@@ -56,6 +56,25 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
         return default;
     }
 
+    public override EmptyStruct VisitUnaryOperator(IUnaryOperation operation, DotNetOperation operationElement)
+    {
+        base.VisitUnaryOperator(operation, operationElement);
+
+        HandleRead(operation.Operand, operationElement, isCopy: false);
+
+        return default;
+    }
+
+    public override EmptyStruct VisitBinaryOperator(IBinaryOperation operation, DotNetOperation operationElement)
+    {
+        base.VisitBinaryOperator(operation, operationElement);
+
+        HandleRead(operation.LeftOperand, operationElement, isCopy: false);
+        HandleRead(operation.RightOperand, operationElement, isCopy: false);
+
+        return default;
+    }
+
     public override EmptyStruct VisitSimpleAssignment(ISimpleAssignmentOperation operation, DotNetOperation operationElement)
     {
         base.VisitSimpleAssignment(operation, operationElement);
