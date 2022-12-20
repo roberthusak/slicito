@@ -27,6 +27,20 @@ public partial class DotNetContext
                 AddOperationElement(operation);
             }
 
+            public override void VisitLocalReference(ILocalReferenceOperation operation)
+            {
+                base.VisitLocalReference(operation);
+
+                AddOperationElement(operation);
+            }
+
+            public override void VisitParameterReference(IParameterReferenceOperation operation)
+            {
+                base.VisitParameterReference(operation);
+
+                AddOperationElement(operation);
+            }
+
             public override void VisitFieldReference(IFieldReferenceOperation operation)
             {
                 base.VisitFieldReference(operation);
@@ -44,20 +58,6 @@ public partial class DotNetContext
             public override void VisitSimpleAssignment(ISimpleAssignmentOperation operation)
             {
                 base.VisitSimpleAssignment(operation);
-
-                AddOperationElement(operation);
-            }
-
-            public override void VisitParameterReference(IParameterReferenceOperation operation)
-            {
-                base.VisitParameterReference(operation);
-
-                AddOperationElement(operation);
-            }
-
-            public override void VisitLocalReference(ILocalReferenceOperation operation)
-            {
-                base.VisitLocalReference(operation);
 
                 AddOperationElement(operation);
             }

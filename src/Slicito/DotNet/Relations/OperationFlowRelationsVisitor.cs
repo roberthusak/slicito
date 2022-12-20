@@ -20,20 +20,20 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
         _isOverridenByRelation = builder.DependencyRelations.Overrides.Invert();
     }
 
-    public override EmptyStruct VisitSimpleAssignment(ISimpleAssignmentOperation operation, DotNetOperation operationElement)
-    {
-        base.VisitSimpleAssignment(operation, operationElement);
-
-        HandleAssignment(operation, operationElement);
-
-        return default;
-    }
-
     public override EmptyStruct VisitInvocation(IInvocationOperation operation, DotNetOperation operationElement)
     {
         base.VisitInvocation(operation, operationElement);
 
         HandleInvocation(operation, operationElement);
+
+        return default;
+    }
+
+    public override EmptyStruct VisitSimpleAssignment(ISimpleAssignmentOperation operation, DotNetOperation operationElement)
+    {
+        base.VisitSimpleAssignment(operation, operationElement);
+
+        HandleAssignment(operation, operationElement);
 
         return default;
     }
