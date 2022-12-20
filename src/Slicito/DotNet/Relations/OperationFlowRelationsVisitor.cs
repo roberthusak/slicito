@@ -101,12 +101,14 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
         {
             var value = argument.Value;
 
-            if (_context.TryGetElementFromOperation(value) is not DotNetOperation valueElement)
+            if (_context.TryGetElementFromOperation(argument) is not DotNetOperation argumentElement
+                || _context.TryGetElementFromOperation(value) is not DotNetOperation valueElement)
             {
                 continue;
             }
 
-            HandleRead(valueElement, operationElement, isCopy: false);
+            HandleRead(valueElement, argumentElement, isCopy: true);
+            _builder.ResultIsReadBy.Add(argumentElement, operationElement, argument.Syntax);
 
             var parameterName = argument.Parameter?.Name;
             if (string.IsNullOrEmpty(parameterName))
@@ -125,7 +127,7 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
                     continue;
                 }
 
-                _builder.IsPassedAs.Add(valueElement, parameterElement, value.Syntax);
+                _builder.IsPassedAs.Add(argumentElement, parameterElement, argument.Syntax);
             }
         }
     }
