@@ -47,4 +47,13 @@ public partial class FlowRelations : IEnumerable<IBinaryRelation<DotNetElement, 
     }
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+    public IEnumerable<IBinaryRelation<DotNetElement, DotNetElement, SyntaxNode>> GetDataFlow()
+    {
+        yield return VariableIsReadBy;
+        yield return WritesToVariable;
+        yield return IsPassedAs;
+        yield return Stores;
+        yield return IsLoadedTo;
+    }
 }
