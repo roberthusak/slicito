@@ -64,7 +64,7 @@ public partial class DotNetContext
 
             private void AddOperationElement(IOperation operation)
             {
-                var id = $"{_methodElement.Id}#{operation.Syntax.SpanStart}-{operation.Syntax.Span.End}";
+                var id = $"{_methodElement.Id}#{operation.Kind}:{operation.Syntax.SpanStart}-{operation.Syntax.Span.End}";
 
                 var element = new DotNetOperation(operation, id);
 
