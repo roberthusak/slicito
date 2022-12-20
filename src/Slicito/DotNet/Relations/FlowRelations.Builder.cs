@@ -20,6 +20,8 @@ public partial class FlowRelations
 
         public BinaryRelation<DotNetOperation, DotNetVariable, SyntaxNode>.Builder WritesToVariable { get; } = new();
 
+        public BinaryRelation<DotNetOperation, DotNetOperation, SyntaxNode>.Builder ResultIsCopiedTo { get; } = new();
+
         public BinaryRelation<DotNetOperation, DotNetOperation, SyntaxNode>.Builder ResultIsReadBy { get; } = new();
 
         public BinaryRelation<DotNetOperation, DotNetParameter, SyntaxNode>.Builder IsPassedAs { get; } = new();
@@ -28,6 +30,7 @@ public partial class FlowRelations
             new(
                 VariableIsReadBy.Build(),
                 WritesToVariable.Build(),
+                ResultIsCopiedTo.Build(),
                 ResultIsReadBy.Build(),
                 IsPassedAs.Build(),
                 DependencyRelations.Stores,

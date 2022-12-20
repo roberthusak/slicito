@@ -24,7 +24,7 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
     {
         base.VisitConversion(operation, operationElement);
 
-        HandleRead(operation.Operand, operationElement);
+        HandleRead(operation.Operand, operationElement, isCopy: true);
 
         return default;
     }
@@ -82,7 +82,7 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
         if (operation.Instance is not null
             && _context.TryGetElementFromOperation(operation.Instance) is DotNetOperation instanceElement)
         {
-            HandleRead(instanceElement, operationElement);
+            HandleRead(instanceElement, operationElement, isCopy: false);
 
             foreach (var targetMethodElement in potentialCallTargets)
             {
@@ -106,7 +106,7 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
                 continue;
             }
 
-            HandleRead(valueElement, operationElement);
+            HandleRead(valueElement, operationElement, isCopy: false);
 
             var parameterName = argument.Parameter?.Name;
             if (string.IsNullOrEmpty(parameterName))
@@ -135,34 +135,36 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
         if (operation.Instance is not null
             && _context.TryGetElementFromOperation(operation.Instance) is DotNetOperation instanceElement)
         {
-            HandleRead(instanceElement, operationElement);
+            HandleRead(instanceElement, operationElement, isCopy: false);
         }
     }
 
     private void HandleAssignment(IAssignmentOperation operation, DotNetOperation operationElement)
     {
-        HandleRead(operation.Value, operationElement);
-        HandleWrite(operation.Target, operationElement);
+        HandleRead(operation.Value, operationElement, isCopy: true);
+        HandleWrite(operation.Target, operationElement, isCopy: true);
     }
 
-    private void HandleRead(IOperation? value, DotNetOperation operationElement)
+    private void HandleRead(IOperation? value, DotNetOperation operationElement, bool isCopy)
     {
         if (value is null)
         {
             return;
         }
 
-        HandleRead(_context.TryGetElementFromOperation(value), operationElement);
+        HandleRead(_context.TryGetElementFromOperation(value), operationElement, isCopy);
     }
 
-    private void HandleRead(DotNetOperation? valueElement, DotNetOperation operationElement)
+    private void HandleRead(DotNetOperation? valueElement, DotNetOperation operationElement, bool isCopy)
     {
         if (valueElement is null)
         {
             return;
         }
 
-        _builder.ResultIsReadBy.Add(valueElement, operationElement, valueElement.Operation.Syntax);
+        var relation = isCopy ? _builder.ResultIsCopiedTo : _builder.ResultIsReadBy;
+
+        relation.Add(valueElement, operationElement, valueElement.Operation.Syntax);
 
         var variableElement = TryGetVariableElementFromReference(valueElement.Operation);
         if (variableElement is not null)
@@ -171,24 +173,26 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
         }
     }
 
-    private void HandleWrite(IOperation? target, DotNetOperation operationElement)
+    private void HandleWrite(IOperation? target, DotNetOperation operationElement, bool isCopy)
     {
         if (target is null)
         {
             return;
         }
 
-        HandleWrite(_context.TryGetElementFromOperation(target), operationElement);
+        HandleWrite(_context.TryGetElementFromOperation(target), operationElement, isCopy);
     }
 
-    private void HandleWrite(DotNetOperation? targetElement, DotNetOperation operationElement)
+    private void HandleWrite(DotNetOperation? targetElement, DotNetOperation operationElement, bool isCopy)
     {
         if (targetElement is null)
         {
             return;
         }
 
-        _builder.ResultIsReadBy.Add(operationElement, targetElement, targetElement.Operation.Syntax);
+        var relation = isCopy ? _builder.ResultIsCopiedTo : _builder.ResultIsReadBy;
+
+        relation.Add(operationElement, targetElement, targetElement.Operation.Syntax);
 
         var variableElement = TryGetVariableElementFromReference(targetElement.Operation);
         if (variableElement is not null)

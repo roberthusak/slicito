@@ -11,6 +11,7 @@ public partial class FlowRelations : IEnumerable<IBinaryRelation<DotNetElement, 
     private FlowRelations(
         BinaryRelation<DotNetVariable, DotNetOperation, SyntaxNode> variableIsReadBy,
         BinaryRelation<DotNetOperation, DotNetVariable, SyntaxNode> writesToVariable,
+        BinaryRelation<DotNetOperation, DotNetOperation, SyntaxNode> resultIsCopiedTo,
         BinaryRelation<DotNetOperation, DotNetOperation, SyntaxNode> resultIsReadBy,
         BinaryRelation<DotNetOperation, DotNetParameter, SyntaxNode> isPassedAs,
         IBinaryRelation<DotNetOperation, DotNetStorageTypeMember, SyntaxNode> stores,
@@ -18,6 +19,7 @@ public partial class FlowRelations : IEnumerable<IBinaryRelation<DotNetElement, 
     {
         VariableIsReadBy = variableIsReadBy;
         WritesToVariable = writesToVariable;
+        ResultIsCopiedTo = resultIsCopiedTo;
         ResultIsReadBy = resultIsReadBy;
         IsPassedAs = isPassedAs;
         Stores = stores;
@@ -27,6 +29,8 @@ public partial class FlowRelations : IEnumerable<IBinaryRelation<DotNetElement, 
     public BinaryRelation<DotNetVariable, DotNetOperation, SyntaxNode> VariableIsReadBy { get; }
 
     public BinaryRelation<DotNetOperation, DotNetVariable, SyntaxNode> WritesToVariable { get; }
+
+    public BinaryRelation<DotNetOperation, DotNetOperation, SyntaxNode> ResultIsCopiedTo { get; }
 
     public BinaryRelation<DotNetOperation, DotNetOperation, SyntaxNode> ResultIsReadBy { get; }
 
@@ -40,6 +44,7 @@ public partial class FlowRelations : IEnumerable<IBinaryRelation<DotNetElement, 
     {
         yield return VariableIsReadBy;
         yield return WritesToVariable;
+        yield return ResultIsCopiedTo;
         yield return ResultIsReadBy;
         yield return IsPassedAs;
         yield return Stores;
@@ -52,6 +57,7 @@ public partial class FlowRelations : IEnumerable<IBinaryRelation<DotNetElement, 
     {
         yield return VariableIsReadBy;
         yield return WritesToVariable;
+        yield return ResultIsCopiedTo;
         yield return IsPassedAs;
         yield return Stores;
         yield return IsLoadedTo;
