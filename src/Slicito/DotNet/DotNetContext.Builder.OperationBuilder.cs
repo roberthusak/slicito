@@ -14,6 +14,8 @@ public partial class DotNetContext
             private readonly Builder _builder;
             private readonly DotNetMethod _methodElement;
 
+            private int _operationIndex = 0;
+
             public OperationBuilder(Builder builder, DotNetMethod methodElement)
             {
                 _builder = builder;
@@ -64,7 +66,8 @@ public partial class DotNetContext
 
             private void AddOperationElement(IOperation operation)
             {
-                var id = $"{_methodElement.Id}#{operation.Kind}:{operation.Syntax.SpanStart}-{operation.Syntax.Span.End}";
+                var id = $"{_methodElement.Id}#{operation.Kind}:{_operationIndex}";
+                _operationIndex++;
 
                 var element = new DotNetOperation(operation, id);
 

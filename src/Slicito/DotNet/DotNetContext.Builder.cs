@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Diagnostics;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FlowAnalysis;
@@ -71,6 +72,8 @@ public partial class DotNetContext
                         throw new Exception($"Unknown path '{path}'");
                 }
             }
+
+            AssertElementIdUniqueness();
 
             return new DotNetContext(
                 _elements.ToImmutableArray(),
@@ -172,6 +175,8 @@ public partial class DotNetContext
 
         private void ProcessMethodContents(DotNetMethod methodElement)
         {
+            var variableIndex = 0;
+
             CreateParameterElements(methodElement.Symbol.Parameters);
 
             if (methodElement.ControlFlowGraph == null)
@@ -214,7 +219,8 @@ public partial class DotNetContext
                         return;
                     }
 
-                    var parameterElement = new DotNetParameter(parameterSymbol, $"{methodElement.Id}#{parameterSymbol.Name}");
+                    var parameterElement = new DotNetParameter(parameterSymbol, $"{methodElement.Id}#{parameterSymbol.Name}:{variableIndex}");
+                    variableIndex++;
 
                     _elements.Add(parameterElement);
                     _symbolsToElements.Add(parameterSymbol, parameterElement);
@@ -233,12 +239,24 @@ public partial class DotNetContext
                         return;
                     }
 
-                    var localElement = new DotNetLocal(localSymbol, $"{methodElement.Id}#{localSymbol.Name}");
+                    var localElement = new DotNetLocal(localSymbol, $"{methodElement.Id}#{localSymbol.Name}:{variableIndex}");
+                    variableIndex++;
 
                     _elements.Add(localElement);
                     _symbolsToElements.Add(localSymbol, localElement);
                     _hierarchyBuilder.Add(methodElement, localElement, default);
                 }
+            }
+        }
+
+        [Conditional("DEBUG")]
+        private void AssertElementIdUniqueness()
+        {
+            var idGroups = _elements.GroupBy(e => e.Id);
+
+            foreach (var idGroup in idGroups)
+            {
+                Debug.Assert(idGroup.Count() == 1, $"There are {idGroup.Count()} elements with ID '{idGroup.Key}'.");
             }
         }
     }
