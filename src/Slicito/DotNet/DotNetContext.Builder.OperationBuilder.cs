@@ -22,6 +22,13 @@ public partial class DotNetContext
                 _methodElement = methodElement;
             }
 
+            public override void VisitConversion(IConversionOperation operation)
+            {
+                base.VisitConversion(operation);
+
+                AddOperationElement(operation);
+            }
+
             public override void VisitInvocation(IInvocationOperation operation)
             {
                 base.VisitInvocation(operation);

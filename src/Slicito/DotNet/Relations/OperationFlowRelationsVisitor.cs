@@ -20,6 +20,15 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
         _isOverridenByRelation = builder.DependencyRelations.Overrides.Invert();
     }
 
+    public override EmptyStruct VisitConversion(IConversionOperation operation, DotNetOperation operationElement)
+    {
+        base.VisitConversion(operation, operationElement);
+
+        HandleRead(operation.Operand, operationElement);
+
+        return default;
+    }
+
     public override EmptyStruct VisitInvocation(IInvocationOperation operation, DotNetOperation operationElement)
     {
         base.VisitInvocation(operation, operationElement);
