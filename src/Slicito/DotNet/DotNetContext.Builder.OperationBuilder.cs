@@ -22,51 +22,9 @@ public partial class DotNetContext
                 _methodElement = methodElement;
             }
 
-            public override void VisitConversion(IConversionOperation operation)
+            public override void DefaultVisit(IOperation operation)
             {
-                base.VisitConversion(operation);
-
-                AddOperationElement(operation);
-            }
-
-            public override void VisitInvocation(IInvocationOperation operation)
-            {
-                base.VisitInvocation(operation);
-
-                AddOperationElement(operation);
-            }
-
-            public override void VisitLocalReference(ILocalReferenceOperation operation)
-            {
-                base.VisitLocalReference(operation);
-
-                AddOperationElement(operation);
-            }
-
-            public override void VisitParameterReference(IParameterReferenceOperation operation)
-            {
-                base.VisitParameterReference(operation);
-
-                AddOperationElement(operation);
-            }
-
-            public override void VisitFieldReference(IFieldReferenceOperation operation)
-            {
-                base.VisitFieldReference(operation);
-
-                AddOperationElement(operation);
-            }
-
-            public override void VisitPropertyReference(IPropertyReferenceOperation operation)
-            {
-                base.VisitPropertyReference(operation);
-
-                AddOperationElement(operation);
-            }
-
-            public override void VisitSimpleAssignment(ISimpleAssignmentOperation operation)
-            {
-                base.VisitSimpleAssignment(operation);
+                base.DefaultVisit(operation);
 
                 AddOperationElement(operation);
             }
