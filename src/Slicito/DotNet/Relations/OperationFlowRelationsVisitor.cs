@@ -29,6 +29,24 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
         return default;
     }
 
+    public override EmptyStruct VisitFieldReference(IFieldReferenceOperation operation, DotNetOperation operationElement)
+    {
+        base.VisitFieldReference(operation, operationElement);
+
+        HandleMemberReference(operation, operationElement);
+
+        return default;
+    }
+
+    public override EmptyStruct VisitPropertyReference(IPropertyReferenceOperation operation, DotNetOperation operationElement)
+    {
+        base.VisitPropertyReference(operation, operationElement);
+
+        HandleMemberReference(operation, operationElement);
+
+        return default;
+    }
+
     public override EmptyStruct VisitSimpleAssignment(ISimpleAssignmentOperation operation, DotNetOperation operationElement)
     {
         base.VisitSimpleAssignment(operation, operationElement);
@@ -36,12 +54,6 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
         HandleAssignment(operation, operationElement);
 
         return default;
-    }
-
-    private void HandleAssignment(IAssignmentOperation operation, DotNetOperation operationElement)
-    {
-        HandleRead(operation.Value, operationElement);
-        HandleWrite(operation.Target, operationElement);
     }
 
     private void HandleInvocation(IInvocationOperation operation, DotNetOperation operationElement)
@@ -107,6 +119,21 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
                 _builder.IsPassedAs.Add(valueElement, parameterElement, value.Syntax);
             }
         }
+    }
+
+    private void HandleMemberReference(IMemberReferenceOperation operation, DotNetOperation operationElement)
+    {
+        if (operation.Instance is not null
+            && _context.TryGetElementFromOperation(operation.Instance) is DotNetOperation instanceElement)
+        {
+            HandleRead(instanceElement, operationElement);
+        }
+    }
+
+    private void HandleAssignment(IAssignmentOperation operation, DotNetOperation operationElement)
+    {
+        HandleRead(operation.Value, operationElement);
+        HandleWrite(operation.Target, operationElement);
     }
 
     private void HandleRead(IOperation? value, DotNetOperation operationElement)
