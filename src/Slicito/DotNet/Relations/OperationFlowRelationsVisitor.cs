@@ -65,6 +65,7 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
         base.VisitPropertyReference(operation, operationElement);
 
         HandleMemberReference(operation, operationElement);
+        HandleIndexerArguments(operation, operationElement);
 
         return default;
     }
@@ -259,15 +260,22 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
         }
     }
 
+    private void HandleIndexerArguments(IPropertyReferenceOperation operation, DotNetOperation operationElement)
+    {
+        HandleArgumentList(operationElement, Enumerable.Empty<DotNetMethod>(), operation.Arguments);
+    }
+
     private void HandleObjectCreation(IObjectCreationOperation operation, DotNetOperation operationElement)
     {
-        if (operation.Constructor is null
-            || _context.TryGetElementFromSymbol(operation.Constructor) is not DotNetMethod constructorElement)
+        var callTargets = Array.Empty<DotNetMethod>();
+
+        if (operation.Constructor is not null
+            && _context.TryGetElementFromSymbol(operation.Constructor) is DotNetMethod constructorElement)
         {
-            return;
+            callTargets = new[] { constructorElement };
         }
 
-        HandleArgumentList(operationElement, new[] { constructorElement }, operation.Arguments);
+        HandleArgumentList(operationElement, callTargets, operation.Arguments);
     }
 
     private void HandleAssignment(IAssignmentOperation operation, DotNetOperation operationElement)
