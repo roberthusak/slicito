@@ -24,6 +24,15 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
         _isOverridenByRelation = builder.DependencyRelations.Overrides.Invert();
     }
 
+    public override EmptyStruct VisitExpressionStatement(IExpressionStatementOperation operation, DotNetOperation operationElement)
+    {
+        base.VisitExpressionStatement(operation, operationElement);
+
+        HandleRead(operation.Operation, operationElement, isCopy: false);
+
+        return default;
+    }
+
     public override EmptyStruct VisitConversion(IConversionOperation operation, DotNetOperation operationElement)
     {
         base.VisitConversion(operation, operationElement);
@@ -88,6 +97,29 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
         return default;
     }
 
+    public override EmptyStruct VisitArrayCreation(IArrayCreationOperation operation, DotNetOperation operationElement)
+    {
+        base.VisitArrayCreation(operation, operationElement);
+
+        foreach (var dimensionSize in operation.DimensionSizes)
+        {
+            HandleRead(dimensionSize, operationElement, isCopy: false);
+        }
+
+        HandleRead(operation.Initializer, operationElement, isCopy: false);
+
+        return default;
+    }
+
+    public override EmptyStruct VisitAwait(IAwaitOperation operation, DotNetOperation operationElement)
+    {
+        base.VisitAwait(operation, operationElement);
+
+        HandleRead(operation.Operation, operationElement, isCopy: false);
+
+        return default;
+    }
+
     public override EmptyStruct VisitSimpleAssignment(ISimpleAssignmentOperation operation, DotNetOperation operationElement)
     {
         base.VisitSimpleAssignment(operation, operationElement);
@@ -102,6 +134,18 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
         base.VisitIsPattern(operation, operationElement);
 
         HandleIsPattern(operation, operationElement);
+
+        return default;
+    }
+
+    public override EmptyStruct VisitArrayInitializer(IArrayInitializerOperation operation, DotNetOperation operationElement)
+    {
+        base.VisitArrayInitializer(operation, operationElement);
+
+        foreach (var elementValue in operation.ElementValues)
+        {
+            HandleRead(elementValue, operationElement, isCopy: false);
+        }
 
         return default;
     }
