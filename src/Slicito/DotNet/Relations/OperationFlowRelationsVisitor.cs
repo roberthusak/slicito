@@ -95,6 +95,33 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
         return default;
     }
 
+    public override EmptyStruct VisitIsPattern(IIsPatternOperation operation, DotNetOperation operationElement)
+    {
+        base.VisitIsPattern(operation, operationElement);
+
+        HandleIsPattern(operation, operationElement);
+
+        return default;
+    }
+
+    public override EmptyStruct VisitConstantPattern(IConstantPatternOperation operation, DotNetOperation operationElement)
+    {
+        base.VisitConstantPattern(operation, operationElement);
+
+        HandleRead(operation.Value, operationElement, isCopy: false);
+        
+        return default;
+    }
+
+    public override EmptyStruct VisitDeclarationPattern(IDeclarationPatternOperation operation, DotNetOperation operationElement)
+    {
+        base.VisitDeclarationPattern(operation, operationElement);
+
+        HandleDeclarationPattern(operation, operationElement);
+
+        return default;
+    }
+
     private void HandleInvocation(IInvocationOperation operation, DotNetOperation operationElement)
     {
         var baseCallTargets = _builder.DependencyRelations.Calls
@@ -154,6 +181,29 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
     {
         HandleRead(operation.Value, operationElement, isCopy: true);
         HandleWrite(operation.Target, operationElement, isCopy: true);
+    }
+
+    private void HandleIsPattern(IIsPatternOperation operation, DotNetOperation operationElement)
+    {
+        if (_context.TryGetElementFromOperation(operation.Pattern) is not DotNetOperation patternElement)
+        {
+            return;
+        }
+
+        HandleRead(operation.Value, patternElement, isCopy: patternElement.Operation is IDeclarationPatternOperation);
+
+        _builder.ResultIsReadBy.Add(patternElement, operationElement, patternElement.Operation.Syntax);
+    }
+
+    private void HandleDeclarationPattern(IDeclarationPatternOperation operation, DotNetOperation operationElement)
+    {
+        if (operation.DeclaredSymbol is null
+            || _context.TryGetElementFromSymbol(operation.DeclaredSymbol) is not DotNetVariable variableElement)
+        {
+            return;
+        }
+
+        _builder.WritesToVariable.Add(operationElement, variableElement, operation.Syntax);
     }
 
     private void HandleArgumentList(DotNetOperation operationElement, IEnumerable<DotNetMethod> potentialCallTargets, ImmutableArray<IArgumentOperation> arguments)
