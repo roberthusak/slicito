@@ -156,7 +156,7 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
             .Where(e => !e.Symbol.IsAbstract)
             .ToHashSet();
 
-        // Connect the instance to "this" parameter
+        // Connect the instance to the references to the current instance in the called method
         if (operation.Instance is not null
             && _context.TryGetElementFromOperation(operation.Instance) is DotNetOperation instanceElement)
         {
@@ -164,13 +164,14 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
 
             foreach (var targetMethodElement in potentialCallTargets)
             {
-                var thisParameter = targetMethodElement.Symbol.Parameters
-                    .FirstOrDefault(p => p.IsThis);
+                var instanceReferenceElementsQuery = _context.Hierarchy.GetOutgoing(targetMethodElement)
+                    .Select(pair => pair.Target)
+                    .OfType<DotNetOperation>()
+                    .Where(o => o.Operation is IInstanceReferenceOperation { ReferenceKind: InstanceReferenceKind.ContainingTypeInstance });
 
-                if (thisParameter is not null
-                    && _context.TryGetElementFromSymbol(thisParameter) is DotNetParameter thisParameterElement)
+                foreach (var instanceReferenceElement in instanceReferenceElementsQuery)
                 {
-                    _builder.IsPassedAs.Add(instanceElement, thisParameterElement, operation.Instance.Syntax);
+                    _builder.ResultIsCopiedTo.Add(instanceElement, instanceReferenceElement, instanceElement.Operation.Syntax);
                 }
             }
         }
