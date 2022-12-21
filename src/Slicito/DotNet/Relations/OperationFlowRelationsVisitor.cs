@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.FlowAnalysis;
 using Microsoft.CodeAnalysis.Operations;
 using Slicito.Abstractions.Relations;
 using Slicito.DotNet.Elements;
@@ -118,6 +119,24 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
         base.VisitDeclarationPattern(operation, operationElement);
 
         HandleDeclarationPattern(operation, operationElement);
+
+        return default;
+    }
+
+    public override EmptyStruct VisitFlowCapture(IFlowCaptureOperation operation, DotNetOperation operationElement)
+    {
+        base.VisitFlowCapture(operation, operationElement);
+
+        HandleRead(operation.Value, operationElement, isCopy: true);
+
+        return default;
+    }
+
+    public override EmptyStruct VisitIsNull(IIsNullOperation operation, DotNetOperation operationElement)
+    {
+        base.VisitIsNull(operation, operationElement);
+
+        HandleRead(operation.Operand, operationElement, isCopy: false);
 
         return default;
     }
@@ -269,6 +288,11 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
         {
             _builder.VariableIsReadBy.Add(variableElement, valueElement, valueElement.Operation.Syntax);
         }
+
+        foreach (var captureOperationElement in GetReferencedCaptureOperations(valueElement))
+        {
+            relation.Add(captureOperationElement, valueElement, valueElement.Operation.Syntax);
+        }
     }
 
     private void HandleWrite(IOperation? target, DotNetOperation operationElement, bool isCopy)
@@ -297,6 +321,11 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
         {
             _builder.WritesToVariable.Add(targetElement, variableElement, targetElement.Operation.Syntax);
         }
+
+        foreach (var captureOperationElement in GetReferencedCaptureOperations(targetElement))
+        {
+            relation.Add(targetElement, captureOperationElement, targetElement.Operation.Syntax);
+        }
     }
 
     private DotNetVariable? TryGetVariableElementFromReference(IOperation operation)
@@ -317,6 +346,24 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
             return null;
         }
 
-        return variableElement;
+        return variableElement; 
+    }
+
+    private IEnumerable<DotNetOperation> GetReferencedCaptureOperations(DotNetOperation operationElement) {
+        if (operationElement.Operation is not IFlowCaptureReferenceOperation captureReferenceOperation)
+        {
+            return Enumerable.Empty<DotNetOperation>();
+        }
+
+        var methodElement = _context.Hierarchy.GetAncestors(operationElement)
+            .OfType<DotNetMethod>()
+            .First();
+
+        return _context.Hierarchy.GetOutgoing(methodElement)
+            .Select(pair => pair.Target)
+            .OfType<DotNetOperation>()
+            .Where(e =>
+                e.Operation is IFlowCaptureOperation captureOperation
+                && captureOperation.Id.Equals(captureReferenceOperation.Id));
     }
 }
