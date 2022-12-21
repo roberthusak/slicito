@@ -241,9 +241,15 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
             _builder.ResultIsReadBy.Add(argumentElement, operationElement, argument.Syntax);
 
             var parameterName = argument.Parameter?.Name;
-            if (string.IsNullOrEmpty(parameterName))
+            if (argument.Parameter is null || string.IsNullOrEmpty(parameterName))
             {
                 continue;
+            }
+
+            if (argument.Parameter.RefKind != RefKind.None)
+            {
+                HandleWrite(valueElement, argumentElement, isCopy: true);
+                _builder.ResultIsReadBy.Add(operationElement, argumentElement, argument.Syntax);
             }
 
             foreach (var targetMethodElement in potentialCallTargets)
@@ -258,6 +264,11 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
                 }
 
                 _builder.IsPassedAs.Add(argumentElement, parameterElement, argument.Syntax);
+
+                if (parameter.RefKind != RefKind.None)
+                {
+                    _builder.VariableIsReadBy.Add(parameterElement, argumentElement, argument.Syntax);
+                }
             }
         }
     }
