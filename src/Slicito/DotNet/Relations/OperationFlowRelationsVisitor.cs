@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Diagnostics;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FlowAnalysis;
@@ -155,6 +156,7 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
             .Where(e => !e.Symbol.IsAbstract)
             .ToHashSet();
 
+        // Connect the instance to "this" parameter
         if (operation.Instance is not null
             && _context.TryGetElementFromOperation(operation.Instance) is DotNetOperation instanceElement)
         {
@@ -174,6 +176,33 @@ internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation,
         }
 
         HandleArgumentList(operationElement, potentialCallTargets, operation.Arguments);
+
+        // Connect return values to the invocation operation
+        foreach (var targetMethodElement in potentialCallTargets)
+        {
+            if (targetMethodElement.ControlFlowGraph is null)
+            {
+                continue;
+            }
+
+            var exitBlock = targetMethodElement.ControlFlowGraph.Blocks[^1];
+            Debug.Assert(exitBlock.Kind == BasicBlockKind.Exit);
+
+            foreach (var returnBranch in exitBlock.Predecessors)
+            {
+                if (returnBranch.Semantics != ControlFlowBranchSemantics.Return)
+                {
+                    continue;
+                }
+
+                var returnValue = returnBranch.Source.BranchValue;
+                if (returnValue is not null
+                    && _context.TryGetElementFromOperation(returnValue) is DotNetOperation returnValueElement)
+                {
+                    _builder.ResultIsCopiedTo.Add(returnValueElement, operationElement, returnValue.Syntax);
+                }
+            }
+        }
     }
 
     private void HandleMemberReference(IMemberReferenceOperation operation, DotNetOperation operationElement)
