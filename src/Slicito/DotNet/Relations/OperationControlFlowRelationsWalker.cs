@@ -110,6 +110,25 @@ internal class OperationControlFlowRelationsWalker : OperationWalker
     {
         base.DefaultVisit(operation);
 
+        ConnectFlowWithPreviousElement(operation, _builder.IsSucceededByUnconditionally);
+    }
+
+    public override void VisitInvocation(IInvocationOperation operation)
+    {
+        base.DefaultVisit(operation);
+
+        ConnectFlowWithPreviousElement(operation, _builder.IsSucceededByWithLeftOutInvocation);
+    }
+
+    public override void VisitObjectCreation(IObjectCreationOperation operation)
+    {
+        base.DefaultVisit(operation);
+
+        ConnectFlowWithPreviousElement(operation, _builder.IsSucceededByWithLeftOutInvocation);
+    }
+
+    private void ConnectFlowWithPreviousElement(IOperation operation, BinaryRelation<DotNetOperation, DotNetOperation, SyntaxNode?>.Builder relation)
+    {
         if (_context.TryGetElementFromOperation(operation) is not DotNetOperation operationElement)
         {
             return;
@@ -122,7 +141,7 @@ internal class OperationControlFlowRelationsWalker : OperationWalker
 
         if (_lastElement != null)
         {
-            _builder.IsSucceededByUnconditionally.Add(_lastElement, operationElement, default);
+            relation.Add(_lastElement, operationElement, default);
         }
 
         _lastElement = operationElement;

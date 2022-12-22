@@ -21,16 +21,17 @@ public partial record ControlFlowRelations
 
         public BinaryRelation<DotNetOperation, DotNetOperation, SyntaxNode?>.Builder IsSucceededByIfFalse { get; } = new();
 
+        public BinaryRelation<DotNetOperation, DotNetOperation, SyntaxNode?>.Builder IsSucceededByWithLeftOutInvocation { get; } = new();
+
         public BinaryRelation<DotNetOperation, DotNetOperation, SyntaxNode?>.Builder IsSucceededByWithDynamicDispatch { get; } = new();
 
         public BinaryRelation<DotNetOperation, DotNetOperation, SyntaxNode?>.Builder IsSucceededByWithReturn { get; } = new();
-
-        public BinaryRelation<DotNetOperation, DotNetOperation, SyntaxNode?>.Builder IsSucceededByWithLeftOutInvocation { get; } = new();
 
         public ControlFlowRelations Build() =>
             new(
                 IsSucceededByUnconditionally.Build(),
                 IsSucceededByIfTrue.Build(),
-                IsSucceededByIfFalse.Build());
+                IsSucceededByIfFalse.Build(),
+                IsSucceededByWithLeftOutInvocation.Build());
     }
 }
