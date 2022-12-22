@@ -124,6 +124,16 @@ public class DotNetLocal : DotNetVariable
     public new ILocalSymbol Symbol => (ILocalSymbol) base.Symbol;
 }
 
+public class DotNetBlock : DotNetElement
+{
+    internal DotNetBlock(BasicBlock block, string id) : base(id)
+    {
+        Block = block;
+    }
+
+    public BasicBlock Block { get; }
+}
+
 public class DotNetOperation : DotNetElement
 {
     internal DotNetOperation(IOperation operation, string id) : base(id)

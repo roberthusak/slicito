@@ -14,30 +14,38 @@ internal class OperationControlFlowRelationsWalker : OperationWalker
     private readonly DotNetContext _context;
     private readonly ControlFlowRelations.Builder _builder;
 
-    private DotNetOperation? _firstElement;
-    private DotNetOperation? _lastElement;
+    private DotNetElement _firstElement;
+    private DotNetElement _lastElement;
 
-    private OperationControlFlowRelationsWalker(DotNetContext context, ControlFlowRelations.Builder builder)
+    private OperationControlFlowRelationsWalker(DotNetContext context, DotNetBlock blockElement, ControlFlowRelations.Builder builder)
     {
         _context = context;
         _builder = builder;
+
+        _firstElement = blockElement;
+        _lastElement = blockElement;
     }
 
-    public static void VisitMethod(DotNetContext context, DotNetMethod method, ControlFlowRelations.Builder builder)
+    public static void VisitMethod(DotNetContext context, DotNetMethod methodElement, ControlFlowRelations.Builder builder)
     {
-        if (method.ControlFlowGraph is null)
+        if (methodElement.ControlFlowGraph is null)
         {
             return;
         }
 
-        var blocks = method.ControlFlowGraph.Blocks;
+        var blocks = methodElement.ControlFlowGraph.Blocks;
 
-        var firstAndLastElements = new (DotNetOperation? first, DotNetOperation? last)[blocks.Length];
-
-        // Connect operation elements within blocks, find the first and the last element of each block
         foreach (var block in blocks)
         {
-            var walker = new OperationControlFlowRelationsWalker(context, builder);
+            // Connect operation elements within blocks
+
+            var blockElement = context.TryGetElementFromBlock(block);
+            if (blockElement is null)
+            {
+                continue;
+            }
+
+            var walker = new OperationControlFlowRelationsWalker(context, blockElement, builder);
 
             foreach (var operation in block.Operations)
             {
@@ -46,22 +54,12 @@ internal class OperationControlFlowRelationsWalker : OperationWalker
 
             walker.Visit(block.BranchValue);
 
-            Debug.Assert(walker._firstElement is not null || block.ConditionalSuccessor is null);
+            // Connect the flow between blocks
 
-            firstAndLastElements[block.Ordinal] = (walker._firstElement, walker._lastElement);
-        }
+            var lastElement = walker._lastElement;
 
-        // Connect the flow between blocks
-        foreach (var block in blocks)
-        {
-            var lastElement = firstAndLastElements[block.Ordinal].last;
-            if (lastElement is null)
-            {
-                continue;
-            }
-
-            var firstConditionalElement = TryGetFirstElement(block.ConditionalSuccessor?.Destination);
-            var firstFallthroughElement = TryGetFirstElement(block.FallThroughSuccessor?.Destination);
+            var firstConditionalElement = context.TryGetElementFromBlock(block.ConditionalSuccessor?.Destination);
+            var firstFallthroughElement = context.TryGetElementFromBlock(block.FallThroughSuccessor?.Destination);
 
             switch (block.ConditionKind)
             {
@@ -70,33 +68,21 @@ internal class OperationControlFlowRelationsWalker : OperationWalker
                     break;
 
                 case ControlFlowConditionKind.WhenFalse:
-                    AddPairIfTargetNotNull(builder.IsSucceededByIfFalse, lastElement, firstConditionalElement, lastElement.Operation.Syntax);
-                    AddPairIfTargetNotNull(builder.IsSucceededByIfTrue, lastElement, firstFallthroughElement, lastElement.Operation.Syntax);
+                    AddPairIfTargetNotNull(builder.IsSucceededByIfFalse, lastElement, firstConditionalElement, default);
+                    AddPairIfTargetNotNull(builder.IsSucceededByIfTrue, lastElement, firstFallthroughElement, default);
                     break;
 
                 case ControlFlowConditionKind.WhenTrue:
-                    AddPairIfTargetNotNull(builder.IsSucceededByIfTrue, lastElement, firstConditionalElement, lastElement.Operation.Syntax);
-                    AddPairIfTargetNotNull(builder.IsSucceededByIfFalse, lastElement, firstFallthroughElement, lastElement.Operation.Syntax);
+                    AddPairIfTargetNotNull(builder.IsSucceededByIfTrue, lastElement, firstConditionalElement, default);
+                    AddPairIfTargetNotNull(builder.IsSucceededByIfFalse, lastElement, firstFallthroughElement, default);
                     break;
             }
         }
 
-        DotNetOperation? TryGetFirstElement(BasicBlock? block)
-        {
-            while (block is not null && firstAndLastElements[block.Ordinal].first is null)
-            {
-                Debug.Assert(block.ConditionalSuccessor is null);
-
-                block = block.FallThroughSuccessor?.Destination;
-            }
-
-            return block is null ? null : firstAndLastElements[block.Ordinal].first;
-        }
-
         void AddPairIfTargetNotNull(
-            BinaryRelation<DotNetOperation, DotNetOperation, SyntaxNode?>.Builder relation,
-            DotNetOperation source,
-            DotNetOperation? target,
+            BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?>.Builder relation,
+            DotNetElement source,
+            DotNetElement? target,
             SyntaxNode? data)
         {
             if (target is not null)
@@ -127,7 +113,7 @@ internal class OperationControlFlowRelationsWalker : OperationWalker
         ConnectFlowWithPreviousElement(operation, _builder.IsSucceededByWithLeftOutInvocation);
     }
 
-    private void ConnectFlowWithPreviousElement(IOperation operation, BinaryRelation<DotNetOperation, DotNetOperation, SyntaxNode?>.Builder relation)
+    private void ConnectFlowWithPreviousElement(IOperation operation, BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?>.Builder relation)
     {
         if (_context.TryGetElementFromOperation(operation) is not DotNetOperation operationElement)
         {

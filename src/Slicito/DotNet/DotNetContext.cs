@@ -4,6 +4,7 @@ using System.Web;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.FlowAnalysis;
 
 using Slicito.Abstractions;
 using Slicito.Abstractions.Relations;
@@ -15,6 +16,7 @@ namespace Slicito.DotNet;
 public partial class DotNetContext : IContext<DotNetElement, EmptyStruct>
 {
     private readonly Dictionary<ISymbol, DotNetElement> _symbolsToElements;
+    private readonly Dictionary<BasicBlock, DotNetBlock> _blocksToElements;
     private readonly Dictionary<IOperation, DotNetOperation> _operationsToElements;
     private readonly Dictionary<string, DotNetProject> _moduleMetadataNamesToProjects;
 
@@ -28,18 +30,25 @@ public partial class DotNetContext : IContext<DotNetElement, EmptyStruct>
         ImmutableArray<DotNetElement> elements,
         BinaryRelation<DotNetElement, DotNetElement, EmptyStruct> hierarchy,
         Dictionary<ISymbol, DotNetElement> symbolsToElements,
+        Dictionary<BasicBlock, DotNetBlock> blocksToElements,
         Dictionary<IOperation, DotNetOperation> operationsToElements,
         Dictionary<string, DotNetProject> moduleMetadataNamesToProjects)
     {
         Elements = elements;
         Hierarchy = hierarchy;
         _symbolsToElements = symbolsToElements;
+        _blocksToElements = blocksToElements;
         _operationsToElements = operationsToElements;
         _moduleMetadataNamesToProjects = moduleMetadataNamesToProjects;
     }
 
-    public DotNetElement? TryGetElementFromSymbol(ISymbol symbol)
+    public DotNetElement? TryGetElementFromSymbol(ISymbol? symbol)
     {
+        if (symbol is null)
+        {
+            return null;
+        }
+
         var element = _symbolsToElements.GetValueOrDefault(symbol);
 
         if (element is null
@@ -65,8 +74,15 @@ public partial class DotNetContext : IContext<DotNetElement, EmptyStruct>
         return element;
     }
 
-    public DotNetOperation? TryGetElementFromOperation(IOperation operation) =>
-        _operationsToElements.GetValueOrDefault(operation);
+    public DotNetBlock? TryGetElementFromBlock(BasicBlock? block) =>
+        block is null
+        ? null
+        : _blocksToElements.GetValueOrDefault(block);
+
+    public DotNetOperation? TryGetElementFromOperation(IOperation? operation) =>
+        operation is null
+        ? null
+        : _operationsToElements.GetValueOrDefault(operation);
 
     public DependencyRelations ExtractDependencyRelations(Predicate<DotNetElement>? filter = null)
     {

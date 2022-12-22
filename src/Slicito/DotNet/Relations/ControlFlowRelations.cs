@@ -6,12 +6,12 @@ using Slicito.DotNet.Elements;
 namespace Slicito.DotNet.Relations;
 
 public partial record ControlFlowRelations(
-    BinaryRelation<DotNetOperation, DotNetOperation, SyntaxNode?> IsSucceededByUnconditionally,
-    BinaryRelation<DotNetOperation, DotNetOperation, SyntaxNode?> IsSucceededByIfTrue,
-    BinaryRelation<DotNetOperation, DotNetOperation, SyntaxNode?> IsSucceededByIfFalse,
-    BinaryRelation<DotNetOperation, DotNetOperation, SyntaxNode?> IsSucceededByWithLeftOutInvocation)
+    BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?> IsSucceededByUnconditionally,
+    BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?> IsSucceededByIfTrue,
+    BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?> IsSucceededByIfFalse,
+    BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?> IsSucceededByWithLeftOutInvocation)
 {
-    public IEnumerable<BinaryRelation<DotNetOperation, DotNetOperation, SyntaxNode?>> GetIntraproceduralFlow()
+    public IEnumerable<BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?>> GetIntraproceduralFlow()
     {
         yield return IsSucceededByUnconditionally;
         yield return IsSucceededByIfTrue;
@@ -19,7 +19,7 @@ public partial record ControlFlowRelations(
         yield return IsSucceededByWithLeftOutInvocation;
     }
 
-    public IEnumerable<BinaryRelation<DotNetOperation, DotNetOperation, SyntaxNode?>> GetInterproceduralFlow()
+    public IEnumerable<BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?>> GetInterproceduralFlow()
     {
         throw new NotImplementedException();
     }

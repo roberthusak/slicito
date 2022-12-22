@@ -31,7 +31,7 @@ public partial class DotNetContext
 
             private void AddOperationElement(IOperation operation)
             {
-                var id = $"{_methodElement.Id}#{operation.Kind}:{_operationIndex}";
+                var id = $"{_methodElement.Id}#op:{operation.Kind}:{_operationIndex}";
                 _operationIndex++;
 
                 var element = new DotNetOperation(operation, id);

@@ -17,6 +17,7 @@ public partial class DotNetContext
         private readonly BinaryRelation<DotNetElement, DotNetElement, EmptyStruct>.Builder _hierarchyBuilder = new();
 
         private readonly Dictionary<ISymbol, DotNetElement> _symbolsToElements = new(SymbolEqualityComparer.Default);
+        private readonly Dictionary<BasicBlock, DotNetBlock> _blocksToElements = new();
         private readonly Dictionary<IOperation, DotNetOperation> _operationsToElements = new();
         private readonly Dictionary<string, DotNetProject> _moduleMetadataNamesToProjects = new();
 
@@ -79,6 +80,7 @@ public partial class DotNetContext
                 _elements.ToImmutableArray(),
                 _hierarchyBuilder.Build(),
                 new Dictionary<ISymbol, DotNetElement>(_symbolsToElements, SymbolEqualityComparer.Default),
+                new Dictionary<BasicBlock, DotNetBlock>(_blocksToElements),
                 new Dictionary<IOperation, DotNetOperation>(_operationsToElements),
                 new Dictionary<string, DotNetProject>(_moduleMetadataNamesToProjects));
         }
@@ -190,6 +192,12 @@ public partial class DotNetContext
 
             foreach (var block in methodElement.ControlFlowGraph.Blocks)
             {
+                var blockElement = new DotNetBlock(block, $"{methodElement.Id}#block:{block.Kind}:{block.Ordinal}");
+
+                _elements.Add(blockElement);
+                _blocksToElements.Add(block, blockElement);
+                _hierarchyBuilder.Add(methodElement, blockElement, default);
+
                 foreach (var operation in block.Operations)
                 {
                     operationBuilder.Visit(operation);
@@ -219,7 +227,7 @@ public partial class DotNetContext
                         return;
                     }
 
-                    var parameterElement = new DotNetParameter(parameterSymbol, $"{methodElement.Id}#{parameterSymbol.Name}:{variableIndex}");
+                    var parameterElement = new DotNetParameter(parameterSymbol, $"{methodElement.Id}#param:{parameterSymbol.Name}:{variableIndex}");
                     variableIndex++;
 
                     _elements.Add(parameterElement);
@@ -239,7 +247,7 @@ public partial class DotNetContext
                         return;
                     }
 
-                    var localElement = new DotNetLocal(localSymbol, $"{methodElement.Id}#{localSymbol.Name}:{variableIndex}");
+                    var localElement = new DotNetLocal(localSymbol, $"{methodElement.Id}#local:{localSymbol.Name}:{variableIndex}");
                     variableIndex++;
 
                     _elements.Add(localElement);
