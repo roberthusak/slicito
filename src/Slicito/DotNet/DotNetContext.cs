@@ -137,6 +137,25 @@ public partial class DotNetContext : IContext<DotNetElement, EmptyStruct>
         return builder.Build();
     }
 
+    public ControlFlowRelations ExtractControlFlowRelations(Predicate<DotNetMethod>? filter = null)
+    {
+        var dependencyRelations = ExtractDependencyRelations();
+
+        var builder = new ControlFlowRelations.Builder(dependencyRelations);
+
+        foreach (var method in Elements.OfType<DotNetMethod>())
+        {
+            if (filter is not null && !filter(method))
+            {
+                continue;
+            }
+
+            OperationControlFlowRelationsWalker.VisitMethod(this, method, builder);
+        }
+
+        return builder.Build();
+    }
+
     private void ExtractTypeDependencies(DotNetType typeElement, DependencyRelations.Builder builder)
     {
         var baseSymbol = typeElement.Symbol.BaseType;
