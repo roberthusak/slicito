@@ -115,13 +115,13 @@ public partial class DotNetContext : IContext<DotNetElement, EmptyStruct>
         }
     }
 
-    public FlowRelations ExtractFlowRelations(Predicate<DotNetElement>? filter = null)
+    public DataFlowRelations ExtractDataFlowRelations(Predicate<DotNetElement>? filter = null)
     {
         var dependencyRelations = ExtractDependencyRelations(filter);
 
-        var builder = new FlowRelations.Builder(dependencyRelations);
+        var builder = new DataFlowRelations.Builder(dependencyRelations);
 
-        var operationVisitor = new OperationFlowRelationsVisitor(this, builder);
+        var operationVisitor = new OperationDataFlowRelationsVisitor(this, builder);
 
         foreach (var element in Elements)
         {

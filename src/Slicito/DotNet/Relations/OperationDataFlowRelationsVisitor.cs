@@ -9,14 +9,14 @@ using Slicito.DotNet.Elements;
 
 namespace Slicito.DotNet.Relations;
 
-internal class OperationFlowRelationsVisitor : OperationVisitor<DotNetOperation, EmptyStruct>
+internal class OperationDataFlowRelationsVisitor : OperationVisitor<DotNetOperation, EmptyStruct>
 {
     private readonly DotNetContext _context;
-    private readonly FlowRelations.Builder _builder;
+    private readonly DataFlowRelations.Builder _builder;
 
     private readonly IBinaryRelation<DotNetMethod, DotNetMethod, EmptyStruct> _isOverridenByRelation;
 
-    public OperationFlowRelationsVisitor(DotNetContext context, FlowRelations.Builder builder)
+    public OperationDataFlowRelationsVisitor(DotNetContext context, DataFlowRelations.Builder builder)
     {
         _context = context;
         _builder = builder;

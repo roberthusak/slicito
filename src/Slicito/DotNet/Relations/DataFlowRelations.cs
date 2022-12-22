@@ -6,9 +6,9 @@ using Slicito.DotNet.Elements;
 
 namespace Slicito.DotNet.Relations;
 
-public partial class FlowRelations : IEnumerable<IBinaryRelation<DotNetElement, DotNetElement, SyntaxNode?>>
+public partial class DataFlowRelations : IEnumerable<IBinaryRelation<DotNetElement, DotNetElement, SyntaxNode?>>
 {
-    private FlowRelations(
+    private DataFlowRelations(
         BinaryRelation<DotNetVariable, DotNetOperation, SyntaxNode> variableIsReadBy,
         BinaryRelation<DotNetOperation, DotNetVariable, SyntaxNode> writesToVariable,
         BinaryRelation<DotNetOperation, DotNetOperation, SyntaxNode> resultIsCopiedTo,
@@ -53,7 +53,7 @@ public partial class FlowRelations : IEnumerable<IBinaryRelation<DotNetElement, 
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-    public IEnumerable<IBinaryRelation<DotNetElement, DotNetElement, SyntaxNode>> GetDataFlow()
+    public IEnumerable<IBinaryRelation<DotNetElement, DotNetElement, SyntaxNode>> GetValueFlow()
     {
         yield return VariableIsReadBy;
         yield return WritesToVariable;

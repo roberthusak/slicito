@@ -5,7 +5,7 @@ using Slicito.DotNet.Elements;
 
 namespace Slicito.DotNet.Relations;
 
-public partial class FlowRelations
+public partial class DataFlowRelations
 {
     internal class Builder
     {
@@ -26,7 +26,7 @@ public partial class FlowRelations
 
         public BinaryRelation<DotNetOperation, DotNetParameter, SyntaxNode>.Builder IsPassedAs { get; } = new();
 
-        public FlowRelations Build() =>
+        public DataFlowRelations Build() =>
             new(
                 VariableIsReadBy.Build(),
                 WritesToVariable.Build(),
