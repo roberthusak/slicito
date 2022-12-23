@@ -10,6 +10,8 @@ public partial class BinaryRelation<TSourceElement, TTargetElement, TData>
 
         public IEnumerable<IPair<TSourceElement, TTargetElement, TData>> Pairs => _pairs;
 
+        public IBinaryRelation<TSourceElement, TTargetElement, TData> AsRelation() => this;
+
         public Builder Add(TSourceElement source, TTargetElement target, TData data)
         {
             _pairs.Add(new Pair<TSourceElement, TTargetElement, TData>(source, target, data));

@@ -9,7 +9,9 @@ public partial record ControlFlowRelations(
     BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?> IsSucceededByUnconditionally,
     BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?> IsSucceededByIfTrue,
     BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?> IsSucceededByIfFalse,
-    BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?> IsSucceededByWithLeftOutInvocation)
+    BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?> IsSucceededByWithLeftOutInvocation,
+    BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?> IsSucceededByWithInvocation,
+    BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?> IsSucceededByWithReturn)
 {
     public IEnumerable<BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?>> GetIntraproceduralFlow()
     {
@@ -21,6 +23,10 @@ public partial record ControlFlowRelations(
 
     public IEnumerable<BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?>> GetInterproceduralFlow()
     {
-        throw new NotImplementedException();
+        yield return IsSucceededByUnconditionally;
+        yield return IsSucceededByIfTrue;
+        yield return IsSucceededByIfFalse;
+        yield return IsSucceededByWithInvocation;
+        yield return IsSucceededByWithReturn;
     }
 }

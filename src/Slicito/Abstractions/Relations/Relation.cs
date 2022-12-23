@@ -19,6 +19,14 @@ public static class Relation
     }
 
     public static IBinaryRelation<TSourceElement, TTargetElement, TData>
+        Merge<TSourceElement, TTargetElement, TData>(
+            params IBinaryRelation<TSourceElement, TTargetElement, TData>[] relations)
+        where TSourceElement : class, IElement
+        where TTargetElement : class, IElement
+    =>
+        Merge((IEnumerable<IBinaryRelation<TSourceElement, TTargetElement, TData>>) relations);
+
+    public static IBinaryRelation<TSourceElement, TTargetElement, TData>
         Filter<TSourceElement, TTargetElement, TData>(
             this IBinaryRelation<TSourceElement, TTargetElement, TData> relation,
             Predicate<IPair<TSourceElement, TTargetElement, TData>> filter)
@@ -364,4 +372,43 @@ public static class Relation
         where TElement : class, IElement
     =>
         relation.SliceForward(new[] { sourceElement });
+
+    public static IBinaryRelation<TElement, TElement, TData>
+        CreateTransitiveClosure<TElement, TData>(
+            this IBinaryRelation<TElement, TElement, TData> relation)
+        where TElement : class, IElement
+    {
+        var builder = new BinaryRelation<TElement, TElement, TData>.Builder();
+
+        foreach (var sourceElement in relation.Sources)
+        {
+            foreach (var pair in relation.SliceForward(sourceElement).Pairs)
+            {
+                builder.Add(sourceElement, pair.Target, pair.Data);
+            }
+        }
+
+        return builder.Build();
+    }
+
+    public static IBinaryRelation<TSourceElement, TTargetElement, TData>
+        Join<TSourceElement, TInnerElement, TTargetElement, TData>(
+            this IBinaryRelation<TSourceElement, TInnerElement, TData> relation,
+            IBinaryRelation<TInnerElement, TTargetElement, TData> joinedRelation)
+        where TSourceElement : class, IElement
+        where TInnerElement : class, IElement
+        where TTargetElement : class, IElement
+    {
+        var builder = new BinaryRelation<TSourceElement, TTargetElement, TData>.Builder();
+
+        foreach (var pairLeft in relation.Pairs)
+        {
+            foreach (var pairRight in joinedRelation.GetOutgoing(pairLeft.Target))
+            {
+                builder.Add(pairLeft.Source, pairRight.Target, pairRight.Data);
+            }
+        }
+
+        return builder.Build();
+    }
 }

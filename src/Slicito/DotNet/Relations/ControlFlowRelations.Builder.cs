@@ -23,7 +23,7 @@ public partial record ControlFlowRelations
 
         public BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?>.Builder IsSucceededByWithLeftOutInvocation { get; } = new();
 
-        public BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?>.Builder IsSucceededByWithDynamicDispatch { get; } = new();
+        public BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?>.Builder IsSucceededByWithInvocation { get; } = new();
 
         public BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?>.Builder IsSucceededByWithReturn { get; } = new();
 
@@ -32,6 +32,8 @@ public partial record ControlFlowRelations
                 IsSucceededByUnconditionally.Build(),
                 IsSucceededByIfTrue.Build(),
                 IsSucceededByIfFalse.Build(),
-                IsSucceededByWithLeftOutInvocation.Build());
+                IsSucceededByWithLeftOutInvocation.Build(),
+                IsSucceededByWithInvocation.Build(),
+                IsSucceededByWithReturn.Build());
     }
 }

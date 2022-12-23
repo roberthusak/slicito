@@ -22,7 +22,7 @@ internal class OperationDependencyRelationsVisitor : OperationVisitor<DotNetOper
     {
         base.VisitInvocation(operation, operationElement);
 
-        HandleInvocation(operation, operationElement);
+        HandleInvocation(operation, operationElement, operation.TargetMethod);
 
         return default;
     }
@@ -45,9 +45,18 @@ internal class OperationDependencyRelationsVisitor : OperationVisitor<DotNetOper
         return default;
     }
 
-    private void HandleInvocation(IInvocationOperation operation, DotNetOperation operationElement)
+    public override EmptyStruct VisitObjectCreation(IObjectCreationOperation operation, DotNetOperation operationElement)
     {
-        if (_context.TryGetElementFromSymbol(operation.TargetMethod) is not DotNetMethod calleeElement)
+        base.VisitObjectCreation(operation, operationElement);
+
+        HandleInvocation(operation, operationElement, operation.Constructor);
+
+        return default;
+    }
+
+    private void HandleInvocation(IOperation operation, DotNetOperation operationElement, IMethodSymbol? targetMethod)
+    {
+        if (_context.TryGetElementFromSymbol(targetMethod) is not DotNetMethod calleeElement)
         {
             return;
         }

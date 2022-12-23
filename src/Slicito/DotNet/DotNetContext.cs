@@ -169,6 +169,8 @@ public partial class DotNetContext : IContext<DotNetElement, EmptyStruct>
             OperationControlFlowRelationsWalker.VisitMethod(this, method, builder);
         }
 
+        ExtractInterproceduralControlFlowRelations(builder);
+
         return builder.Build();
     }
 
@@ -266,5 +268,39 @@ public partial class DotNetContext : IContext<DotNetElement, EmptyStruct>
         }
 
         builder.IsOfType.Add(storageElement, typeElement, default);
+    }
+
+    private void ExtractInterproceduralControlFlowRelations(ControlFlowRelations.Builder builder)
+    {
+        var directCalls = builder.DependencyRelations.Calls.SetData(new EmptyStruct());
+
+        var calls = Relation.Merge(
+            directCalls,
+            directCalls.Join(
+                builder.DependencyRelations.Overrides
+                    .Invert()
+                    .CreateTransitiveClosure()));
+
+        foreach (var callPair in calls.Pairs)
+        {
+            var invocationElement = callPair.Source;
+            var methodElement = callPair.Target;
+
+            var entryBlockElement = TryGetElementFromBlock(methodElement.ControlFlowGraph?.Blocks[0]);
+            var exitBlockElement = TryGetElementFromBlock(methodElement.ControlFlowGraph?.Blocks[^1]);
+
+            if (entryBlockElement is not null)
+            {
+                foreach (var preInvocationPair in builder.IsSucceededByWithLeftOutInvocation.AsRelation().GetIncoming(invocationElement))
+                {
+                    builder.IsSucceededByWithInvocation.Add(preInvocationPair.Source, entryBlockElement, default);
+                }
+            }
+
+            if (exitBlockElement is not null)
+            {
+                builder.IsSucceededByWithReturn.Add(exitBlockElement, invocationElement, default);
+            }
+        }
     }
 }

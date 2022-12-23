@@ -1,5 +1,3 @@
-using System.Diagnostics;
-
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FlowAnalysis;
 using Microsoft.CodeAnalysis.Operations;
