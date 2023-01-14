@@ -32,7 +32,8 @@ namespace Slicito
         /// if is set to true then no edges are written
         /// </summary>
         public bool IgnoreEdges { get; set; }
-        readonly Stream stream;
+
+        private static readonly XmlWriterSettings _xmlWriterSettings = new() { Indent = true };
 
         readonly XmlWriter xmlWriter;
         /// <summary>
@@ -40,12 +41,16 @@ namespace Slicito
         /// </summary>
         /// <param name="streamPar"></param>
         /// <param name="graphP"></param>
-        public CustomSvgGraphWriter(Stream streamPar, Graph graphP) {
+        public CustomSvgGraphWriter(Stream stream, Graph graphP) {
             InitColorSet();
-            stream = streamPar;
             _graph = graphP;
-            var xmlWriterSettings = new XmlWriterSettings { Indent = true };
-            xmlWriter = XmlWriter.Create(stream, xmlWriterSettings);
+            xmlWriter = XmlWriter.Create(stream, _xmlWriterSettings);
+        }
+
+        public CustomSvgGraphWriter(TextWriter writer, Graph graph) { 
+            InitColorSet();
+            _graph = graph;
+            xmlWriter = XmlWriter.Create(writer, _xmlWriterSettings);
         }
 
         ///<summary>

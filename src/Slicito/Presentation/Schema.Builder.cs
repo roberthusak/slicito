@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 using Microsoft.Msagl.Drawing;
 
@@ -11,7 +12,7 @@ public partial class Schema
 {
     public class Builder
     {
-        private readonly Graph _graph = new();
+        private Graph? _graph = new();
 
         private readonly List<IUriProvider> _uriProviders = new();
         private readonly List<ILabelProvider> _labelProviders = new();
@@ -36,6 +37,8 @@ public partial class Schema
             Action<TElement, Node>? nodeCustomizer = null)
             where TElement : class, IElement
         {
+            EnsureValidState();
+
             if (_graph.SubgraphMap.TryGetValue(element.Id, out _))
             {
                 return this;
@@ -86,6 +89,8 @@ public partial class Schema
             Action<TElement, Node>? nodeCustomizer = null)
             where TElement : class, IElement
         {
+            EnsureValidState();
+
             foreach (var element in elements)
             {
                 AddNode(element, containingElement, nodeCustomizer);
@@ -111,6 +116,8 @@ public partial class Schema
             Action<TElement, Node>? nodeCustomizer = null)
             where TElement: class, IElement
         {
+            EnsureValidState();
+
             if (hierarchy is null)
             {
                 return AddNodes(elements, null, nodeCustomizer);
@@ -164,6 +171,8 @@ public partial class Schema
             where TSourceElement : class, IElement
             where TTargetElement : class, IElement
         {
+            EnsureValidState();
+
             if (!_graph.SubgraphMap.ContainsKey(pair.Source.Id)
                 || !_graph.SubgraphMap.ContainsKey(pair.Target.Id))
             {
@@ -201,6 +210,8 @@ public partial class Schema
             where TSourceElement : class, IElement
             where TTargetElement : class, IElement
         {
+            EnsureValidState();
+
             foreach (var pair in pairs)
             {
                 AddEdge(pair, edgeCustomizer);
@@ -217,33 +228,23 @@ public partial class Schema
         =>
             AddEdges(relation.Pairs, edgeCustomizer);
 
-        public Schema BuildSvg(LayoutOrientation orientation = LayoutOrientation.Vertical)
+        public Schema Build()
         {
-            var ms = _graph.RenderSvgToStream(orientation);
+            EnsureValidState();
 
-            return new Schema(ms.ToArray(), ".svg");
+            var graph = _graph;
+            _graph = null;
+
+            return new Schema(graph);
         }
 
-        public Schema BuildHtml(LayoutOrientation orientation = LayoutOrientation.Vertical)
+        [MemberNotNull(nameof(_graph))]
+        private void EnsureValidState()
         {
-            var ms = new MemoryStream();
-
-            using (var writer = new StreamWriter(ms))
+            if (_graph is null)
             {
-                writer.WriteLine("<!DOCTYPE html>");
-                writer.WriteLine("<html><body>");
-                writer.Flush();
-
-                _graph.RenderSvgToStream(ms, orientation, embedJs: false);
-
-                writer.WriteLine("<script type=\"text/javascript\">");
-                writer.Write(Resources.SvgEmbeddedJavaScript);
-                writer.WriteLine("</script>");
-
-                writer.WriteLine("</body></html>");
+                throw new InvalidOperationException($"It is impossible to modify the builder after it has already produced a schema.");
             }
-
-            return new Schema(ms.ToArray(), ".html");
         }
     }
 }

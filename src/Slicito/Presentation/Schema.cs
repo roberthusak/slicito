@@ -1,34 +1,22 @@
-using System.Text;
 using System.Text.Encodings.Web;
 
 using Microsoft.AspNetCore.Html;
+using Microsoft.Msagl.Drawing;
 
 namespace Slicito.Presentation;
 
-public partial class Schema : IHtmlContent
+public partial class Schema : IContent, IHtmlContent
 {
-    private readonly byte[] _contents;
+    private readonly Graph _graph;
 
-    private readonly string _fileExtension;
-
-    private Schema(byte[] contents, string fileExtension)
+    private Schema(Graph graph)
     {
-        _contents = contents;
-        _fileExtension = fileExtension;
+        _graph = graph;
     }
 
-    public Stream GetContents() => new MemoryStream(_contents);
+    public void WriteHtmlTo(TextWriter writer) => _graph.RenderSvgToTextWriter(writer, LayoutOrientation.Vertical, false);
 
-    public void WriteTo(TextWriter writer, HtmlEncoder encoder)
-    {
-        var contentsString = Encoding.UTF8.GetString(_contents);
-        writer.Write(contentsString);
-    }
+    public void WriteMarkdownTo(TextWriter writer) => WriteHtmlTo(writer);
 
-    public async Task<SchemaReference> UploadToServerAsync(string name = "schema")
-    {
-        var uri = await ServerUtils.UploadFileAsync(name + _fileExtension, GetContents());
-
-        return new SchemaReference(uri);
-    }
+    public void WriteTo(TextWriter writer, HtmlEncoder encoder) => WriteHtmlTo(writer);
 }

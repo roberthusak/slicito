@@ -81,6 +81,18 @@ public static partial class GraphExtensions
         svgWriter.Write(embedJs ? Resources.SvgEmbeddedJavaScript : null);
     }
 
+    public static void RenderSvgToTextWriter(this Graph graph, TextWriter writer, LayoutOrientation orientation, bool embedJs = true)
+    {
+        EnsureLayout(graph, orientation);
+
+        var svgWriter = new CustomSvgGraphWriter(writer, graph)
+        {
+            NodeSanitizer = (n => HttpUtility.HtmlEncode(n))
+        };
+
+        svgWriter.Write(embedJs ? Resources.SvgEmbeddedJavaScript : null);
+    }
+
     private static void EnsureLayout(Graph graph, LayoutOrientation orientation)
     {
         if (graph.GeometryGraph != null)
