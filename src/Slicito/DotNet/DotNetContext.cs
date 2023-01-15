@@ -13,7 +13,7 @@ using Slicito.DotNet.Relations;
 
 namespace Slicito.DotNet;
 
-public partial class DotNetContext : IContext<DotNetElement, EmptyStruct>
+public partial class DotNetContext : IContext
 {
     private readonly Dictionary<ISymbol, DotNetElement> _symbolsToElements;
     private readonly Dictionary<BasicBlock, DotNetBlock> _blocksToElements;
@@ -25,6 +25,10 @@ public partial class DotNetContext : IContext<DotNetElement, EmptyStruct>
     public IEnumerable<DotNetElement> Elements { get; }
 
     public IBinaryRelation<DotNetElement, DotNetElement, EmptyStruct> Hierarchy { get; }
+
+    IEnumerable<IElement> IContext.Elements => Elements;
+
+    IBinaryRelation<IElement, IElement, EmptyStruct> IContext.Hierarchy => Hierarchy;
 
     private DotNetContext(
         ImmutableArray<DotNetElement> elements,
