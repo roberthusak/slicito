@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 
 using Slicito.Abstractions;
 using Slicito.Abstractions.Relations;
+using Slicito.Interactive;
 
 namespace Slicito.Presentation;
 
@@ -30,6 +31,24 @@ public class DefaultContextSiteBuilder
             .AddDynamicPage(ElementPageId, options =>
             {
                 var element = _context.Elements.Single(e => e.Id == options.Parameters["id"]);
+
+                // FIXME Refactor the interfaces so that this ugly code is not needed
+
+                IImmutableDictionary<string, string>? openInIdeParameters = null;
+
+                _context.GetOpenInIdeUriProvider((path, parameters) =>
+                {
+                    openInIdeParameters = parameters;
+                    return null;
+                }).TryGetUriForElement(element);
+
+                if (openInIdeParameters is not null)
+                {
+                    InteractiveSession.Global.OpenFileInIde(
+                        openInIdeParameters["path"],
+                        int.Parse(openInIdeParameters["line"]),
+                        int.Parse(openInIdeParameters["offset"]));
+                }
 
                 return CreateSchema(options.GetUriDelegate, element);
             });
@@ -81,7 +100,7 @@ public class DefaultContextSiteBuilder
         }
     }
 
-    private Schema CreateSchema(GetUriDelegate? getUriDelegate, IElement? rootElement = null)
+    private Schema? CreateSchema(GetUriDelegate? getUriDelegate, IElement? rootElement = null)
     {
         var elements = new HashSet<IElement>();
 
@@ -110,6 +129,12 @@ public class DefaultContextSiteBuilder
                 if (underlyingLevel <= _elementLevels.Count - 1)
                 {
                     elements.UnionWith(_elementLevels[underlyingLevel].Intersect(slicedElements));
+                }
+
+                // Zooming to an element which would be shown as the only one in the view is pointless
+                if (elements.Count == 1)
+                {
+                    return null;
                 }
             }
         }

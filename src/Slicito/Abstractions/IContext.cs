@@ -10,4 +10,6 @@ public interface IContext
     IBinaryRelation<IElement, IElement, EmptyStruct> Hierarchy { get; }
 
     ILabelProvider LabelProvider { get; }
+
+    IUriProvider GetOpenInIdeUriProvider(GetUriDelegate? getUriDelegate);
 }

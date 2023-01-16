@@ -10,19 +10,24 @@ namespace Slicito.DotNet;
 
 public partial class DotNetContext
 {
-    public IUriProvider GetOpenInIdeUriProvider(GetUriDelegate getUriDelegate) => new OpenInIdeUriProviderImplementation(getUriDelegate);
+    public IUriProvider GetOpenInIdeUriProvider(GetUriDelegate? getUriDelegate) => new OpenInIdeUriProviderImplementation(getUriDelegate);
 
     private class OpenInIdeUriProviderImplementation : IUriProvider
     {
-        private readonly GetUriDelegate _getUriDelegate;
+        private readonly GetUriDelegate? _getUriDelegate;
 
-        public OpenInIdeUriProviderImplementation(GetUriDelegate getUriDelegate)
+        public OpenInIdeUriProviderImplementation(GetUriDelegate? getUriDelegate)
         {
             _getUriDelegate = getUriDelegate;
         }
 
         public Uri? TryGetUriForElement(IElement element)
         {
+            if (_getUriDelegate is null)
+            {
+                return null;
+            }
+
             var location = element switch
             {
                 DotNetSymbolElement { Symbol: var symbol } => symbol.TryGetDefinitionLocation(),
@@ -42,6 +47,11 @@ public partial class DotNetContext
 
         public Uri? TryGetUriForPair(object pair)
         {
+            if (_getUriDelegate is null)
+            {
+                return null;
+            }
+
             if (pair is not IPair<DotNetElement, DotNetElement, SyntaxNode?> sourcePair)
             {
                 return null;
@@ -53,9 +63,11 @@ public partial class DotNetContext
                 return null;
             }
 
-            var position = syntaxNode.SyntaxTree.GetMappedLineSpan(syntaxNode.Span);
+            var location = syntaxNode.SyntaxTree.GetMappedLineSpan(syntaxNode.Span);
 
-            return ServerUtils.GetOpenFileEndpointUri(position);
+            var destination = IdeUtils.GetOpenInIdePageNavigationDestination(location);
+
+            return _getUriDelegate(destination.PageId, destination.Parameters);
         }
     }
 }
