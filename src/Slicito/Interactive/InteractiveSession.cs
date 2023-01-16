@@ -81,7 +81,7 @@ public class InteractiveSession
         var site = GetSite(siteGuid);
         var destination = GetDestination(destinationGuid);
 
-        var content = site.NavigateTo(destination.pageId, destination.Parameters, StoreDestinationAndGetUri);
+        var content = site.NavigateTo(destination.PageId, destination.Parameters, StoreDestinationAndGetUri);
         var jsKernel = Kernel.Root.FindKernelByName("javascript");
 
         if (content is null || jsKernel is null)
@@ -96,5 +96,15 @@ public class InteractiveSession
         var contentJsString = HttpUtility.JavaScriptStringEncode(contentHtml, addDoubleQuotes: false);
 
         await jsKernel.SubmitCodeAsync($@"window.slicito.showSiteContent(""{siteGuid}"", ""{contentJsString}"");");
+    }
+
+    public void OpenFileInIde(string path, int line, int offset)
+    {
+        // Inspired by https://stackoverflow.com/a/54869165/2105235
+        // (other ways are cleaner but need proper handling of NuGet packages etc.)
+
+        dynamic vs = Marshal2.GetActiveObject("VisualStudio.DTE");
+        dynamic window = vs.ItemOperations.OpenFile(path);
+        window.Selection.MoveToLineAndOffset(line, offset);
     }
 }

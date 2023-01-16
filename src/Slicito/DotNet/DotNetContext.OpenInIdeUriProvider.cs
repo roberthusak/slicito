@@ -3,23 +3,42 @@ using Microsoft.CodeAnalysis;
 using Slicito.Abstractions;
 using Slicito.Abstractions.Relations;
 using Slicito.DotNet.Elements;
+using Slicito.Interactive;
 using Slicito.Presentation;
 
 namespace Slicito.DotNet;
 
 public partial class DotNetContext
 {
-    public IUriProvider OpenInIdeUriProvider { get; } = new OpenInIdeUriProviderImplementation();
+    public IUriProvider GetOpenInIdeUriProvider(GetUriDelegate getUriDelegate) => new OpenInIdeUriProviderImplementation(getUriDelegate);
 
     private class OpenInIdeUriProviderImplementation : IUriProvider
     {
-        public Uri? TryGetUriForElement(IElement element) =>
-            element switch
+        private readonly GetUriDelegate _getUriDelegate;
+
+        public OpenInIdeUriProviderImplementation(GetUriDelegate getUriDelegate)
+        {
+            _getUriDelegate = getUriDelegate;
+        }
+
+        public Uri? TryGetUriForElement(IElement element)
+        {
+            var location = element switch
             {
-                DotNetSymbolElement { Symbol: var symbol } => symbol.GetFileOpenUri(),
-                DotNetOperation { Operation: var operation } => operation.GetFileOpenUri(),
+                DotNetSymbolElement { Symbol: var symbol } => symbol.TryGetDefinitionLocation(),
+                DotNetOperation { Operation: var operation } => operation.Syntax.GetLocation().GetMappedLineSpan(),
                 _ => null
             };
+
+            if (location is null)
+            {
+                return null;
+            }
+
+            var destination = IdeUtils.GetOpenInIdePageNavigationDestination(location.Value);
+
+            return _getUriDelegate(destination.PageId, destination.Parameters);
+        }
 
         public Uri? TryGetUriForPair(object pair)
         {

@@ -65,7 +65,7 @@ public static class SymbolExtensions
         return label;
     }
 
-    public static Uri? GetFileOpenUri(this ISymbol symbol)
+    public static FileLinePositionSpan? TryGetDefinitionLocation(this ISymbol symbol)
     {
         var location = symbol.Locations.FirstOrDefault();
         if (location is null || !location.IsInSource)
@@ -73,7 +73,7 @@ public static class SymbolExtensions
             return null;
         }
 
-        return ServerUtils.GetOpenFileEndpointUri(location.GetMappedLineSpan());
+        return location.GetMappedLineSpan();
     }
 
     public static INamespaceSymbol? FindTopNamespace(this ISymbol symbol)
