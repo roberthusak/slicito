@@ -62,6 +62,7 @@ public class InteractiveSession
         var guid = AddSite(site);
 
         writer.WriteLine($"<div class='slicito-site' id='slicito-site-{guid}'>");
+        writer.WriteLine($"<button class='slicito-site-back' style='display:none' onclick='window.slicito.showPreviousSiteContent(\"{guid}\")'>Back</button>");
         writer.WriteLine($"<div class='slicito-site-content' id='slicito-site-content-{guid}'>");
 
         frontPageContent.WriteHtmlTo(writer);

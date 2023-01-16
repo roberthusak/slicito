@@ -2,8 +2,34 @@
 
     if (!window.slicito) {
 
+        // Associative array from site GUID to its state
+        let siteStates = {};
+
+        let getOrCreateSiteState = function (siteGuid) {
+            let siteState = siteStates[siteGuid];
+            if (!siteState) {
+                siteState = {
+                    history: []
+                };
+
+                siteStates[siteGuid] = siteState;
+            }
+
+            return siteState;
+        }
+
+        let getSiteElement = function (siteGuid) {
+            return document.getElementById("slicito-site-" + siteGuid);
+        };
+
+        let getBackButtonElement = function (siteGuid) {
+            let siteElement = getSiteElement(siteGuid);
+
+            return siteElement.getElementsByClassName("slicito-site-back")[0];
+        }
+
         let getContentElement = function (siteGuid) {
-            return siteContentElement = document.getElementById("slicito-site-content-" + siteGuid);
+            return document.getElementById("slicito-site-content-" + siteGuid);
         };
 
         let extractLinkHref = function (a) {
@@ -55,7 +81,27 @@
             },
 
             showSiteContent: function (siteGuid, content) {
+                let history = getOrCreateSiteState(siteGuid).history;
+                let backButtonElement = getBackButtonElement(siteGuid);
                 let siteContentElement = getContentElement(siteGuid);
+
+                history.push(siteContentElement.innerHTML);
+                backButtonElement.removeAttribute("style");
+
+                siteContentElement.innerHTML = content;
+                this.forwardLinksToDotNet(siteGuid);
+            },
+
+            showPreviousSiteContent: function (siteGuid) {
+                let history = getOrCreateSiteState(siteGuid).history;
+                let backButtonElement = getBackButtonElement(siteGuid);
+                let siteContentElement = getContentElement(siteGuid);
+
+                let content = history.pop();
+                if (history.length == 0) {
+                    backButtonElement.setAttribute("style", "display: none;");
+                }
+
                 siteContentElement.innerHTML = content;
                 this.forwardLinksToDotNet(siteGuid);
             }
