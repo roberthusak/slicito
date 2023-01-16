@@ -2,7 +2,7 @@ using System.Collections.Immutable;
 
 namespace Slicito.Presentation;
 
-public delegate Uri? GetUriDelegate(string locationId, IImmutableDictionary<string, string> parameters);
+public delegate Uri? GetUriDelegate(string pageId, IImmutableDictionary<string, string> parameters);
 
 public partial class Site
 {
