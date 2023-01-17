@@ -1,5 +1,7 @@
 using System.Collections.Immutable;
 
+using Microsoft.CodeAnalysis;
+
 using Slicito.Abstractions;
 using Slicito.Abstractions.Relations;
 using Slicito.Interactive;
@@ -14,6 +16,9 @@ public class DefaultContextSiteBuilder
 
     private readonly List<HashSet<IElement>> _elementLevels;
 
+    // FIXME Don't reference SyntaxNode after relation refactoring
+    private readonly List<IBinaryRelation<IElement, IElement, SyntaxNode?>> _relations = new();
+
     public Site.Builder SiteBuilder { get; }
 
     public DefaultContextSiteBuilder(IContext context)
@@ -22,6 +27,20 @@ public class DefaultContextSiteBuilder
         _elementLevels = GenerateElementLevels(context);
 
         SiteBuilder = new();
+    }
+
+    public DefaultContextSiteBuilder AddRelation(IBinaryRelation<IElement, IElement, SyntaxNode?> relation)
+    {
+        _relations.Add(relation);
+
+        return this;
+    }
+
+    public DefaultContextSiteBuilder AddRelations(IEnumerable<IBinaryRelation<IElement, IElement, SyntaxNode?>> relations)
+    {
+        _relations.AddRange(relations);
+
+        return this;
     }
 
     public Site Build()
@@ -139,13 +158,19 @@ public class DefaultContextSiteBuilder
             }
         }
 
-        return new Schema.Builder()
+        var builder = new Schema.Builder()
             .AddLabelProvider(_context.LabelProvider)
             .AddNodes(elements, _context.Hierarchy, (e, node) =>
             {
                 var parameters = ImmutableDictionary<string, string>.Empty.Add("id", e.Id);
                 node.Attr.Uri = getUriDelegate?.Invoke(ElementPageId, parameters)?.ToString();
-            })
-            .Build();
+            });
+
+        foreach (var relation in _relations)
+        {
+            builder.AddEdges(relation);
+        }
+
+        return builder.Build();
     }
 }
