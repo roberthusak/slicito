@@ -1,9 +1,9 @@
-namespace Slicito.Abstractions.Relations;
+namespace Slicito.Abstractions;
 
 public record Pair<TSourceElement, TTargetElement, TData>(TSourceElement Source, TTargetElement Target, TData Data)
     : IPair<TSourceElement, TTargetElement, TData>
-    where TSourceElement: class, IElement
-    where TTargetElement: class, IElement;
+    where TSourceElement : class, IElement
+    where TTargetElement : class, IElement;
 
 public static class Pair
 {

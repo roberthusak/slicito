@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
 
-namespace Slicito.Abstractions.Relations;
+namespace Slicito.Abstractions;
 
 public partial class BinaryRelation<TSourceElement, TTargetElement, TData> : IBinaryRelation<TSourceElement, TTargetElement, TData>
     where TSourceElement : class, IElement

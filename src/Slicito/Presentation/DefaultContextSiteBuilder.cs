@@ -3,7 +3,6 @@ using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 
 using Slicito.Abstractions;
-using Slicito.Abstractions.Relations;
 using Slicito.Interactive;
 
 namespace Slicito.Presentation;

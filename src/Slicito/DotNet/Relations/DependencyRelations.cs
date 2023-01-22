@@ -2,7 +2,7 @@ using System.Collections;
 
 using Microsoft.CodeAnalysis;
 
-using Slicito.Abstractions.Relations;
+using Slicito.Abstractions;
 using Slicito.DotNet.Elements;
 
 namespace Slicito.DotNet.Relations;

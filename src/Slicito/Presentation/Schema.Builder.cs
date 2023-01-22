@@ -4,7 +4,6 @@ using System.Diagnostics.CodeAnalysis;
 using Microsoft.Msagl.Drawing;
 
 using Slicito.Abstractions;
-using Slicito.Abstractions.Relations;
 
 namespace Slicito.Presentation;
 

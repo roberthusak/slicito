@@ -1,4 +1,4 @@
-namespace Slicito.Abstractions.Relations;
+namespace Slicito.Abstractions;
 
 public interface IBinaryRelation<out TSourceElement, out TTargetElement, out TData>
     where TSourceElement : class, IElement

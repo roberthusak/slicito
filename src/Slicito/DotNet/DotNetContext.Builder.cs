@@ -4,7 +4,7 @@ using System.Diagnostics;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FlowAnalysis;
 
-using Slicito.Abstractions.Relations;
+using Slicito.Abstractions;
 using Slicito.DotNet.Elements;
 
 namespace Slicito.DotNet;

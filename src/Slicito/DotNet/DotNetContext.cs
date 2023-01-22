@@ -7,7 +7,6 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.FlowAnalysis;
 
 using Slicito.Abstractions;
-using Slicito.Abstractions.Relations;
 using Slicito.DotNet.Elements;
 using Slicito.DotNet.Relations;
 

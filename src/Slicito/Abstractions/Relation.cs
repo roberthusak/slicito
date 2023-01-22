@@ -1,4 +1,4 @@
-namespace Slicito.Abstractions.Relations;
+namespace Slicito.Abstractions;
 
 public static class Relation
 {

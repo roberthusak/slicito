@@ -1,7 +1,6 @@
 using Microsoft.CodeAnalysis;
 
 using Slicito.Abstractions;
-using Slicito.Abstractions.Relations;
 using Slicito.DotNet.Elements;
 using Slicito.Interactive;
 using Slicito.Presentation;
