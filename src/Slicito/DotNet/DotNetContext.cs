@@ -45,6 +45,16 @@ public partial class DotNetContext : IContext
         _moduleMetadataNamesToProjects = moduleMetadataNamesToProjects;
     }
 
+    public static Task<DotNetContext> CreateFromProjectAsync(string projectPath) =>
+        new Builder()
+        .AddProject(projectPath)
+        .BuildAsync();
+
+    public static Task<DotNetContext> CreateFromSolutionAsync(string solutionPath) =>
+        new Builder()
+        .AddSolution(solutionPath)
+        .BuildAsync();
+
     public DotNetElement? TryGetElementFromSymbol(ISymbol? symbol)
     {
         if (symbol is null)
