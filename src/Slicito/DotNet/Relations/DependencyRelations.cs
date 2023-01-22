@@ -21,8 +21,8 @@ public partial class DependencyRelations : IEnumerable<IBinaryRelation<DotNetEle
         InheritsFrom = inheritsFrom;
         Overrides = overrides;
         Calls = calls;
-        Stores = stores;
-        Loads = loads;
+        StoresTo = stores;
+        LoadsFrom = loads;
         ReferencesType = referencesType;
         IsOfType = isOfType;
     }
@@ -33,9 +33,9 @@ public partial class DependencyRelations : IEnumerable<IBinaryRelation<DotNetEle
 
     public IBinaryRelation<DotNetOperation, DotNetMethod, SyntaxNode> Calls { get; }
 
-    public IBinaryRelation<DotNetOperation, DotNetStorageTypeMember, SyntaxNode> Stores { get; }
+    public IBinaryRelation<DotNetOperation, DotNetStorageTypeMember, SyntaxNode> StoresTo { get; }
 
-    public IBinaryRelation<DotNetOperation, DotNetStorageTypeMember, SyntaxNode> Loads { get; }
+    public IBinaryRelation<DotNetOperation, DotNetStorageTypeMember, SyntaxNode> LoadsFrom { get; }
 
     public IBinaryRelation<DotNetElement, DotNetType, SyntaxNode> ReferencesType { get; }
 
@@ -46,8 +46,8 @@ public partial class DependencyRelations : IEnumerable<IBinaryRelation<DotNetEle
         yield return InheritsFrom.SetData((SyntaxNode?) null);
         yield return Overrides.SetData((SyntaxNode?) null);
         yield return Calls;
-        yield return Stores;
-        yield return Loads;
+        yield return StoresTo;
+        yield return LoadsFrom;
         yield return ReferencesType;
         yield return IsOfType.SetData((SyntaxNode?) null);
     }

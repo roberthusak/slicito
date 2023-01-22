@@ -73,11 +73,11 @@ internal class OperationDependencyRelationsVisitor : OperationVisitor<DotNetOper
 
         if (operation.Parent is IAssignmentOperation assignment && assignment.Target == operation)
         {
-            _builder.Stores.Add(operationElement, storageElement, operation.Syntax);
+            _builder.StoresTo.Add(operationElement, storageElement, operation.Syntax);
         }
         else
         {
-            _builder.Loads.Add(operationElement, storageElement, operation.Syntax);
+            _builder.LoadsFrom.Add(operationElement, storageElement, operation.Syntax);
         }
     }
 }

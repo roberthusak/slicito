@@ -15,9 +15,9 @@ public partial class DependencyRelations
 
         public BinaryRelation<DotNetOperation, DotNetMethod, SyntaxNode>.Builder Calls { get; } = new();
 
-        public BinaryRelation<DotNetOperation, DotNetStorageTypeMember, SyntaxNode>.Builder Stores { get; } = new();
+        public BinaryRelation<DotNetOperation, DotNetStorageTypeMember, SyntaxNode>.Builder StoresTo { get; } = new();
 
-        public BinaryRelation<DotNetOperation, DotNetStorageTypeMember, SyntaxNode>.Builder Loads { get; } = new();
+        public BinaryRelation<DotNetOperation, DotNetStorageTypeMember, SyntaxNode>.Builder LoadsFrom { get; } = new();
 
         public BinaryRelation<DotNetElement, DotNetType, SyntaxNode>.Builder ReferencesType { get; } = new();
 
@@ -28,8 +28,8 @@ public partial class DependencyRelations
                 InheritsFrom.Build(),
                 Overrides.Build(),
                 Calls.Build(),
-                Stores.Build(),
-                Loads.Build(),
+                StoresTo.Build(),
+                LoadsFrom.Build(),
                 ReferencesType.Build(),
                 IsOfType.Build());
     }

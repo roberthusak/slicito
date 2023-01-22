@@ -33,7 +33,7 @@ public partial class DataFlowRelations
                 ResultIsCopiedTo.Build(),
                 ResultIsReadBy.Build(),
                 IsPassedAs.Build(),
-                DependencyRelations.Stores,
-                DependencyRelations.Loads.Invert());
+                DependencyRelations.StoresTo,
+                DependencyRelations.LoadsFrom.Invert());
     }
 }
