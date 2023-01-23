@@ -5,9 +5,9 @@ using Slicito.DotNet.Elements;
 
 namespace Slicito.DotNet.Relations;
 
-public partial class DependencyRelations
+public partial record DependencyRelations
 {
-    internal class Builder
+    public class Builder
     {
         public Relation<DotNetType, DotNetType, EmptyStruct>.Builder InheritsFrom { get; } = new();
 

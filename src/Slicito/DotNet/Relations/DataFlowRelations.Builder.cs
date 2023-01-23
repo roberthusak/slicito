@@ -5,9 +5,9 @@ using Slicito.DotNet.Elements;
 
 namespace Slicito.DotNet.Relations;
 
-public partial class DataFlowRelations
+public partial record DataFlowRelations
 {
-    internal class Builder
+    public class Builder
     {
         public Builder(DependencyRelations dependencyRelations)
         {

@@ -7,7 +7,7 @@ namespace Slicito.DotNet.Relations;
 
 public partial record ControlFlowRelations
 {
-    internal class Builder
+    public class Builder
     {
         public Builder(DependencyRelations dependencyRelations)
         {

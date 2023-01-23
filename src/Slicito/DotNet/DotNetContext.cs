@@ -144,10 +144,8 @@ public partial class DotNetContext : IContext
         }
     }
 
-    public DataFlowRelations ExtractDataFlowRelations(Predicate<DotNetElement>? filter = null)
+    public DataFlowRelations ExtractDataFlowRelations(DependencyRelations dependencyRelations, Predicate<DotNetElement>? filter = null)
     {
-        var dependencyRelations = ExtractDependencyRelations(filter);
-
         var builder = new DataFlowRelations.Builder(dependencyRelations);
 
         var operationVisitor = new OperationDataFlowRelationsVisitor(this, builder);
@@ -166,10 +164,8 @@ public partial class DotNetContext : IContext
         return builder.Build();
     }
 
-    public ControlFlowRelations ExtractControlFlowRelations(Predicate<DotNetMethod>? filter = null)
+    public ControlFlowRelations ExtractControlFlowRelations(DependencyRelations dependencyRelations, Predicate<DotNetMethod>? filter = null)
     {
-        var dependencyRelations = ExtractDependencyRelations();
-
         var builder = new ControlFlowRelations.Builder(dependencyRelations);
 
         foreach (var method in Elements.OfType<DotNetMethod>())

@@ -1,3 +1,5 @@
+using System.Collections;
+
 using Microsoft.CodeAnalysis;
 
 using Slicito.Abstractions;
@@ -12,6 +14,7 @@ public partial record ControlFlowRelations(
     Relation<DotNetElement, DotNetElement, SyntaxNode?> IsSucceededByWithLeftOutInvocation,
     Relation<DotNetElement, DotNetElement, SyntaxNode?> IsSucceededByWithInvocation,
     Relation<DotNetElement, DotNetElement, SyntaxNode?> IsSucceededByWithReturn)
+    : IEnumerable<Relation<DotNetElement, DotNetElement, SyntaxNode?>>
 {
     public IEnumerable<Relation<DotNetElement, DotNetElement, SyntaxNode?>> GetIntraproceduralFlow()
     {
@@ -29,4 +32,16 @@ public partial record ControlFlowRelations(
         yield return IsSucceededByWithInvocation;
         yield return IsSucceededByWithReturn;
     }
+
+    public IEnumerator<Relation<DotNetElement, DotNetElement, SyntaxNode?>> GetEnumerator()
+    {
+        yield return IsSucceededByUnconditionally;
+        yield return IsSucceededByIfTrue;
+        yield return IsSucceededByIfFalse;
+        yield return IsSucceededByWithLeftOutInvocation;
+        yield return IsSucceededByWithInvocation;
+        yield return IsSucceededByWithReturn;
+    }
+
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 }
