@@ -4,6 +4,7 @@ using System.Web;
 
 using Microsoft.DotNet.Interactive;
 
+using Slicito.Abstractions;
 using Slicito.Presentation;
 
 namespace Slicito.Interactive;
@@ -75,6 +76,9 @@ public class InteractiveSession
         writer.WriteLine($"window.slicito.forwardLinksToDotNet(\"{guid}\");");
         writer.WriteLine("</script>");
     }
+
+    public void FormatContextAsSiteHtml(IContext context, TextWriter writer) =>
+        FormatSiteAsHtml(new DefaultContextSiteBuilder(context).Build(), writer);
 
     public async Task NavigateSiteToAsync(Guid siteGuid, Guid destinationGuid)
     {
