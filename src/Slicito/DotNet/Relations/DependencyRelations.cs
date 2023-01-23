@@ -7,16 +7,16 @@ using Slicito.DotNet.Elements;
 
 namespace Slicito.DotNet.Relations;
 
-public partial class DependencyRelations : IEnumerable<IBinaryRelation<DotNetElement, DotNetElement, SyntaxNode?>>
+public partial class DependencyRelations : IEnumerable<IRelation<DotNetElement, DotNetElement, SyntaxNode?>>
 {
     internal DependencyRelations(
-        IBinaryRelation<DotNetType, DotNetType, EmptyStruct> inheritsFrom,
-        IBinaryRelation<DotNetMethod, DotNetMethod, EmptyStruct> overrides,
-        IBinaryRelation<DotNetOperation, DotNetMethod, SyntaxNode> calls,
-        IBinaryRelation<DotNetOperation, DotNetStorageTypeMember, SyntaxNode> stores,
-        IBinaryRelation<DotNetOperation, DotNetStorageTypeMember, SyntaxNode> loads,
-        IBinaryRelation<DotNetElement, DotNetType, SyntaxNode> referencesType,
-        IBinaryRelation<DotNetStorageTypeMember, DotNetType, EmptyStruct> isOfType)
+        IRelation<DotNetType, DotNetType, EmptyStruct> inheritsFrom,
+        IRelation<DotNetMethod, DotNetMethod, EmptyStruct> overrides,
+        IRelation<DotNetOperation, DotNetMethod, SyntaxNode> calls,
+        IRelation<DotNetOperation, DotNetStorageTypeMember, SyntaxNode> stores,
+        IRelation<DotNetOperation, DotNetStorageTypeMember, SyntaxNode> loads,
+        IRelation<DotNetElement, DotNetType, SyntaxNode> referencesType,
+        IRelation<DotNetStorageTypeMember, DotNetType, EmptyStruct> isOfType)
     {
         InheritsFrom = inheritsFrom;
         Overrides = overrides;
@@ -27,21 +27,21 @@ public partial class DependencyRelations : IEnumerable<IBinaryRelation<DotNetEle
         IsOfType = isOfType;
     }
 
-    public IBinaryRelation<DotNetType, DotNetType, EmptyStruct> InheritsFrom { get; }
+    public IRelation<DotNetType, DotNetType, EmptyStruct> InheritsFrom { get; }
 
-    public IBinaryRelation<DotNetMethod, DotNetMethod, EmptyStruct> Overrides { get; }
+    public IRelation<DotNetMethod, DotNetMethod, EmptyStruct> Overrides { get; }
 
-    public IBinaryRelation<DotNetOperation, DotNetMethod, SyntaxNode> Calls { get; }
+    public IRelation<DotNetOperation, DotNetMethod, SyntaxNode> Calls { get; }
 
-    public IBinaryRelation<DotNetOperation, DotNetStorageTypeMember, SyntaxNode> StoresTo { get; }
+    public IRelation<DotNetOperation, DotNetStorageTypeMember, SyntaxNode> StoresTo { get; }
 
-    public IBinaryRelation<DotNetOperation, DotNetStorageTypeMember, SyntaxNode> LoadsFrom { get; }
+    public IRelation<DotNetOperation, DotNetStorageTypeMember, SyntaxNode> LoadsFrom { get; }
 
-    public IBinaryRelation<DotNetElement, DotNetType, SyntaxNode> ReferencesType { get; }
+    public IRelation<DotNetElement, DotNetType, SyntaxNode> ReferencesType { get; }
 
-    public IBinaryRelation<DotNetStorageTypeMember, DotNetType, EmptyStruct> IsOfType { get; }
+    public IRelation<DotNetStorageTypeMember, DotNetType, EmptyStruct> IsOfType { get; }
 
-    public IEnumerator<IBinaryRelation<DotNetElement, DotNetElement, SyntaxNode?>> GetEnumerator()
+    public IEnumerator<IRelation<DotNetElement, DotNetElement, SyntaxNode?>> GetEnumerator()
     {
         yield return InheritsFrom.SetData((SyntaxNode?) null);
         yield return Overrides.SetData((SyntaxNode?) null);

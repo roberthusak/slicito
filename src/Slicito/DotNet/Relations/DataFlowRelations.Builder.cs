@@ -16,15 +16,15 @@ public partial class DataFlowRelations
 
         public DependencyRelations DependencyRelations { get; }
 
-        public BinaryRelation<DotNetVariable, DotNetOperation, SyntaxNode>.Builder VariableIsReadBy { get; } = new();
+        public Relation<DotNetVariable, DotNetOperation, SyntaxNode>.Builder VariableIsReadBy { get; } = new();
 
-        public BinaryRelation<DotNetOperation, DotNetVariable, SyntaxNode>.Builder WritesToVariable { get; } = new();
+        public Relation<DotNetOperation, DotNetVariable, SyntaxNode>.Builder WritesToVariable { get; } = new();
 
-        public BinaryRelation<DotNetOperation, DotNetOperation, SyntaxNode>.Builder ResultIsCopiedTo { get; } = new();
+        public Relation<DotNetOperation, DotNetOperation, SyntaxNode>.Builder ResultIsCopiedTo { get; } = new();
 
-        public BinaryRelation<DotNetOperation, DotNetOperation, SyntaxNode>.Builder ResultIsReadBy { get; } = new();
+        public Relation<DotNetOperation, DotNetOperation, SyntaxNode>.Builder ResultIsReadBy { get; } = new();
 
-        public BinaryRelation<DotNetOperation, DotNetParameter, SyntaxNode>.Builder IsPassedAs { get; } = new();
+        public Relation<DotNetOperation, DotNetParameter, SyntaxNode>.Builder IsPassedAs { get; } = new();
 
         public DataFlowRelations Build() =>
             new(

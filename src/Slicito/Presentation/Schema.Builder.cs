@@ -100,7 +100,7 @@ public partial class Schema
 
         public Builder AddNode<TElement, THierarchyData>(
             TElement element,
-            IBinaryRelation<TElement, TElement, THierarchyData>? hierarchy,
+            IRelation<TElement, TElement, THierarchyData>? hierarchy,
             Action<TElement, Node>? nodeCustomizer = null)
             where TElement: class, IElement
         =>
@@ -111,7 +111,7 @@ public partial class Schema
 
         public Builder AddNodes<TElement, THierarchyData>(
             IEnumerable<TElement> elements,
-            IBinaryRelation<TElement, TElement, THierarchyData>? hierarchy,
+            IRelation<TElement, TElement, THierarchyData>? hierarchy,
             Action<TElement, Node>? nodeCustomizer = null)
             where TElement: class, IElement
         {
@@ -157,7 +157,7 @@ public partial class Schema
         }
 
         public Builder AddNodes<TElement, THierarchyData>(
-            IBinaryRelation<TElement, TElement, THierarchyData> hierarchy,
+            IRelation<TElement, TElement, THierarchyData> hierarchy,
             Action<TElement, Node>? nodeCustomizer = null)
             where TElement: class, IElement
         =>
@@ -220,7 +220,7 @@ public partial class Schema
         }
 
         public Builder AddEdges<TSourceElement, TTargetElement, TData>(
-            IBinaryRelation<TSourceElement, TTargetElement, TData> relation,
+            IRelation<TSourceElement, TTargetElement, TData> relation,
             Action<IPair<TSourceElement, TTargetElement, TData>, Edge>? edgeCustomizer = null)
             where TSourceElement : class, IElement
             where TTargetElement : class, IElement

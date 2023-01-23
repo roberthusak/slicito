@@ -9,19 +9,19 @@ public partial class DependencyRelations
 {
     internal class Builder
     {
-        public BinaryRelation<DotNetType, DotNetType, EmptyStruct>.Builder InheritsFrom { get; } = new();
+        public Relation<DotNetType, DotNetType, EmptyStruct>.Builder InheritsFrom { get; } = new();
 
-        public BinaryRelation<DotNetMethod, DotNetMethod, EmptyStruct>.Builder Overrides { get; } = new();
+        public Relation<DotNetMethod, DotNetMethod, EmptyStruct>.Builder Overrides { get; } = new();
 
-        public BinaryRelation<DotNetOperation, DotNetMethod, SyntaxNode>.Builder Calls { get; } = new();
+        public Relation<DotNetOperation, DotNetMethod, SyntaxNode>.Builder Calls { get; } = new();
 
-        public BinaryRelation<DotNetOperation, DotNetStorageTypeMember, SyntaxNode>.Builder StoresTo { get; } = new();
+        public Relation<DotNetOperation, DotNetStorageTypeMember, SyntaxNode>.Builder StoresTo { get; } = new();
 
-        public BinaryRelation<DotNetOperation, DotNetStorageTypeMember, SyntaxNode>.Builder LoadsFrom { get; } = new();
+        public Relation<DotNetOperation, DotNetStorageTypeMember, SyntaxNode>.Builder LoadsFrom { get; } = new();
 
-        public BinaryRelation<DotNetElement, DotNetType, SyntaxNode>.Builder ReferencesType { get; } = new();
+        public Relation<DotNetElement, DotNetType, SyntaxNode>.Builder ReferencesType { get; } = new();
 
-        public BinaryRelation<DotNetStorageTypeMember, DotNetType, EmptyStruct>.Builder IsOfType { get; } = new();
+        public Relation<DotNetStorageTypeMember, DotNetType, EmptyStruct>.Builder IsOfType { get; } = new();
 
         public DependencyRelations Build() =>
             new(

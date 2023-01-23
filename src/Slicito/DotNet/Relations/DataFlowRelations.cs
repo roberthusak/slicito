@@ -7,16 +7,16 @@ using Slicito.DotNet.Elements;
 
 namespace Slicito.DotNet.Relations;
 
-public partial class DataFlowRelations : IEnumerable<IBinaryRelation<DotNetElement, DotNetElement, SyntaxNode?>>
+public partial class DataFlowRelations : IEnumerable<IRelation<DotNetElement, DotNetElement, SyntaxNode?>>
 {
     private DataFlowRelations(
-        BinaryRelation<DotNetVariable, DotNetOperation, SyntaxNode> variableIsReadBy,
-        BinaryRelation<DotNetOperation, DotNetVariable, SyntaxNode> writesToVariable,
-        BinaryRelation<DotNetOperation, DotNetOperation, SyntaxNode> resultIsCopiedTo,
-        BinaryRelation<DotNetOperation, DotNetOperation, SyntaxNode> resultIsReadBy,
-        BinaryRelation<DotNetOperation, DotNetParameter, SyntaxNode> isPassedAs,
-        IBinaryRelation<DotNetOperation, DotNetStorageTypeMember, SyntaxNode> stores,
-        IBinaryRelation<DotNetStorageTypeMember, DotNetOperation, SyntaxNode> isLoadedTo)
+        Relation<DotNetVariable, DotNetOperation, SyntaxNode> variableIsReadBy,
+        Relation<DotNetOperation, DotNetVariable, SyntaxNode> writesToVariable,
+        Relation<DotNetOperation, DotNetOperation, SyntaxNode> resultIsCopiedTo,
+        Relation<DotNetOperation, DotNetOperation, SyntaxNode> resultIsReadBy,
+        Relation<DotNetOperation, DotNetParameter, SyntaxNode> isPassedAs,
+        IRelation<DotNetOperation, DotNetStorageTypeMember, SyntaxNode> stores,
+        IRelation<DotNetStorageTypeMember, DotNetOperation, SyntaxNode> isLoadedTo)
     {
         VariableIsReadBy = variableIsReadBy;
         WritesToVariable = writesToVariable;
@@ -27,21 +27,21 @@ public partial class DataFlowRelations : IEnumerable<IBinaryRelation<DotNetEleme
         IsLoadedTo = isLoadedTo;
     }
 
-    public BinaryRelation<DotNetVariable, DotNetOperation, SyntaxNode> VariableIsReadBy { get; }
+    public Relation<DotNetVariable, DotNetOperation, SyntaxNode> VariableIsReadBy { get; }
 
-    public BinaryRelation<DotNetOperation, DotNetVariable, SyntaxNode> WritesToVariable { get; }
+    public Relation<DotNetOperation, DotNetVariable, SyntaxNode> WritesToVariable { get; }
 
-    public BinaryRelation<DotNetOperation, DotNetOperation, SyntaxNode> ResultIsCopiedTo { get; }
+    public Relation<DotNetOperation, DotNetOperation, SyntaxNode> ResultIsCopiedTo { get; }
 
-    public BinaryRelation<DotNetOperation, DotNetOperation, SyntaxNode> ResultIsReadBy { get; }
+    public Relation<DotNetOperation, DotNetOperation, SyntaxNode> ResultIsReadBy { get; }
 
-    public BinaryRelation<DotNetOperation, DotNetParameter, SyntaxNode> IsPassedAs { get; }
+    public Relation<DotNetOperation, DotNetParameter, SyntaxNode> IsPassedAs { get; }
 
-    public IBinaryRelation<DotNetOperation, DotNetStorageTypeMember, SyntaxNode> Stores { get; }
+    public IRelation<DotNetOperation, DotNetStorageTypeMember, SyntaxNode> Stores { get; }
 
-    public IBinaryRelation<DotNetStorageTypeMember, DotNetOperation, SyntaxNode> IsLoadedTo { get; }
+    public IRelation<DotNetStorageTypeMember, DotNetOperation, SyntaxNode> IsLoadedTo { get; }
 
-    public IEnumerator<IBinaryRelation<DotNetElement, DotNetElement, SyntaxNode>> GetEnumerator()
+    public IEnumerator<IRelation<DotNetElement, DotNetElement, SyntaxNode>> GetEnumerator()
     {
         yield return VariableIsReadBy;
         yield return WritesToVariable;
@@ -54,7 +54,7 @@ public partial class DataFlowRelations : IEnumerable<IBinaryRelation<DotNetEleme
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-    public IEnumerable<IBinaryRelation<DotNetElement, DotNetElement, SyntaxNode>> GetValueFlow()
+    public IEnumerable<IRelation<DotNetElement, DotNetElement, SyntaxNode>> GetValueFlow()
     {
         yield return VariableIsReadBy;
         yield return WritesToVariable;

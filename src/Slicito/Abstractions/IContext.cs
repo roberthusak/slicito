@@ -6,7 +6,7 @@ public interface IContext
 {
     IEnumerable<IElement> Elements { get; }
 
-    IBinaryRelation<IElement, IElement, EmptyStruct> Hierarchy { get; }
+    IRelation<IElement, IElement, EmptyStruct> Hierarchy { get; }
 
     ILabelProvider LabelProvider { get; }
 

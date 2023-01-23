@@ -16,7 +16,7 @@ public class DefaultContextSiteBuilder
     private readonly List<HashSet<IElement>> _elementLevels;
 
     // FIXME Don't reference SyntaxNode after relation refactoring
-    private readonly List<IBinaryRelation<IElement, IElement, SyntaxNode?>> _relations = new();
+    private readonly List<IRelation<IElement, IElement, SyntaxNode?>> _relations = new();
 
     public Site.Builder SiteBuilder { get; }
 
@@ -28,14 +28,14 @@ public class DefaultContextSiteBuilder
         SiteBuilder = new();
     }
 
-    public DefaultContextSiteBuilder AddRelation(IBinaryRelation<IElement, IElement, SyntaxNode?> relation)
+    public DefaultContextSiteBuilder AddRelation(IRelation<IElement, IElement, SyntaxNode?> relation)
     {
         _relations.Add(relation);
 
         return this;
     }
 
-    public DefaultContextSiteBuilder AddRelations(IEnumerable<IBinaryRelation<IElement, IElement, SyntaxNode?>> relations)
+    public DefaultContextSiteBuilder AddRelations(IEnumerable<IRelation<IElement, IElement, SyntaxNode?>> relations)
     {
         _relations.AddRange(relations);
 

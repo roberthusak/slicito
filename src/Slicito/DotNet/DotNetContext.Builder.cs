@@ -14,7 +14,7 @@ public partial class DotNetContext
     public partial class Builder
     {
         private readonly List<DotNetElement> _elements = new();
-        private readonly BinaryRelation<DotNetElement, DotNetElement, EmptyStruct>.Builder _hierarchyBuilder = new();
+        private readonly Relation<DotNetElement, DotNetElement, EmptyStruct>.Builder _hierarchyBuilder = new();
 
         private readonly Dictionary<ISymbol, DotNetElement> _symbolsToElements = new(SymbolEqualityComparer.Default);
         private readonly Dictionary<BasicBlock, DotNetBlock> _blocksToElements = new();

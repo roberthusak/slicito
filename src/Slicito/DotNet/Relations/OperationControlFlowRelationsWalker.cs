@@ -78,7 +78,7 @@ internal class OperationControlFlowRelationsWalker : OperationWalker
         }
 
         void AddPairIfTargetNotNull(
-            BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?>.Builder relation,
+            Relation<DotNetElement, DotNetElement, SyntaxNode?>.Builder relation,
             DotNetElement source,
             DotNetElement? target,
             SyntaxNode? data)
@@ -111,7 +111,7 @@ internal class OperationControlFlowRelationsWalker : OperationWalker
         ConnectFlowWithPreviousElement(operation, _builder.IsSucceededByWithLeftOutInvocation);
     }
 
-    private void ConnectFlowWithPreviousElement(IOperation operation, BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?>.Builder relation)
+    private void ConnectFlowWithPreviousElement(IOperation operation, Relation<DotNetElement, DotNetElement, SyntaxNode?>.Builder relation)
     {
         if (_context.TryGetElementFromOperation(operation) is not DotNetOperation operationElement)
         {

@@ -2,13 +2,13 @@ namespace Slicito.Abstractions;
 
 public static class Relation
 {
-    public static IBinaryRelation<TSourceElement, TTargetElement, TData>
+    public static IRelation<TSourceElement, TTargetElement, TData>
         Merge<TSourceElement, TTargetElement, TData>(
-            IEnumerable<IBinaryRelation<TSourceElement, TTargetElement, TData>> relations)
+            IEnumerable<IRelation<TSourceElement, TTargetElement, TData>> relations)
         where TSourceElement : class, IElement
         where TTargetElement : class, IElement
     {
-        var builder = new BinaryRelation<TSourceElement, TTargetElement, TData>.Builder();
+        var builder = new Relation<TSourceElement, TTargetElement, TData>.Builder();
 
         foreach (var relation in relations)
         {
@@ -18,22 +18,22 @@ public static class Relation
         return builder.Build();
     }
 
-    public static IBinaryRelation<TSourceElement, TTargetElement, TData>
+    public static IRelation<TSourceElement, TTargetElement, TData>
         Merge<TSourceElement, TTargetElement, TData>(
-            params IBinaryRelation<TSourceElement, TTargetElement, TData>[] relations)
+            params IRelation<TSourceElement, TTargetElement, TData>[] relations)
         where TSourceElement : class, IElement
         where TTargetElement : class, IElement
     =>
-        Merge((IEnumerable<IBinaryRelation<TSourceElement, TTargetElement, TData>>) relations);
+        Merge((IEnumerable<IRelation<TSourceElement, TTargetElement, TData>>) relations);
 
-    public static IBinaryRelation<TSourceElement, TTargetElement, TData>
+    public static IRelation<TSourceElement, TTargetElement, TData>
         Filter<TSourceElement, TTargetElement, TData>(
-            this IBinaryRelation<TSourceElement, TTargetElement, TData> relation,
+            this IRelation<TSourceElement, TTargetElement, TData> relation,
             Predicate<IPair<TSourceElement, TTargetElement, TData>> filter)
         where TSourceElement : class, IElement
         where TTargetElement : class, IElement
     {
-        var builder = new BinaryRelation<TSourceElement, TTargetElement, TData>.Builder();
+        var builder = new Relation<TSourceElement, TTargetElement, TData>.Builder();
 
         foreach (var pair in relation.Pairs)
         {
@@ -46,15 +46,15 @@ public static class Relation
         return builder.Build();
     }
 
-    public static IBinaryRelation<TSourceElement, TTargetElement, TData>
+    public static IRelation<TSourceElement, TTargetElement, TData>
         MakeUnique<TSourceElement, TTargetElement, TData>(
-            this IBinaryRelation<TSourceElement, TTargetElement, TData> relation)
+            this IRelation<TSourceElement, TTargetElement, TData> relation)
         where TSourceElement : class, IElement
         where TTargetElement : class, IElement
     {
         var addedPairs = new HashSet<(string sourceId, string targetId)>();
 
-        var builder = new BinaryRelation<TSourceElement, TTargetElement, TData>.Builder();
+        var builder = new Relation<TSourceElement, TTargetElement, TData>.Builder();
 
         foreach (var pair in relation.Pairs)
         {
@@ -67,65 +67,65 @@ public static class Relation
         return builder.Build();
     }
 
-    public static IBinaryRelation<TSourceElement, TTargetElement, TDataTo>
+    public static IRelation<TSourceElement, TTargetElement, TDataTo>
         Transform<TSourceElement, TTargetElement, TDataFrom, TDataTo>(
-            this IBinaryRelation<TSourceElement, TTargetElement, TDataFrom> relation,
+            this IRelation<TSourceElement, TTargetElement, TDataFrom> relation,
             Func<IPair<TSourceElement, TTargetElement, TDataFrom>, IPair<TSourceElement, TTargetElement, TDataTo>> transformer)
         where TSourceElement : class, IElement
         where TTargetElement : class, IElement
     =>
-        new BinaryRelation<TSourceElement, TTargetElement, TDataTo>.Builder()
+        new Relation<TSourceElement, TTargetElement, TDataTo>.Builder()
         .AddRange(
             relation.Pairs.Select(pair => transformer(pair)))
         .Build();
 
-    public static IBinaryRelation<TSourceElement, TTargetElement, TDataTo>
+    public static IRelation<TSourceElement, TTargetElement, TDataTo>
         TransformData<TSourceElement, TTargetElement, TDataFrom, TDataTo>(
-            this IBinaryRelation<TSourceElement, TTargetElement, TDataFrom> relation,
+            this IRelation<TSourceElement, TTargetElement, TDataFrom> relation,
             Func<TDataFrom, TDataTo> dataTransformer)
         where TSourceElement : class, IElement
         where TTargetElement : class, IElement
     =>
         relation.Transform(pair => Pair.Create(pair.Source, pair.Target, dataTransformer(pair.Data)));
 
-    public static IBinaryRelation<TSourceElement, TTargetElement, TDataTo>
+    public static IRelation<TSourceElement, TTargetElement, TDataTo>
         SetData<TSourceElement, TTargetElement, TDataFrom, TDataTo>(
-            this IBinaryRelation<TSourceElement, TTargetElement, TDataFrom> relation,
+            this IRelation<TSourceElement, TTargetElement, TDataFrom> relation,
             TDataTo dataValue)
         where TSourceElement : class, IElement
         where TTargetElement : class, IElement
     =>
         relation.Transform(pair => Pair.Create(pair.Source, pair.Target, dataValue));
 
-    public static IBinaryRelation<TTargetElement, TSourceElement, TData>
+    public static IRelation<TTargetElement, TSourceElement, TData>
         Invert<TSourceElement, TTargetElement, TData>(
-            this IBinaryRelation<TSourceElement, TTargetElement, TData> relation)
+            this IRelation<TSourceElement, TTargetElement, TData> relation)
         where TSourceElement : class, IElement
         where TTargetElement : class, IElement
     =>
-        new BinaryRelation<TTargetElement, TSourceElement, TData>.Builder()
+        new Relation<TTargetElement, TSourceElement, TData>.Builder()
         .AddRange(
             relation.Pairs.Select(pair => Pair.Create(pair.Target, pair.Source, pair.Data)))
         .Build();
 
-    public static IBinaryRelation<TElement, TElement, TData>
+    public static IRelation<TElement, TElement, TData>
         MoveUpHierarchy<TElement, TData, THierarchyData>(
-            this IBinaryRelation<TElement, TElement, TData> relation,
-            IBinaryRelation<TElement, TElement, THierarchyData> hierarchy,
+            this IRelation<TElement, TElement, TData> relation,
+            IRelation<TElement, TElement, THierarchyData> hierarchy,
             Func<IPair<TElement, TElement, TData>, IPair<TElement, TElement, THierarchyData>, bool> moveFilter)
         where TElement : class, IElement
     =>
         relation.MoveUpHierarchy(hierarchy, moveFilter, moveFilter);
 
-    public static IBinaryRelation<TElement, TElement, TData>
+    public static IRelation<TElement, TElement, TData>
         MoveUpHierarchy<TElement, TData, THierarchyData>(
-            this IBinaryRelation<TElement, TElement, TData> relation,
-            IBinaryRelation<TElement, TElement, THierarchyData> hierarchy,
+            this IRelation<TElement, TElement, TData> relation,
+            IRelation<TElement, TElement, THierarchyData> hierarchy,
             Func<IPair<TElement, TElement, TData>, IPair<TElement, TElement, THierarchyData>, bool> sourceMoveFilter,
             Func<IPair<TElement, TElement, TData>, IPair<TElement, TElement, THierarchyData>, bool> targetMoveFilter)
         where TElement : class, IElement
     {
-        var builder = new BinaryRelation<TElement, TElement, TData>.Builder();
+        var builder = new Relation<TElement, TElement, TData>.Builder();
 
         foreach (var pair in relation.Pairs)
         {
@@ -166,15 +166,15 @@ public static class Relation
         return builder.Build();
     }
 
-    public static IBinaryRelation<TElement, TElement, TData>
+    public static IRelation<TElement, TElement, TData>
         CompactPaths<TElement, TData>(
-            this IBinaryRelation<TElement, TElement, TData> relation,
+            this IRelation<TElement, TElement, TData> relation,
             Predicate<IPair<TElement, TElement, TData>>? pairFilter = null,
             Predicate<IEnumerable<IPair<TElement, TElement, TData>>>? pathFilter = null,
             Func<IEnumerable<IPair<TElement, TElement, TData>>, TData>? dataProvider = null)
         where TElement : class, IElement
     {
-        var builder = new BinaryRelation<TElement, TElement, TData>.Builder();
+        var builder = new Relation<TElement, TElement, TData>.Builder();
 
         var processedCompactablePairs = new HashSet<IPair<TElement, TElement, TData>>();
 
@@ -278,14 +278,14 @@ public static class Relation
     }
 
     public static bool Contains<TElement, TData>(
-        this IBinaryRelation<TElement, TElement, TData> relation,
+        this IRelation<TElement, TElement, TData> relation,
         TElement element)
     where TElement : class, IElement
     =>
         relation.Pairs.Any(pair => element == pair.Source || element == pair.Target);
 
     public static ISet<TElement> GetElements<TElement, TData>(
-        this IBinaryRelation<TElement, TElement, TData> relation)
+        this IRelation<TElement, TElement, TData> relation)
     where TElement : class, IElement
     {
         var set = new HashSet<TElement>(relation.Sources);
@@ -298,7 +298,7 @@ public static class Relation
     /// Works only on hierarchies, i.e. relations where each element is a target of at most one pair.
     /// </remarks>
     public static IEnumerable<TElement> GetAncestors<TElement, TData>(
-        this IBinaryRelation<TElement, TElement, TData> hierarchy,
+        this IRelation<TElement, TElement, TData> hierarchy,
         TElement element)
     where TElement : class, IElement
     {
@@ -319,7 +319,7 @@ public static class Relation
     /// Works only on hierarchies, i.e. relations where each element is a target of at most one pair.
     /// </remarks>
     public static IEnumerable<TElement> GetAncestorsOrSelf<TElement, TData>(
-        this IBinaryRelation<TElement, TElement, TData> hierarchy,
+        this IRelation<TElement, TElement, TData> hierarchy,
         TElement element)
     where TElement : class, IElement
     {
@@ -331,12 +331,12 @@ public static class Relation
         }
     }
 
-    public static IBinaryRelation<TElement, TElement, TData> SliceForward<TElement, TData>(
-        this IBinaryRelation<TElement, TElement, TData> relation,
+    public static IRelation<TElement, TElement, TData> SliceForward<TElement, TData>(
+        this IRelation<TElement, TElement, TData> relation,
         IEnumerable<TElement> sourceElements)
     where TElement : class, IElement
     {
-        var builder = new BinaryRelation<TElement, TElement, TData>.Builder();
+        var builder = new Relation<TElement, TElement, TData>.Builder();
 
         var stack = new Stack<TElement>();
         foreach (var element in sourceElements)
@@ -365,20 +365,20 @@ public static class Relation
         return builder.Build();
     }
 
-    public static IBinaryRelation<TElement, TElement, TData>
+    public static IRelation<TElement, TElement, TData>
         SliceForward<TElement, TData>(
-            this IBinaryRelation<TElement, TElement, TData> relation,
+            this IRelation<TElement, TElement, TData> relation,
             TElement sourceElement)
         where TElement : class, IElement
     =>
         relation.SliceForward(new[] { sourceElement });
 
-    public static IBinaryRelation<TElement, TElement, TData>
+    public static IRelation<TElement, TElement, TData>
         CreateTransitiveClosure<TElement, TData>(
-            this IBinaryRelation<TElement, TElement, TData> relation)
+            this IRelation<TElement, TElement, TData> relation)
         where TElement : class, IElement
     {
-        var builder = new BinaryRelation<TElement, TElement, TData>.Builder();
+        var builder = new Relation<TElement, TElement, TData>.Builder();
 
         foreach (var sourceElement in relation.Sources)
         {
@@ -391,15 +391,15 @@ public static class Relation
         return builder.Build();
     }
 
-    public static IBinaryRelation<TSourceElement, TTargetElement, TData>
+    public static IRelation<TSourceElement, TTargetElement, TData>
         Join<TSourceElement, TInnerElement, TTargetElement, TData>(
-            this IBinaryRelation<TSourceElement, TInnerElement, TData> relation,
-            IBinaryRelation<TInnerElement, TTargetElement, TData> joinedRelation)
+            this IRelation<TSourceElement, TInnerElement, TData> relation,
+            IRelation<TInnerElement, TTargetElement, TData> joinedRelation)
         where TSourceElement : class, IElement
         where TInnerElement : class, IElement
         where TTargetElement : class, IElement
     {
-        var builder = new BinaryRelation<TSourceElement, TTargetElement, TData>.Builder();
+        var builder = new Relation<TSourceElement, TTargetElement, TData>.Builder();
 
         foreach (var pairLeft in relation.Pairs)
         {

@@ -23,15 +23,15 @@ public partial class DotNetContext : IContext
 
     public IEnumerable<DotNetElement> Elements { get; }
 
-    public IBinaryRelation<DotNetElement, DotNetElement, EmptyStruct> Hierarchy { get; }
+    public IRelation<DotNetElement, DotNetElement, EmptyStruct> Hierarchy { get; }
 
     IEnumerable<IElement> IContext.Elements => Elements;
 
-    IBinaryRelation<IElement, IElement, EmptyStruct> IContext.Hierarchy => Hierarchy;
+    IRelation<IElement, IElement, EmptyStruct> IContext.Hierarchy => Hierarchy;
 
     private DotNetContext(
         ImmutableArray<DotNetElement> elements,
-        BinaryRelation<DotNetElement, DotNetElement, EmptyStruct> hierarchy,
+        Relation<DotNetElement, DotNetElement, EmptyStruct> hierarchy,
         Dictionary<ISymbol, DotNetElement> symbolsToElements,
         Dictionary<BasicBlock, DotNetBlock> blocksToElements,
         Dictionary<IOperation, DotNetOperation> operationsToElements,

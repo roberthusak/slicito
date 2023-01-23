@@ -6,14 +6,14 @@ using Slicito.DotNet.Elements;
 namespace Slicito.DotNet.Relations;
 
 public partial record ControlFlowRelations(
-    BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?> IsSucceededByUnconditionally,
-    BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?> IsSucceededByIfTrue,
-    BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?> IsSucceededByIfFalse,
-    BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?> IsSucceededByWithLeftOutInvocation,
-    BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?> IsSucceededByWithInvocation,
-    BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?> IsSucceededByWithReturn)
+    Relation<DotNetElement, DotNetElement, SyntaxNode?> IsSucceededByUnconditionally,
+    Relation<DotNetElement, DotNetElement, SyntaxNode?> IsSucceededByIfTrue,
+    Relation<DotNetElement, DotNetElement, SyntaxNode?> IsSucceededByIfFalse,
+    Relation<DotNetElement, DotNetElement, SyntaxNode?> IsSucceededByWithLeftOutInvocation,
+    Relation<DotNetElement, DotNetElement, SyntaxNode?> IsSucceededByWithInvocation,
+    Relation<DotNetElement, DotNetElement, SyntaxNode?> IsSucceededByWithReturn)
 {
-    public IEnumerable<BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?>> GetIntraproceduralFlow()
+    public IEnumerable<Relation<DotNetElement, DotNetElement, SyntaxNode?>> GetIntraproceduralFlow()
     {
         yield return IsSucceededByUnconditionally;
         yield return IsSucceededByIfTrue;
@@ -21,7 +21,7 @@ public partial record ControlFlowRelations(
         yield return IsSucceededByWithLeftOutInvocation;
     }
 
-    public IEnumerable<BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?>> GetInterproceduralFlow()
+    public IEnumerable<Relation<DotNetElement, DotNetElement, SyntaxNode?>> GetInterproceduralFlow()
     {
         yield return IsSucceededByUnconditionally;
         yield return IsSucceededByIfTrue;

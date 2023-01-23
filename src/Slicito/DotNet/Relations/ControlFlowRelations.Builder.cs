@@ -16,17 +16,17 @@ public partial record ControlFlowRelations
 
         public DependencyRelations DependencyRelations { get; }
 
-        public BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?>.Builder IsSucceededByUnconditionally { get; } = new();
+        public Relation<DotNetElement, DotNetElement, SyntaxNode?>.Builder IsSucceededByUnconditionally { get; } = new();
 
-        public BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?>.Builder IsSucceededByIfTrue { get; } = new();
+        public Relation<DotNetElement, DotNetElement, SyntaxNode?>.Builder IsSucceededByIfTrue { get; } = new();
 
-        public BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?>.Builder IsSucceededByIfFalse { get; } = new();
+        public Relation<DotNetElement, DotNetElement, SyntaxNode?>.Builder IsSucceededByIfFalse { get; } = new();
 
-        public BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?>.Builder IsSucceededByWithLeftOutInvocation { get; } = new();
+        public Relation<DotNetElement, DotNetElement, SyntaxNode?>.Builder IsSucceededByWithLeftOutInvocation { get; } = new();
 
-        public BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?>.Builder IsSucceededByWithInvocation { get; } = new();
+        public Relation<DotNetElement, DotNetElement, SyntaxNode?>.Builder IsSucceededByWithInvocation { get; } = new();
 
-        public BinaryRelation<DotNetElement, DotNetElement, SyntaxNode?>.Builder IsSucceededByWithReturn { get; } = new();
+        public Relation<DotNetElement, DotNetElement, SyntaxNode?>.Builder IsSucceededByWithReturn { get; } = new();
 
         public ControlFlowRelations Build() =>
             new(

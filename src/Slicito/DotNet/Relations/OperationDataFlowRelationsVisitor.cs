@@ -15,7 +15,7 @@ internal class OperationDataFlowRelationsVisitor : OperationVisitor<DotNetOperat
     private readonly DotNetContext _context;
     private readonly DataFlowRelations.Builder _builder;
 
-    private readonly IBinaryRelation<DotNetMethod, DotNetMethod, EmptyStruct> _isOverridenByRelation;
+    private readonly IRelation<DotNetMethod, DotNetMethod, EmptyStruct> _isOverridenByRelation;
 
     public OperationDataFlowRelationsVisitor(DotNetContext context, DataFlowRelations.Builder builder)
     {

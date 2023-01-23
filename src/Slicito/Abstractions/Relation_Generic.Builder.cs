@@ -2,15 +2,15 @@ using System.Collections.Immutable;
 
 namespace Slicito.Abstractions;
 
-public partial class BinaryRelation<TSourceElement, TTargetElement, TData>
+public partial class Relation<TSourceElement, TTargetElement, TData>
 {
-    public class Builder : IBinaryRelation<TSourceElement, TTargetElement, TData>
+    public class Builder : IRelation<TSourceElement, TTargetElement, TData>
     {
         private readonly List<IPair<TSourceElement, TTargetElement, TData>> _pairs = new();
 
         public IEnumerable<IPair<TSourceElement, TTargetElement, TData>> Pairs => _pairs;
 
-        public IBinaryRelation<TSourceElement, TTargetElement, TData> AsRelation() => this;
+        public IRelation<TSourceElement, TTargetElement, TData> AsRelation() => this;
 
         public Builder Add(TSourceElement source, TTargetElement target, TData data)
         {
@@ -33,7 +33,7 @@ public partial class BinaryRelation<TSourceElement, TTargetElement, TData>
             return this;
         }
 
-        public BinaryRelation<TSourceElement, TTargetElement, TData> Build() =>
+        public Relation<TSourceElement, TTargetElement, TData> Build() =>
             new(_pairs.ToImmutableArray());
     }
 }
