@@ -121,6 +121,17 @@ public class DefaultContextSiteBuilder
         }
     }
 
+    private int GetElementLevel(IElement element)
+    {
+        var level = _elementLevels.FindIndex(level => level.Contains(element));
+        if (level == -1)
+        {
+            throw new ArgumentException($"The provided element with ID '{element.Id}' is not present in the displayed context", nameof(element));
+        }
+
+        return level;
+    }
+
     private Schema? CreateSchema(GetUriDelegate? getUriDelegate, IElement? rootElement = null)
     {
         // FIXME Refactor
@@ -150,7 +161,7 @@ public class DefaultContextSiteBuilder
                 var hierarchySlice = _context.Hierarchy.SliceForward(rootElement);
                 var slicedElements = hierarchySlice.GetElements().ToHashSet();
 
-                var rootElementLevel = _elementLevels.FindIndex(level => level.Contains(rootElement));
+                var rootElementLevel = GetElementLevel(rootElement);
                 sameLevelElements = _elementLevels[rootElementLevel];
 
                 elements.UnionWith(sameLevelElements.Intersect(slicedElements));
@@ -191,9 +202,24 @@ public class DefaultContextSiteBuilder
 
         elements.UnionWith(summarizedExternalRelation.GetElements().Intersect(sameLevelElements));
 
+        var simplifiedHierarchy = _context.Hierarchy.CompactPaths(pair =>
+            GetElementLevel(pair.Source) == GetElementLevel(pair.Target)
+            && summarizedInternalRelation.GetIncoming(pair.Target).Count() == 0
+            && summarizedInternalRelation.GetOutgoing(pair.Target).Count() == 0
+            && summarizedExternalRelation.GetIncoming(pair.Target).Count() == 0
+            && summarizedExternalRelation.GetOutgoing(pair.Target).Count() == 0);
+
+        // Prevent removing elements not having any other connected elements
+        var lonelyElements = elements.Where(e =>
+            _context.Hierarchy.GetIncoming(e).Count() == 0 && _context.Hierarchy.GetOutgoing(e).Count() == 0)
+            .ToArray();
+
+        elements.IntersectWith(simplifiedHierarchy.GetElements());
+        elements.UnionWith(lonelyElements);
+
         return new Schema.Builder()
             .AddLabelProvider(_context.LabelProvider)
-            .AddNodes(elements, _context.Hierarchy, (e, node) =>
+            .AddNodes(elements, simplifiedHierarchy, (e, node) =>
             {
                 var parameters = ImmutableDictionary<string, string>.Empty.Add("id", e.Id);
                 node.Attr.Uri = getUriDelegate?.Invoke(ElementPageId, parameters)?.ToString();
