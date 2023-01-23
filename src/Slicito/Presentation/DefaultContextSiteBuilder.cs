@@ -44,6 +44,9 @@ public class DefaultContextSiteBuilder
 
     public Site Build()
     {
+        // FIXME Ensure that the callbacks don't reference mutable fields of this class
+        // (store them to an immutable object, or at least reference their copies using a closure
+
         SiteBuilder
             .AddStaticPage(Site.IndexPageId, options => CreateSchema(options.GetUriDelegate, null))
             .AddDynamicPage(ElementPageId, options =>
@@ -122,15 +125,22 @@ public class DefaultContextSiteBuilder
     {
         var elements = new HashSet<IElement>();
 
+        var sameLevelElements = new HashSet<IElement>();
+        var underlyingLevelElements = new HashSet<IElement>(); // TODO: Remove if not used
+
         if (_elementLevels.Count > 0)
         {
             if (rootElement is null)
             {
-                elements.UnionWith(_elementLevels[0]);
+                sameLevelElements = _elementLevels[0];
+
+                elements.UnionWith(sameLevelElements);
 
                 if (_elementLevels.Count > 1)
                 {
-                    elements.UnionWith(_elementLevels[1]);
+                    underlyingLevelElements = _elementLevels[1];
+
+                    elements.UnionWith(underlyingLevelElements);
                 }
             }
             else
@@ -141,12 +151,16 @@ public class DefaultContextSiteBuilder
                 var slicedElements = hierarchySlice.GetElements().ToHashSet();
 
                 var rootElementLevel = _elementLevels.FindIndex(level => level.Contains(rootElement));
-                elements.UnionWith(_elementLevels[rootElementLevel].Intersect(slicedElements));
+                sameLevelElements = _elementLevels[rootElementLevel];
+
+                elements.UnionWith(sameLevelElements.Intersect(slicedElements));
 
                 var underlyingLevel = rootElementLevel + 1;
                 if (underlyingLevel <= _elementLevels.Count - 1)
                 {
-                    elements.UnionWith(_elementLevels[underlyingLevel].Intersect(slicedElements));
+                    underlyingLevelElements = _elementLevels[underlyingLevel];
+
+                    elements.UnionWith(underlyingLevelElements.Intersect(slicedElements));
                 }
 
                 // Zooming to an element which would be shown as the only one in the view is pointless
@@ -157,19 +171,25 @@ public class DefaultContextSiteBuilder
             }
         }
 
-        var builder = new Schema.Builder()
+        var summarizedRelation = Relation.Merge(
+            _relations.Select(r =>
+                r.MoveUpHierarchy(
+                    _context.Hierarchy,
+                    (_, hierarchyPair) => !sameLevelElements.Contains(hierarchyPair.Target)))
+            )
+            .MakeUnique()
+            .Filter(pair => pair.Source != pair.Target && (elements.Contains(pair.Source) || elements.Contains(pair.Target)));
+
+        elements.UnionWith(summarizedRelation.GetElements().Intersect(sameLevelElements));
+
+        return new Schema.Builder()
             .AddLabelProvider(_context.LabelProvider)
             .AddNodes(elements, _context.Hierarchy, (e, node) =>
             {
                 var parameters = ImmutableDictionary<string, string>.Empty.Add("id", e.Id);
                 node.Attr.Uri = getUriDelegate?.Invoke(ElementPageId, parameters)?.ToString();
-            });
-
-        foreach (var relation in _relations)
-        {
-            builder.AddEdges(relation);
-        }
-
-        return builder.Build();
+            })
+            .AddEdges(summarizedRelation)
+            .Build();
     }
 }
