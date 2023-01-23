@@ -123,24 +123,24 @@ public class DefaultContextSiteBuilder
 
     private Schema? CreateSchema(GetUriDelegate? getUriDelegate, IElement? rootElement = null)
     {
+        // FIXME Refactor
+
         var elements = new HashSet<IElement>();
 
         var sameLevelElements = new HashSet<IElement>();
-        var underlyingLevelElements = new HashSet<IElement>(); // TODO: Remove if not used
+        var underlyingLevelElements = new HashSet<IElement>();
 
         if (_elementLevels.Count > 0)
         {
             if (rootElement is null)
             {
-                sameLevelElements = _elementLevels[0];
+                underlyingLevelElements = _elementLevels[0];
 
-                elements.UnionWith(sameLevelElements);
+                elements.UnionWith(underlyingLevelElements);
 
                 if (_elementLevels.Count > 1)
                 {
-                    underlyingLevelElements = _elementLevels[1];
-
-                    elements.UnionWith(underlyingLevelElements);
+                    elements.UnionWith(_elementLevels[1]);
                 }
             }
             else
@@ -171,16 +171,25 @@ public class DefaultContextSiteBuilder
             }
         }
 
-        var summarizedRelation = Relation.Merge(
+        var summarizedInternalRelation = Relation.Merge(
+            _relations.Select(r =>
+                r.MoveUpHierarchy(
+                    _context.Hierarchy,
+                    (_, hierarchyPair) => !underlyingLevelElements.Contains(hierarchyPair.Target)))
+            )
+            .MakeUnique()
+            .Filter(pair => pair.Source != pair.Target && elements.Contains(pair.Source) && elements.Contains(pair.Target));
+
+        var summarizedExternalRelation = Relation.Merge(
             _relations.Select(r =>
                 r.MoveUpHierarchy(
                     _context.Hierarchy,
                     (_, hierarchyPair) => !sameLevelElements.Contains(hierarchyPair.Target)))
             )
             .MakeUnique()
-            .Filter(pair => pair.Source != pair.Target && (elements.Contains(pair.Source) || elements.Contains(pair.Target)));
+            .Filter(pair => elements.Contains(pair.Source) ^ elements.Contains(pair.Target));
 
-        elements.UnionWith(summarizedRelation.GetElements().Intersect(sameLevelElements));
+        elements.UnionWith(summarizedExternalRelation.GetElements().Intersect(sameLevelElements));
 
         return new Schema.Builder()
             .AddLabelProvider(_context.LabelProvider)
@@ -189,7 +198,8 @@ public class DefaultContextSiteBuilder
                 var parameters = ImmutableDictionary<string, string>.Empty.Add("id", e.Id);
                 node.Attr.Uri = getUriDelegate?.Invoke(ElementPageId, parameters)?.ToString();
             })
-            .AddEdges(summarizedRelation)
+            .AddEdges(summarizedInternalRelation)
+            .AddEdges(summarizedExternalRelation)
             .Build();
     }
 }
