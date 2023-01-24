@@ -335,11 +335,42 @@ public static class Relation
         this IRelation<TElement, TElement, TData> relation,
         IEnumerable<TElement> sourceElements)
     where TElement : class, IElement
+    =>
+        SliceForwardOrBackward(relation, sourceElements, isForward: true);
+
+    public static IRelation<TElement, TElement, TData>
+        SliceForward<TElement, TData>(
+            this IRelation<TElement, TElement, TData> relation,
+            TElement sourceElement)
+        where TElement : class, IElement
+    =>
+        relation.SliceForward(new[] { sourceElement });
+
+    public static IRelation<TElement, TElement, TData> SliceBackward<TElement, TData>(
+        this IRelation<TElement, TElement, TData> relation,
+        IEnumerable<TElement> targetElements)
+    where TElement : class, IElement
+    =>
+        SliceForwardOrBackward(relation, targetElements, isForward: false);
+
+    public static IRelation<TElement, TElement, TData>
+        SliceBackward<TElement, TData>(
+            this IRelation<TElement, TElement, TData> relation,
+            TElement targetElement)
+        where TElement : class, IElement
+    =>
+        relation.SliceBackward(new[] { targetElement });
+
+    private static IRelation<TElement, TElement, TData> SliceForwardOrBackward<TElement, TData>(
+        IRelation<TElement, TElement, TData> relation,
+        IEnumerable<TElement> startingElements,
+        bool isForward)
+    where TElement : class, IElement
     {
         var builder = new Relation<TElement, TElement, TData>.Builder();
 
         var stack = new Stack<TElement>();
-        foreach (var element in sourceElements)
+        foreach (var element in startingElements)
         {
             stack.Push(element);
         }
@@ -355,23 +386,16 @@ public static class Relation
                 continue;
             }
 
-            foreach (var pair in relation.GetOutgoing(current))
+            var nextPairs = isForward ? relation.GetOutgoing(current) : relation.GetIncoming(current);
+            foreach (var pair in nextPairs)
             {
                 builder.Add(pair);
-                stack.Push(pair.Target);
+                stack.Push(isForward ? pair.Target : pair.Source);
             }
         }
 
         return builder.Build();
     }
-
-    public static IRelation<TElement, TElement, TData>
-        SliceForward<TElement, TData>(
-            this IRelation<TElement, TElement, TData> relation,
-            TElement sourceElement)
-        where TElement : class, IElement
-    =>
-        relation.SliceForward(new[] { sourceElement });
 
     public static IRelation<TElement, TElement, TData>
         CreateTransitiveClosure<TElement, TData>(

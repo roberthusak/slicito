@@ -56,16 +56,58 @@ public partial class DotNetContext : IContext
         .BuildAsync();
 
     public DotNetContext AddElements(
-        IEnumerable<IElement> elements,
+        IEnumerable<IElement> addedElements,
         IRelation<IElement, IElement, EmptyStruct>? addedHierarchy)
     =>
         new(
-            Elements.Concat(elements).ToImmutableArray(),
+            Elements.Concat(addedElements).ToImmutableArray(),
             addedHierarchy is null ? Hierarchy : Relation.Merge(Hierarchy, addedHierarchy),
             _symbolsToElements,
             _blocksToElements,
             _operationsToElements,
             _moduleMetadataNamesToProjects);
+
+    public DotNetContext RemoveElements(IEnumerable<IElement> removedElements)
+    {
+        var removedElementsSet = removedElements.ToHashSet();
+
+        return new(
+            Elements.Except(removedElementsSet).ToImmutableArray(),
+            Hierarchy.Filter(pair => !removedElementsSet.Contains(pair.Source) && !removedElementsSet.Contains(pair.Target)),
+            new(_symbolsToElements.Where(kvp => !removedElementsSet.Contains(kvp.Value)), SymbolEqualityComparer.Default),
+            new(_blocksToElements.Where(kvp => !removedElementsSet.Contains(kvp.Value))),
+            new(_operationsToElements.Where(kvp => !removedElementsSet.Contains(kvp.Value))),
+            new(_moduleMetadataNamesToProjects.Where(kvp => !removedElementsSet.Contains(kvp.Value))));
+    }
+
+    public DotNetContext Slice<TData>(
+        IRelation<IElement, IElement, TData> relation,
+        IEnumerable<IElement> sourceElements,
+        IEnumerable<IElement> targetElements)
+    {
+        var sourceElementsSet = sourceElements.ToHashSet();
+        var targetElementsSet = targetElements.ToHashSet();
+
+        var forwardSlice = relation.SliceForward(sourceElementsSet);
+        var backwardSlice = relation.SliceBackward(targetElementsSet);
+
+        var sliceIntersection = forwardSlice.GetElements()
+            .Intersect(backwardSlice.GetElements())
+            .Union(sourceElementsSet.Intersect(targetElements))
+            .ToArray();
+
+        var sliceIntersectionWithHierarchyQuery = Hierarchy.SliceForward(sliceIntersection).GetElements()
+            .Union(Hierarchy.SliceBackward(sliceIntersection).GetElements());
+
+        return RemoveElements(Elements.Except(sliceIntersectionWithHierarchyQuery));
+    }
+
+    public DotNetContext Slice<TData>(
+        IEnumerable<IRelation<IElement, IElement, TData>> relations,
+        IEnumerable<IElement> sourceElements,
+        IEnumerable<IElement> targetElements)
+    =>
+        Slice(Relation.Merge(relations), sourceElements, targetElements);
 
     public DotNetElement? TryGetElementFromSymbol(ISymbol? symbol)
     {

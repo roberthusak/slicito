@@ -33,6 +33,13 @@ internal class OperationControlFlowRelationsWalker : OperationWalker
 
         var blocks = methodElement.ControlFlowGraph.Blocks;
 
+        // Connect the method definition with its start (simplifies slicing from methods)
+        var entryBlockElement = context.TryGetElementFromBlock(blocks[0]);
+        if (entryBlockElement is not null)
+        {
+            builder.IsSucceededByUnconditionally.Add(methodElement, entryBlockElement, null);
+        }
+
         foreach (var block in blocks)
         {
             // Connect operation elements within blocks
