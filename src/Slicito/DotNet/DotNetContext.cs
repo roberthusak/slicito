@@ -21,17 +21,17 @@ public partial class DotNetContext : IContext
 
     private DependencyRelations? _cachedDependencyRelations;
 
-    public IEnumerable<DotNetElement> Elements { get; }
+    public IEnumerable<IElement> Elements { get; }
 
-    public IRelation<DotNetElement, DotNetElement, EmptyStruct> Hierarchy { get; }
+    public IRelation<IElement, IElement, EmptyStruct> Hierarchy { get; }
 
     IEnumerable<IElement> IContext.Elements => Elements;
 
     IRelation<IElement, IElement, EmptyStruct> IContext.Hierarchy => Hierarchy;
 
     private DotNetContext(
-        ImmutableArray<DotNetElement> elements,
-        Relation<DotNetElement, DotNetElement, EmptyStruct> hierarchy,
+        ImmutableArray<IElement> elements,
+        IRelation<IElement, IElement, EmptyStruct> hierarchy,
         Dictionary<ISymbol, DotNetElement> symbolsToElements,
         Dictionary<BasicBlock, DotNetBlock> blocksToElements,
         Dictionary<IOperation, DotNetOperation> operationsToElements,
@@ -54,6 +54,18 @@ public partial class DotNetContext : IContext
         new Builder()
         .AddSolution(solutionPath)
         .BuildAsync();
+
+    public DotNetContext AddElements(
+        IEnumerable<IElement> elements,
+        IRelation<IElement, IElement, EmptyStruct>? addedHierarchy)
+    =>
+        new(
+            Elements.Concat(elements).ToImmutableArray(),
+            addedHierarchy is null ? Hierarchy : Relation.Merge(Hierarchy, addedHierarchy),
+            _symbolsToElements,
+            _blocksToElements,
+            _operationsToElements,
+            _moduleMetadataNamesToProjects);
 
     public DotNetElement? TryGetElementFromSymbol(ISymbol? symbol)
     {
@@ -97,7 +109,7 @@ public partial class DotNetContext : IContext
         ? null
         : _operationsToElements.GetValueOrDefault(operation);
 
-    public DependencyRelations ExtractDependencyRelations(Predicate<DotNetElement>? filter = null)
+    public DependencyRelations ExtractDependencyRelations(Predicate<IElement>? filter = null)
     {
         if (filter == null)
         {
@@ -144,7 +156,7 @@ public partial class DotNetContext : IContext
         }
     }
 
-    public DataFlowRelations ExtractDataFlowRelations(DependencyRelations dependencyRelations, Predicate<DotNetElement>? filter = null)
+    public DataFlowRelations ExtractDataFlowRelations(DependencyRelations dependencyRelations, Predicate<IElement>? filter = null)
     {
         var builder = new DataFlowRelations.Builder(dependencyRelations);
 

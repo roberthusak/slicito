@@ -13,7 +13,7 @@ public partial class DotNetContext
 {
     public partial class Builder
     {
-        private readonly List<DotNetElement> _elements = new();
+        private readonly List<IElement> _elements = new();
         private readonly Relation<DotNetElement, DotNetElement, EmptyStruct>.Builder _hierarchyBuilder = new();
 
         private readonly Dictionary<ISymbol, DotNetElement> _symbolsToElements = new(SymbolEqualityComparer.Default);
