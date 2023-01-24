@@ -33,6 +33,15 @@ public partial record ControlFlowRelations(
         yield return IsSucceededByWithReturn;
     }
 
+    public IEnumerable<Relation<DotNetElement, DotNetElement, SyntaxNode?>> GetInterproceduralReachabilityFlow()
+    {
+        yield return IsSucceededByUnconditionally;
+        yield return IsSucceededByIfTrue;
+        yield return IsSucceededByIfFalse;
+        yield return IsSucceededByWithInvocation;
+        yield return IsSucceededByWithLeftOutInvocation;
+    }
+
     public IEnumerator<Relation<DotNetElement, DotNetElement, SyntaxNode?>> GetEnumerator()
     {
         yield return IsSucceededByUnconditionally;

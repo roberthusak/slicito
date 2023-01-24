@@ -80,6 +80,9 @@ public partial class DotNetContext : IContext
             new(_moduleMetadataNamesToProjects.Where(kvp => !removedElementsSet.Contains(kvp.Value))));
     }
 
+    public DotNetContext FilterElements(Predicate<IElement> filter) =>
+        RemoveElements(Elements.Where(e => !filter(e)));
+
     public DotNetContext Slice<TData>(
         IRelation<IElement, IElement, TData> relation,
         IEnumerable<IElement> sourceElements,
@@ -93,7 +96,7 @@ public partial class DotNetContext : IContext
 
         var sliceIntersection = forwardSlice.GetElements()
             .Intersect(backwardSlice.GetElements())
-            .Union(sourceElementsSet.Intersect(targetElements))
+            .Union(sourceElementsSet.Intersect(targetElementsSet))
             .ToArray();
 
         var sliceIntersectionWithHierarchyQuery = Hierarchy.SliceForward(sliceIntersection).GetElements()

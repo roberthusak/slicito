@@ -20,12 +20,21 @@ public class DefaultContextSiteBuilder
 
     public Site.Builder SiteBuilder { get; }
 
+    public DefaultContextSiteBuilderOptions Options { get; } = new();
+
     public DefaultContextSiteBuilder(IContext context)
     {
         _context = context;
         _elementLevels = GenerateElementLevels(context);
 
         SiteBuilder = new();
+    }
+
+    public DefaultContextSiteBuilder ModifyOptions(Action<DefaultContextSiteBuilderOptions> modifier)
+    {
+        modifier(Options);
+
+        return this;
     }
 
     public DefaultContextSiteBuilder AddRelation(IRelation<IElement, IElement, SyntaxNode?> relation)
@@ -71,7 +80,10 @@ public class DefaultContextSiteBuilder
                         int.Parse(openInIdeParameters["offset"]));
                 }
 
-                return CreateSchema(options.GetUriDelegate, element);
+                return
+                    Options.ElementDetailPageCreationFilter?.Invoke(element) == false
+                    ? null
+                    : CreateSchema(options.GetUriDelegate, element);
             });
 
         return SiteBuilder.Build();
@@ -147,11 +159,18 @@ public class DefaultContextSiteBuilder
             {
                 underlyingLevelElements = _elementLevels[0];
 
-                elements.UnionWith(underlyingLevelElements);
-
-                if (_elementLevels.Count > 1)
+                if (Options.IndexElementDisplayFilter is not null)
                 {
-                    elements.UnionWith(_elementLevels[1]);
+                    elements.UnionWith(_context.Elements.Where(Options.IndexElementDisplayFilter));
+                }
+                else
+                {
+                    elements.UnionWith(underlyingLevelElements);
+
+                    if (_elementLevels.Count > 1)
+                    {
+                        elements.UnionWith(_elementLevels[1]);
+                    }
                 }
             }
             else
@@ -186,7 +205,9 @@ public class DefaultContextSiteBuilder
             _relations.Select(r =>
                 r.MoveUpHierarchy(
                     _context.Hierarchy,
-                    (_, hierarchyPair) => !underlyingLevelElements.Contains(hierarchyPair.Target)))
+                    (_, hierarchyPair) =>
+                        !Options.ElementRelationConnectionFilter?.Invoke(hierarchyPair.Target)
+                        ?? !underlyingLevelElements.Contains(hierarchyPair.Target)))
             )
             .MakeUnique()
             .Filter(pair => pair.Source != pair.Target && elements.Contains(pair.Source) && elements.Contains(pair.Target));
@@ -195,7 +216,9 @@ public class DefaultContextSiteBuilder
             _relations.Select(r =>
                 r.MoveUpHierarchy(
                     _context.Hierarchy,
-                    (_, hierarchyPair) => !sameLevelElements.Contains(hierarchyPair.Target)))
+                    (_, hierarchyPair) =>
+                    !Options.ElementRelationConnectionFilter?.Invoke(hierarchyPair.Target)
+                    ?? !sameLevelElements.Contains(hierarchyPair.Target)))
             )
             .MakeUnique()
             .Filter(pair => elements.Contains(pair.Source) ^ elements.Contains(pair.Target));
@@ -223,6 +246,8 @@ public class DefaultContextSiteBuilder
             {
                 var parameters = ImmutableDictionary<string, string>.Empty.Add("id", e.Id);
                 node.Attr.Uri = getUriDelegate?.Invoke(ElementPageId, parameters)?.ToString();
+
+                Options.ElementNodeCustomizer?.Invoke(e, node);
             })
             .AddEdges(summarizedInternalRelation)
             .AddEdges(summarizedExternalRelation)
