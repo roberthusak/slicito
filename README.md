@@ -12,33 +12,27 @@ Currently, it serves only for simple visualisations of project structure, but mo
 Sample usage
 ------------
 
-Compile the solution and start the server (you can end it by Ctrl+C after you finish working with Slicito):
+Compile the solution:
 
 ```
 dotnet build Slicito.sln
-dotnet run --project src/Slicito.Server/Slicito.Server.csproj
 ```
 
-Install the extension [.NET Interactive Notebooks](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.dotnet-interactive-vscode) to VS Code and open the notebook [`samples/notebooks/NamespaceHierarchy.ipynb`](samples/notebooks/NamespaceHierarchy.ipynb).
-When you execute its first and only cell, an image similar to this should appear:
+Install the extension [Polyglot Notebooks](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.dotnet-interactive-vscode) to VS Code and open the notebook [`samples/notebooks/NamespaceHierarchy.ipynb`](samples/notebooks/NamespaceHierarchy.ipynb).
+When you execute its first cell, an image similar to this should appear:
 
 ![Sample hierarchy of Slicito itself](docs/hierarchy_sample.svg)
 
-It shows the classes of Slicito itself, and (for now) it's pretty simple.
-Replace the reference to `Slicito.csproj` with your C# project to see its structure.
-Notice that the individual nodes are clickable.
-If you have an instance of Microsoft Visual Studio opened, you will be navigated to the definition of the class you click on.
-Next steps:
-
-* Use the power of [Microsoft Roslyn](https://github.com/dotnet/roslyn) to analyse your C# projects. Extract interesting parts of the code and their relations.
-* Create customised and well-arranged graphs using [Microsoft Automated Graph Layout (MSAGL)](https://github.com/microsoft/automatic-graph-layout).
-* Generate multiple schemas, connect them via hyperlinks and show dependencies between different entities - see the [`SolutionAnalysis` sample](samples/SolutionAnalysis/Program.cs).
+It shows the namespaces of Slicito itself, and allows you to navigate through its structure.
+If you have an instance of Microsoft Visual Studio opened, the elements you click in the schema will be shown to you there.
+Replace the reference to `Slicito.csproj` with your C# project to inspect the structure of your code.
+You can also extract and visualize dependencies as shown in the second cell of the [sample notebook](samples/notebooks/NamespaceHierarchy.ipynb).
 
 Plans
 -----
 
-* Enable turning code into graphs as straightforward as possible.
-* Add advanced techniques to analyse dependencies between different parts of the code.
+* Make turning code into graphs as straightforward as possible.
+* Document all the provided abstraction and visualization techniques.
 * Use advanced techniques from [AskTheCode](https://github.com/roberthusak/AskTheCode) to reason precisely about program behaviour.
 
 Disclaimer
