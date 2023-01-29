@@ -34,7 +34,7 @@ public static class IdeUtils
             var line = int.Parse(options.Parameters["line"]);
             var offset = int.Parse(options.Parameters["offset"]);
 
-            (session ?? InteractiveSession.Global).OpenFileInIde(path, line, offset);
+            (session ?? InteractiveSession.Global).TryOpenFileInIde(path, line, offset);
 
             return null;
         });

@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Globalization;
+using System.Runtime.InteropServices;
 using System.Web;
 
 using Microsoft.DotNet.Interactive;
@@ -102,13 +103,22 @@ public class InteractiveSession
         await jsKernel.SubmitCodeAsync($@"window.slicito.showSiteContent(""{siteGuid}"", ""{contentJsString}"");");
     }
 
-    public void OpenFileInIde(string path, int line, int offset)
+    public bool TryOpenFileInIde(string path, int line, int offset)
     {
-        // Inspired by https://stackoverflow.com/a/54869165/2105235
-        // (other ways are cleaner but need proper handling of NuGet packages etc.)
+        try
+        {
+            // Inspired by https://stackoverflow.com/a/54869165/2105235
+            // (other ways are cleaner but need proper handling of NuGet packages etc.)
 
-        dynamic vs = Marshal2.GetActiveObject("VisualStudio.DTE");
-        dynamic window = vs.ItemOperations.OpenFile(path);
-        window.Selection.MoveToLineAndOffset(line, offset);
+            dynamic vs = Marshal2.GetActiveObject("VisualStudio.DTE");
+            dynamic window = vs.ItemOperations.OpenFile(path);
+            window.Selection.MoveToLineAndOffset(line, offset);
+
+            return true;
+        }
+        catch (COMException)
+        {
+            return false;
+        }
     }
 }

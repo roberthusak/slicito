@@ -74,7 +74,7 @@ public class DefaultContextSiteBuilder
 
                 if (openInIdeParameters is not null)
                 {
-                    InteractiveSession.Global.OpenFileInIde(
+                    InteractiveSession.Global.TryOpenFileInIde(
                         openInIdeParameters["path"],
                         int.Parse(openInIdeParameters["line"]),
                         int.Parse(openInIdeParameters["offset"]));
