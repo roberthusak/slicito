@@ -1,8 +1,8 @@
-﻿using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Security;
 
-namespace Slicito.Server;
+namespace Slicito.Interactive;
 
 // https://stackoverflow.com/a/65496277/2105235
 internal static class Marshal2
@@ -11,7 +11,7 @@ internal static class Marshal2
     internal const string OLE32 = "ole32.dll";
 
     [System.Security.SecurityCritical]  // auto-generated_required
-    public static Object GetActiveObject(String progID)
+    public static object GetActiveObject(string progID)
     {
         Guid clsid;
 
@@ -35,18 +35,18 @@ internal static class Marshal2
     [ResourceExposure(ResourceScope.None)]
     [SuppressUnmanagedCodeSecurity]
     [System.Security.SecurityCritical]  // auto-generated
-    private static extern void CLSIDFromProgIDEx([MarshalAs(UnmanagedType.LPWStr)] String progId, out Guid clsid);
+    private static extern void CLSIDFromProgIDEx([MarshalAs(UnmanagedType.LPWStr)] string progId, out Guid clsid);
 
     [DllImport(OLE32, PreserveSig = false)]
     [ResourceExposure(ResourceScope.None)]
     [SuppressUnmanagedCodeSecurity]
     [System.Security.SecurityCritical]  // auto-generated
-    private static extern void CLSIDFromProgID([MarshalAs(UnmanagedType.LPWStr)] String progId, out Guid clsid);
+    private static extern void CLSIDFromProgID([MarshalAs(UnmanagedType.LPWStr)] string progId, out Guid clsid);
 
     [DllImport(OLEAUT32, PreserveSig = false)]
     [ResourceExposure(ResourceScope.None)]
     [SuppressUnmanagedCodeSecurity]
     [System.Security.SecurityCritical]  // auto-generated
-    private static extern void GetActiveObject(ref Guid rclsid, IntPtr reserved, [MarshalAs(UnmanagedType.Interface)] out Object ppunk);
+    private static extern void GetActiveObject(ref Guid rclsid, IntPtr reserved, [MarshalAs(UnmanagedType.Interface)] out object ppunk);
 
 }

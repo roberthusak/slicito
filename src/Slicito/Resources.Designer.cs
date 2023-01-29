@@ -61,6 +61,15 @@ namespace Slicito {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string SiteNavigationJavaScript {
+            get {
+                return ResourceManager.GetString("SiteNavigationJavaScript", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to let tryFindLinkEventTarget = function(e) {
         ///    let path = e.composedPath();
         ///

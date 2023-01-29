@@ -1,87 +1,35 @@
-using Microsoft.CodeAnalysis;
-using Microsoft.Msagl.Drawing;
-using Slicito;
+using Slicito.Abstractions;
+using Slicito.DotNet;
+using Slicito.DotNet.Elements;
+using Slicito.Presentation;
+
 using SolutionAnalysis;
 
-var project = await RoslynUtils.OpenProjectAsync(args[0]);
-var compilation = await project.GetCompilationAsync();
+var globalContext = await new DotNetContext.Builder()
+    .AddSolution(args[0])
+    .BuildAsync();
 
-var graph = await CreateGraphFromSymbolsAsync(compilation!.GetSymbolsWithName(_ => true, SymbolFilter.Namespace | SymbolFilter.Type));
+var dependencyRelations = globalContext.ExtractDependencyRelations();
+var dataFlowRelations = globalContext.ExtractDataFlowRelations(dependencyRelations);
+var controlFlowRelations = globalContext.ExtractControlFlowRelations(dependencyRelations);
 
-var uri = await graph.RenderToSvgUriAsync();
-Utils.OpenUri(uri);
+var namespaceDependsOnRelation = Relation.Merge(dependencyRelations)
+    .MoveUpHierarchy(globalContext.Hierarchy, (_, hierarchyPair) =>
+        hierarchyPair.Target is DotNetOperation or DotNetBlock or DotNetVariable or DotNetTypeMember or DotNetType)
+    .MakeUnique()
+    .Filter(pair =>
+        pair.Source != pair.Target
+        && !globalContext.Hierarchy.GetAncestors(pair.Source).Contains(pair.Target)
+        && !globalContext.Hierarchy.GetAncestors(pair.Target).Contains(pair.Source));
 
+var compactedHierarchy = globalContext.Hierarchy
+    .Filter(pair => pair.Target is not DotNetTypeMember and not DotNetOperation and not DotNetBlock and not DotNetVariable)
+    .CompactPaths(pair => pair.Target is DotNetNamespace);
 
-async Task<Graph> CreateGraphFromSymbolsAsync(IEnumerable<ISymbol> symbols, ISymbol? topLevelSymbol = null)
-{
-    var graph = new Graph();
+var schema = new Schema.Builder()
+    .AddLabelProvider(globalContext.LabelProvider)
+    .AddNodes(compactedHierarchy)
+    .AddEdges(namespaceDependsOnRelation)
+    .Build();
 
-    if (topLevelSymbol is not null)
-    {
-        graph.AddSymbol(topLevelSymbol);
-    }
-
-    foreach (var symbol in symbols)
-    {
-        if (symbol is INamespaceSymbol { IsGlobalNamespace: true })
-        {
-            continue;
-        }
-
-        var symbolSubgraph = graph.AddSymbolWithHierarchy(symbol);
-
-        if (symbol is ITypeSymbol typeSymbol)
-        {
-            var detailGraph = await CreateGraphFromSymbolsAsync(typeSymbol.GetMembers(), typeSymbol);
-
-            symbolSubgraph.Attr.Uri = await detailGraph.RenderToSvgUriAsync(filename: $"schema_{typeSymbol.GetNodeId()}.svg");
-        }
-
-        if (symbol is IMethodSymbol methodSymbol)
-        {
-            AddEdgesToCallees(graph, symbolSubgraph, methodSymbol, topLevelSymbol);
-        }
-    }
-
-    return graph;
-}
-
-void AddEdgesToCallees(Graph graph, Subgraph callerSubgraph, IMethodSymbol callerSymbol, ISymbol? topLevelSymbol = null)
-{
-    foreach (var invocation in callerSymbol.FindCallees(compilation))
-    {
-        Node edgeFrom;
-        Node edgeTo;
-
-        if (topLevelSymbol is not null && !SymbolEqualityComparer.Default.Equals(invocation.Callee.ContainingType, topLevelSymbol))
-        {
-            // Reference to an outside dependency, display only the edge from the current type to the top namespace of its type
-
-            edgeFrom = graph.AddSymbol(topLevelSymbol);
-
-            graph.AddSymbolWithHierarchy(invocation.Callee);
-            edgeTo = graph.AddSymbol(invocation.Callee.FindTopNamespace()!);
-        }
-        else
-        {
-            edgeFrom = callerSubgraph;
-            edgeTo = graph.AddSymbolWithHierarchy(invocation.Callee);
-        }
-
-        var edge = edgeFrom.Edges.FirstOrDefault(edge => edge.Target == edgeTo.Id);
-        if (edge is not null)
-        {
-            // Only increase the thickness (up to a maximum) but not add another edge between the two
-            edge.Attr.LineWidth = Math.Min(5.0, edge.Attr.LineWidth * 1.2);
-
-            continue;
-        }
-
-        edge = graph.AddEdge(edgeFrom.Id, edgeTo.Id);
-
-        var callSite = invocation.CallSite;
-        var position = callSite.SyntaxTree.GetMappedLineSpan(callSite.Span);
-
-        edge.Attr.Uri = ServerUtils.GetOpenFileEndpointUri(position);
-    }
-}
+Utils.SaveSvgAndOpen(schema);

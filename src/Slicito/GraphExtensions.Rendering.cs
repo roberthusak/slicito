@@ -47,7 +47,7 @@ public static partial class GraphExtensions
             $"<iframe src=\"{fileUri}\" width=\"{iframeWidth}\" height=\"{iframeHeight}\"></iframe>");
     }
 
-    public static async Task<string> RenderToSvgUriAsync(
+    public static async Task<Uri> RenderToSvgUriAsync(
         this Graph graph,
         LayoutOrientation orientation = LayoutOrientation.Vertical,
         string filename = "schema.svg")
@@ -57,15 +57,40 @@ public static partial class GraphExtensions
         return await ServerUtils.UploadFileAsync(filename, ms);
     }
 
-    private static MemoryStream RenderSvgToStream(Graph graph, LayoutOrientation orientation)
+    public static MemoryStream RenderSvgToStream(this Graph graph, LayoutOrientation orientation, bool embedJs = true)
     {
         EnsureLayout(graph, orientation);
+
         var ms = new MemoryStream();
-        var svgWriter = new CustomSvgGraphWriter(ms, graph);
-        svgWriter.Write(Resources.SvgEmbeddedJavaScript);
+
+        RenderSvgToStream(graph, ms, orientation, embedJs);
 
         ms.Position = 0;
         return ms;
+    }
+
+    public static void RenderSvgToStream(this Graph graph, Stream stream, LayoutOrientation orientation, bool embedJs = true)
+    {
+        EnsureLayout(graph, orientation);
+
+        var svgWriter = new CustomSvgGraphWriter(stream, graph)
+        {
+            NodeSanitizer = (n => HttpUtility.HtmlEncode(n))
+        };
+
+        svgWriter.Write(embedJs ? Resources.SvgEmbeddedJavaScript : null);
+    }
+
+    public static void RenderSvgToTextWriter(this Graph graph, TextWriter writer, LayoutOrientation orientation, bool embedJs = true)
+    {
+        EnsureLayout(graph, orientation);
+
+        var svgWriter = new CustomSvgGraphWriter(writer, graph)
+        {
+            NodeSanitizer = (n => HttpUtility.HtmlEncode(n))
+        };
+
+        svgWriter.Write(embedJs ? Resources.SvgEmbeddedJavaScript : null);
     }
 
     private static void EnsureLayout(Graph graph, LayoutOrientation orientation)
@@ -130,10 +155,7 @@ public static partial class GraphExtensions
 
         var font = new Font(label.FontName, (float)label.FontSize);
 
-        // The text may contain escaped characters, e.g. '<' and '>'
-        var text = HttpUtility.HtmlDecode(label.Text);
-
-        var measurements = graphics.MeasureString(text, font);
+        var measurements = graphics.MeasureString(label.Text, font);
 
         label.Width = measurements.Width;
         label.Height = measurements.Height;
