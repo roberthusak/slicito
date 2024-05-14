@@ -22,6 +22,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		nuget.config = nuget.config
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{CD7DB68A-219B-4824-BF80-F6C2BA302AEA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slicito.DotNet.Tests", "tests\Slicito.DotNet.Tests\Slicito.DotNet.Tests.csproj", "{18EB7034-80AD-4379-B702-9DB44793E085}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,6 +48,10 @@ Global
 		{210426DD-20A8-4230-BA51-AF7584D8707F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{210426DD-20A8-4230-BA51-AF7584D8707F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{210426DD-20A8-4230-BA51-AF7584D8707F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{18EB7034-80AD-4379-B702-9DB44793E085}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{18EB7034-80AD-4379-B702-9DB44793E085}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{18EB7034-80AD-4379-B702-9DB44793E085}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{18EB7034-80AD-4379-B702-9DB44793E085}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -53,6 +61,7 @@ Global
 		{144F60C8-BB0B-4E0A-91A6-389F266B1A3E} = {2F138FD5-85D9-45DD-954A-E27FB1087800}
 		{722D866D-AE3A-42CB-A64D-F18C3F441CBF} = {DEB14B61-E010-4B08-A880-E956B20A5BE6}
 		{210426DD-20A8-4230-BA51-AF7584D8707F} = {DEB14B61-E010-4B08-A880-E956B20A5BE6}
+		{18EB7034-80AD-4379-B702-9DB44793E085} = {CD7DB68A-219B-4824-BF80-F6C2BA302AEA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {878A59AE-1008-403F-91D2-E4072C3AE3F3}
