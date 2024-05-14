@@ -2,5 +2,5 @@ namespace Slicito.Abstractions;
 
 public interface IFactProvider
 {
-    Task<IFactQueryResult> QueryAsync(IFactQuery query);
+    Task<FactQueryResult> QueryAsync(FactQuery query);
 }
