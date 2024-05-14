@@ -1,5 +1,3 @@
-using System.Threading.Tasks;
-
 namespace Slicito.Abstractions;
 
 public interface IFactProvider
