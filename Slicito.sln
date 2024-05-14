@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SolutionAnalysis", "samples
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{2F138FD5-85D9-45DD-954A-E27FB1087800}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Slicito.Abstractions", "src\Slicito.Abstractions\Slicito.Abstractions.csproj", "{722D866D-AE3A-42CB-A64D-F18C3F441CBF}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C622B298-01DE-45F8-92C7-483809B4DF78}"
 	ProjectSection(SolutionItems) = preProject
 		Directory.Build.props = Directory.Build.props
@@ -32,6 +34,10 @@ Global
 		{144F60C8-BB0B-4E0A-91A6-389F266B1A3E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{144F60C8-BB0B-4E0A-91A6-389F266B1A3E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{144F60C8-BB0B-4E0A-91A6-389F266B1A3E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{722D866D-AE3A-42CB-A64D-F18C3F441CBF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{722D866D-AE3A-42CB-A64D-F18C3F441CBF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{722D866D-AE3A-42CB-A64D-F18C3F441CBF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{722D866D-AE3A-42CB-A64D-F18C3F441CBF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -39,6 +45,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{28C0402F-5B5C-4FBB-87CD-2F6597F73335} = {DEB14B61-E010-4B08-A880-E956B20A5BE6}
 		{144F60C8-BB0B-4E0A-91A6-389F266B1A3E} = {2F138FD5-85D9-45DD-954A-E27FB1087800}
+		{722D866D-AE3A-42CB-A64D-F18C3F441CBF} = {DEB14B61-E010-4B08-A880-E956B20A5BE6}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {878A59AE-1008-403F-91D2-E4072C3AE3F3}
