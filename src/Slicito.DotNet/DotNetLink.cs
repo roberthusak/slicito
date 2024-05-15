@@ -16,5 +16,5 @@ public class DotNetLink : ILink
 
     IElement ILink.Source => Source;
 
-    IElement ILink.Target => Source;
+    IElement ILink.Target => Target;
 }
