@@ -207,4 +207,94 @@ public class DotNetFactProviderTest
             .Which.Links.Should().HaveCount(3)
             .And.NotContain(l => l.Source.Kind == DotNetElementKind.Namespace && l.Target.Kind == DotNetElementKind.Namespace);
     }
+
+    [TestMethod]
+    public async Task Provides_SolutionProjectsNamespacesAndTypes_WithElementFilters_WithoutChildlessElements()
+    {
+        // Arrange
+
+        var solution = await MSBuildWorkspace.Create().OpenSolutionAsync(_solutionPath);
+        var provider = new DotNetFactProvider(solution);
+
+        var query = new FactQuery(
+            [
+                new FactQueryElementRequirement(DotNetElementKind.Solution, includeChildless: false),
+                new FactQueryElementRequirement(DotNetElementKind.Project, includeChildless: false),
+                new FactQueryElementRequirement(DotNetElementKind.Namespace, includeChildless: false, filter: element =>
+                    (element as DotNetElement)?.Name != "ConsoleProject"),
+                new FactQueryElementRequirement(DotNetElementKind.Type, includeChildless: true, filter: element =>
+                    (element as DotNetElement)?.Name != "Adder" && (element as DotNetElement)?.Name != "AdderTest")
+            ],
+            [
+                new FactQueryRelationRequirement(DotNetRelationKind.SolutionContains, includeChildless: false),
+                new FactQueryRelationRequirement(DotNetRelationKind.ProjectContains, includeChildless: false),
+                new FactQueryRelationRequirement(DotNetRelationKind.NamespaceContains, includeChildless: false)
+            ]);
+
+        // Act
+
+        var result = await provider.QueryAsync(query);
+
+        // Assert
+
+        result.Should().NotBeNull();
+        result.Elements.Should().NotBeNull();
+        result.Relations.Should().NotBeNull();
+
+        result.Elements.Should().ContainSingle(e => e.Kind == DotNetElementKind.Solution);
+        result.Elements.Should().ContainSingle(e => e.Kind == DotNetElementKind.Project)
+            .Which.As<DotNetElement>().Name.Should().Be("LibraryProject");
+        result.Elements.Should().ContainSingle(e => e.Kind == DotNetElementKind.Namespace)
+            .Which.As<DotNetElement>().Name.Should().Be("LibraryProject");
+        result.Elements.Where(e => e.Kind == DotNetElementKind.Type).Should().HaveCount(2);
+
+        result.Relations.Should().ContainSingle(r => r.Kind == DotNetRelationKind.SolutionContains)
+            .Which.Links.Should().ContainSingle();
+        result.Relations.Should().ContainSingle(r => r.Kind == DotNetRelationKind.ProjectContains)
+            .Which.Links.Should().ContainSingle();
+        result.Relations.Should().ContainSingle(r => r.Kind == DotNetRelationKind.NamespaceContains)
+            .Which.Links.Should().HaveCount(2)
+            .And.NotContain(l => l.Source.Kind == DotNetElementKind.Namespace && l.Target.Kind == DotNetElementKind.Namespace);
+    }
+
+    [TestMethod]
+    public async Task Returns_EmptyResult_WhenAllElementsChildless()
+    {
+        // Arrange
+
+        var solution = await MSBuildWorkspace.Create().OpenSolutionAsync(_solutionPath);
+        var provider = new DotNetFactProvider(solution);
+
+        var query = new FactQuery(
+            [
+                new FactQueryElementRequirement(DotNetElementKind.Solution, includeChildless: false),
+                new FactQueryElementRequirement(DotNetElementKind.Project, includeChildless: false),
+                new FactQueryElementRequirement(DotNetElementKind.Namespace, includeChildless: false),
+                new FactQueryElementRequirement(DotNetElementKind.Type, includeChildless: false)
+            ],
+            [
+                new FactQueryRelationRequirement(DotNetRelationKind.SolutionContains, includeChildless: false),
+                new FactQueryRelationRequirement(DotNetRelationKind.ProjectContains, includeChildless: false),
+                new FactQueryRelationRequirement(DotNetRelationKind.NamespaceContains, includeChildless: false)
+            ]);
+
+        // Act
+
+        var result = await provider.QueryAsync(query);
+
+        // Assert
+
+        result.Should().NotBeNull();
+        result.Elements.Should().NotBeNull();
+        result.Relations.Should().NotBeNull();
+
+        result.Elements.Should().BeEmpty();
+
+        result.Relations.Should().ContainSingle(r => r.Kind == DotNetRelationKind.SolutionContains)
+            .Which.Links.Should().BeEmpty();
+        result.Relations.Should().ContainSingle(r => r.Kind == DotNetRelationKind.ProjectContains)
+            .Which.Links.Should().BeEmpty();
+        result.Relations.Should().ContainSingle(r => r.Kind == DotNetRelationKind.NamespaceContains)
+            .Which.Links.Should().BeEmpty();
+    }
 }

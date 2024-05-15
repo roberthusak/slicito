@@ -48,25 +48,34 @@ internal partial class FactQueryExecutor
             return;
         }
 
-        _elements.Add(solutionElement);
+        var anyChild = await ProcessSolutionContains(solution, solutionElement);
 
-        await ProcessSolutionContains(solution, solutionElement);
-    }
-
-    private async Task ProcessSolutionContains(Solution solution, DotNetElement solutionElement)
-    {
-        if (_requirements.SolutionContains is null || _requirements.Project is null)
+        if (!anyChild && !_requirements.Solution.IncludeChildless)
         {
             return;
         }
 
-        foreach (var project in solution.Projects)
-        {
-            await ProcessProject(solutionElement, project);
-        }
+        _elements.Add(solutionElement);
     }
 
-    private async Task ProcessProject(DotNetElement solutionElement, Project project)
+    private async Task<bool> ProcessSolutionContains(Solution solution, DotNetElement solutionElement)
+    {
+        if (_requirements.SolutionContains is null || _requirements.Project is null)
+        {
+            return false;
+        }
+
+        var anyChild = false;
+
+        foreach (var project in solution.Projects)
+        {
+            anyChild = await ProcessProject(solutionElement, project) || anyChild;
+        }
+
+        return anyChild;
+    }
+
+    private async Task<bool> ProcessProject(DotNetElement solutionElement, Project project)
     {
         var projectElement = new DotNetElement(
             DotNetElementKind.Project,
@@ -75,7 +84,7 @@ internal partial class FactQueryExecutor
 
         if (_requirements.Project?.Filter is not null && !_requirements.Project.Filter(projectElement))
         {
-            return;
+            return false;
         }
 
         var solutionProjectLink = new DotNetLink(
@@ -84,33 +93,44 @@ internal partial class FactQueryExecutor
 
         if (_requirements.SolutionContains?.Filter is not null && !_requirements.SolutionContains.Filter(solutionProjectLink))
         {
-            return;
+            return false;
+        }
+
+        var anyChild = await ProcessProjectContains(project, projectElement);
+
+        if (!anyChild && !_requirements.Project!.IncludeChildless)
+        {
+            return false;
         }
 
         _elements.Add(projectElement);
         _solutionContainsLinks.Add(solutionProjectLink);
 
-        await ProcessProjectContains(project, projectElement);
+        return true;
     }
 
-    private async Task ProcessProjectContains(Project project, DotNetElement projectElement)
+    private async Task<bool> ProcessProjectContains(Project project, DotNetElement projectElement)
     {
         if (_requirements.ProjectContains is null || _requirements.Namespace is null)
         {
-            return;
+            return false;
         }
 
         var compilation = await project.GetCompilationAsync()
             ?? throw new InvalidOperationException(
                 $"The project '{project.FilePath}' could not be loaded into a Roslyn Compilation.");
 
+        var anyChild = false;
+
         foreach (var @namespace in compilation.SourceModule.GlobalNamespace.GetMembers().OfType<INamespaceSymbol>())
         {
-            ProcessNamespace(projectElement, @namespace);
+            anyChild = ProcessNamespace(projectElement, @namespace) || anyChild;
         }
+
+        return anyChild;
     }
 
-    private void ProcessNamespace(DotNetElement containingElement, INamespaceSymbol @namespace)
+    private bool ProcessNamespace(DotNetElement containingElement, INamespaceSymbol @namespace)
     {
         var namespaceElement = new DotNetElement(
             DotNetElementKind.Namespace,
@@ -119,7 +139,7 @@ internal partial class FactQueryExecutor
 
         if (_requirements.Namespace?.Filter is not null && !_requirements.Namespace.Filter(namespaceElement))
         {
-            return;
+            return false;
         }
 
         var containsLink = new DotNetLink(
@@ -135,42 +155,53 @@ internal partial class FactQueryExecutor
 
         if (filter is not null && !filter(containsLink))
         {
-            return;
+            return false;
+        }
+
+        var anyChild = ProcessNamespaceContains(@namespace, namespaceElement);
+
+        if (!anyChild && !_requirements.Namespace!.IncludeChildless)
+        {
+            return false;
         }
 
         _elements.Add(namespaceElement);
         links.Add(containsLink);
 
-        ProcessNamespaceContains(@namespace, namespaceElement);
+        return true;
     }
 
-    private void ProcessNamespaceContains(INamespaceSymbol @namespace, DotNetElement namespaceElement)
+    private bool ProcessNamespaceContains(INamespaceSymbol @namespace, DotNetElement namespaceElement)
     {
         if (_requirements.NamespaceContains is null)
         {
-            return;
+            return false;
         }
+
+        var anyChild = false;
 
         foreach (var member in @namespace.GetMembers())
         {
             switch (member)
             {
                 case INamespaceSymbol nestedNamespace:
-                    ProcessNamespace(namespaceElement, nestedNamespace);
+                    anyChild = ProcessNamespace(namespaceElement, nestedNamespace) || anyChild;
                     break;
 
                 case ITypeSymbol type:
-                    ProcessType(namespaceElement, type);
+                    anyChild = ProcessType(namespaceElement, type) || anyChild;
                     break;
             }
         }
+
+        return anyChild;
     }
 
-    private void ProcessType(DotNetElement namespaceElement, ITypeSymbol type)
+    private bool ProcessType(DotNetElement namespaceElement, ITypeSymbol type)
     {
         if (_requirements.Type is null)
         {
-            return;
+            return false;
         }
 
         var typeElement = new DotNetElement(
@@ -180,20 +211,27 @@ internal partial class FactQueryExecutor
 
         if (_requirements.Type.Filter is not null && !_requirements.Type.Filter(typeElement))
         {
-            return;
+            return false;
         }
 
         var namespaceTypeLink = new DotNetLink(
             source: namespaceElement,
             target: typeElement);
 
-        if (_requirements.NamespaceContains?.Filter is not null && !_requirements.NamespaceContains.Filter(namespaceTypeLink))
+        if (_requirements.NamespaceContains!.Filter is not null && !_requirements.NamespaceContains.Filter(namespaceTypeLink))
         {
-            return;
+            return false;
+        }
+
+        if (!_requirements.Type.IncludeChildless)
+        {
+            return false;
         }
 
         _elements.Add(typeElement);
         _namespaceContainsLinks.Add(namespaceTypeLink);
+
+        return true;
     }
 
     private FactQueryResult CreateResult()
