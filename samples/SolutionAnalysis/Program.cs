@@ -1,35 +1,55 @@
+using System.Diagnostics;
+
+using Microsoft.CodeAnalysis.MSBuild;
+
 using Slicito.Abstractions;
 using Slicito.DotNet;
-using Slicito.DotNet.Elements;
-using Slicito.Presentation;
 
-using SolutionAnalysis;
+var solutionStopwatch = Stopwatch.StartNew();
 
-var globalContext = await new DotNetContext.Builder()
-    .AddSolution(args[0])
-    .BuildAsync();
+var solution = await MSBuildWorkspace.Create().OpenSolutionAsync(args[0]);
 
-var dependencyRelations = globalContext.ExtractDependencyRelations();
-var dataFlowRelations = globalContext.ExtractDataFlowRelations(dependencyRelations);
-var controlFlowRelations = globalContext.ExtractControlFlowRelations(dependencyRelations);
+Console.WriteLine($"Solution opened in {solutionStopwatch.Elapsed.TotalMilliseconds} ms");
 
-var namespaceDependsOnRelation = Relation.Merge(dependencyRelations)
-    .MoveUpHierarchy(globalContext.Hierarchy, (_, hierarchyPair) =>
-        hierarchyPair.Target is DotNetOperation or DotNetBlock or DotNetVariable or DotNetTypeMember or DotNetType)
-    .MakeUnique()
-    .Filter(pair =>
-        pair.Source != pair.Target
-        && !globalContext.Hierarchy.GetAncestors(pair.Source).Contains(pair.Target)
-        && !globalContext.Hierarchy.GetAncestors(pair.Target).Contains(pair.Source));
+var provider = new DotNetFactProvider(solution);
 
-var compactedHierarchy = globalContext.Hierarchy
-    .Filter(pair => pair.Target is not DotNetTypeMember and not DotNetOperation and not DotNetBlock and not DotNetVariable)
-    .CompactPaths(pair => pair.Target is DotNetNamespace);
+var query = new FactQuery(
+    [
+        new FactQueryElementRequirement(DotNetElementKind.Solution, includeChildless: false),
+        new FactQueryElementRequirement(DotNetElementKind.Project, includeChildless: false),
+        new FactQueryElementRequirement(DotNetElementKind.Namespace, includeChildless: false),
+        new FactQueryElementRequirement(DotNetElementKind.Type, includeChildless: true),
+    ],
+    [
+        new FactQueryRelationRequirement(DotNetRelationKind.SolutionContains, includeChildless: false),
+        new FactQueryRelationRequirement(DotNetRelationKind.ProjectContains, includeChildless: false),
+        new FactQueryRelationRequirement(DotNetRelationKind.NamespaceContains, includeChildless: false)
+    ]);
 
-var schema = new Schema.Builder()
-    .AddLabelProvider(globalContext.LabelProvider)
-    .AddNodes(compactedHierarchy)
-    .AddEdges(namespaceDependsOnRelation)
-    .Build();
+var queryStopwatch = Stopwatch.StartNew();
 
-Utils.SaveSvgAndOpen(schema);
+var result = await provider.QueryAsync(query);
+
+Console.WriteLine($"Query completed in {queryStopwatch.Elapsed.TotalMilliseconds} ms");
+
+Console.WriteLine(
+    "Projects: {0}",
+    result.Elements.Count(e => e.Kind == DotNetElementKind.Project));
+Console.WriteLine(
+    "Namespaces: {0}",
+    result.Elements.Count(e => e.Kind == DotNetElementKind.Namespace));
+Console.WriteLine(
+    "Types: {0}",
+    result.Elements.Count(e => e.Kind == DotNetElementKind.Type));
+
+Console.WriteLine(
+    "SolutionContains links: {0}",
+    result.Relations.Single(l => l.Kind == DotNetRelationKind.SolutionContains).Links.Count());
+
+Console.WriteLine(
+    "ProjectContains links: {0}",
+    result.Relations.Single(l => l.Kind == DotNetRelationKind.ProjectContains).Links.Count());
+
+Console.WriteLine(
+    "NamespaceContains links: {0}",
+    result.Relations.Single(l => l.Kind == DotNetRelationKind.NamespaceContains).Links.Count());
