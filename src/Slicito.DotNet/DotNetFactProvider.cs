@@ -16,6 +16,6 @@ public class DotNetFactProvider : IFactProvider
 
     public Task<FactQueryResult> QueryAsync(FactQuery query)
     {
-        return FactQueryExecutor.ExecuteQuery(_solution, query);
+        return FactQueryExecutor.ExecuteQueryAsync(_solution, query);
     }
 }

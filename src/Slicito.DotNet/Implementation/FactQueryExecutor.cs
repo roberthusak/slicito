@@ -12,11 +12,11 @@ internal partial class FactQueryExecutor
     private readonly List<DotNetLink> _projectContainsLinks = [];
     private readonly List<DotNetLink> _namespaceContainsLinks = [];
 
-    public static async Task<FactQueryResult> ExecuteQuery(Solution solution, FactQuery query)
+    public static async Task<FactQueryResult> ExecuteQueryAsync(Solution solution, FactQuery query)
     {
         var executor = new FactQueryExecutor(query);
 
-        return await executor.ExecuteQuery(solution);
+        return await executor.ExecuteQueryAsync(solution);
     }
 
     private FactQueryExecutor(FactQuery query)
@@ -24,14 +24,14 @@ internal partial class FactQueryExecutor
         _requirements = new KnownRequirements(query);
     }
 
-    private async Task<FactQueryResult> ExecuteQuery(Solution solution)
+    private async Task<FactQueryResult> ExecuteQueryAsync(Solution solution)
     {
-        await ProcessSolution(solution);
+        await ProcessSolutionAsync(solution);
 
         return CreateResult();
     }
 
-    private async Task ProcessSolution(Solution solution)
+    private async Task ProcessSolutionAsync(Solution solution)
     {
         if (_requirements.Solution is null)
         {
@@ -48,7 +48,7 @@ internal partial class FactQueryExecutor
             return;
         }
 
-        var anyChild = await ProcessSolutionContains(solution, solutionElement);
+        var anyChild = await ProcessSolutionContainsAsync(solution, solutionElement);
 
         if (!anyChild && !_requirements.Solution.IncludeChildless)
         {
@@ -58,7 +58,7 @@ internal partial class FactQueryExecutor
         _elements.Add(solutionElement);
     }
 
-    private async Task<bool> ProcessSolutionContains(Solution solution, DotNetElement solutionElement)
+    private async Task<bool> ProcessSolutionContainsAsync(Solution solution, DotNetElement solutionElement)
     {
         if (_requirements.SolutionContains is null || _requirements.Project is null)
         {
@@ -69,13 +69,13 @@ internal partial class FactQueryExecutor
 
         foreach (var project in solution.Projects)
         {
-            anyChild = await ProcessProject(solutionElement, project) || anyChild;
+            anyChild = await ProcessProjectAsync(solutionElement, project) || anyChild;
         }
 
         return anyChild;
     }
 
-    private async Task<bool> ProcessProject(DotNetElement solutionElement, Project project)
+    private async Task<bool> ProcessProjectAsync(DotNetElement solutionElement, Project project)
     {
         var projectElement = new DotNetElement(
             DotNetElementKind.Project,
@@ -96,7 +96,7 @@ internal partial class FactQueryExecutor
             return false;
         }
 
-        var anyChild = await ProcessProjectContains(project, projectElement);
+        var anyChild = await ProcessProjectContainsAsync(project, projectElement);
 
         if (!anyChild && !_requirements.Project!.IncludeChildless)
         {
@@ -109,7 +109,7 @@ internal partial class FactQueryExecutor
         return true;
     }
 
-    private async Task<bool> ProcessProjectContains(Project project, DotNetElement projectElement)
+    private async Task<bool> ProcessProjectContainsAsync(Project project, DotNetElement projectElement)
     {
         if (_requirements.ProjectContains is null || _requirements.Namespace is null)
         {
