@@ -21,11 +21,11 @@ public class DotNetFactProviderTest
 
         var query = new FactQuery(
             [
-                new FactQueryElementRequirement(DotNetElementKind.Solution, returnAll: true),
-                new FactQueryElementRequirement(DotNetElementKind.Project, returnAll: true)
+                new FactQueryElementRequirement(DotNetElementKind.Solution, includeChildless: true),
+                new FactQueryElementRequirement(DotNetElementKind.Project, includeChildless: true)
             ],
             [
-                new FactQueryRelationRequirement(DotNetRelationKind.SolutionContains, returnAll: true)
+                new FactQueryRelationRequirement(DotNetRelationKind.SolutionContains, includeChildless: true)
             ]);
 
         // Act
@@ -54,12 +54,12 @@ public class DotNetFactProviderTest
 
         var query = new FactQuery(
             [
-                new FactQueryElementRequirement(DotNetElementKind.Solution, returnAll: true),
-                new FactQueryElementRequirement(DotNetElementKind.Project, returnAll: true, filter: element =>
+                new FactQueryElementRequirement(DotNetElementKind.Solution, includeChildless: true),
+                new FactQueryElementRequirement(DotNetElementKind.Project, includeChildless: true, filter: element =>
                     (element as DotNetElement)?.Name != "TestProject")
             ],
             [
-                new FactQueryRelationRequirement(DotNetRelationKind.SolutionContains, returnAll: true)
+                new FactQueryRelationRequirement(DotNetRelationKind.SolutionContains, includeChildless: true)
             ]);
 
         // Act
@@ -90,11 +90,11 @@ public class DotNetFactProviderTest
 
         var query = new FactQuery(
             [
-                new FactQueryElementRequirement(DotNetElementKind.Solution, returnAll: true),
-                new FactQueryElementRequirement(DotNetElementKind.Project, returnAll: true)
+                new FactQueryElementRequirement(DotNetElementKind.Solution, includeChildless: true),
+                new FactQueryElementRequirement(DotNetElementKind.Project, includeChildless: true)
             ],
             [
-                new FactQueryRelationRequirement(DotNetRelationKind.SolutionContains, returnAll: true, filter: link =>
+                new FactQueryRelationRequirement(DotNetRelationKind.SolutionContains, includeChildless: true, filter: link =>
                     (link.Target as DotNetElement)?.Name != "TestProject")
             ]);
 
@@ -126,15 +126,15 @@ public class DotNetFactProviderTest
 
         var query = new FactQuery(
             [
-                new FactQueryElementRequirement(DotNetElementKind.Solution, returnAll: true),
-                new FactQueryElementRequirement(DotNetElementKind.Project, returnAll: true),
-                new FactQueryElementRequirement(DotNetElementKind.Namespace, returnAll: true),
-                new FactQueryElementRequirement(DotNetElementKind.Type, returnAll: true)
+                new FactQueryElementRequirement(DotNetElementKind.Solution, includeChildless: true),
+                new FactQueryElementRequirement(DotNetElementKind.Project, includeChildless: true),
+                new FactQueryElementRequirement(DotNetElementKind.Namespace, includeChildless: true),
+                new FactQueryElementRequirement(DotNetElementKind.Type, includeChildless: true)
             ],
             [
-                new FactQueryRelationRequirement(DotNetRelationKind.SolutionContains, returnAll: true),
-                new FactQueryRelationRequirement(DotNetRelationKind.ProjectContains, returnAll: true),
-                new FactQueryRelationRequirement(DotNetRelationKind.NamespaceContains, returnAll: true)
+                new FactQueryRelationRequirement(DotNetRelationKind.SolutionContains, includeChildless: true),
+                new FactQueryRelationRequirement(DotNetRelationKind.ProjectContains, includeChildless: true),
+                new FactQueryRelationRequirement(DotNetRelationKind.NamespaceContains, includeChildless: true)
             ]);
 
         // Act
@@ -171,17 +171,17 @@ public class DotNetFactProviderTest
 
         var query = new FactQuery(
             [
-                new FactQueryElementRequirement(DotNetElementKind.Solution, returnAll: true),
-                new FactQueryElementRequirement(DotNetElementKind.Project, returnAll: true),
-                new FactQueryElementRequirement(DotNetElementKind.Namespace, returnAll: true, filter: element =>
+                new FactQueryElementRequirement(DotNetElementKind.Solution, includeChildless: true),
+                new FactQueryElementRequirement(DotNetElementKind.Project, includeChildless: true),
+                new FactQueryElementRequirement(DotNetElementKind.Namespace, includeChildless: true, filter: element =>
                     (element as DotNetElement)?.Name != "Implementation"),
-                new FactQueryElementRequirement(DotNetElementKind.Type, returnAll: true, filter: element =>
+                new FactQueryElementRequirement(DotNetElementKind.Type, includeChildless: true, filter: element =>
                     (element as DotNetElement)?.Name != "Program")
             ],
             [
-                new FactQueryRelationRequirement(DotNetRelationKind.SolutionContains, returnAll: true),
-                new FactQueryRelationRequirement(DotNetRelationKind.ProjectContains, returnAll: true),
-                new FactQueryRelationRequirement(DotNetRelationKind.NamespaceContains, returnAll: true)
+                new FactQueryRelationRequirement(DotNetRelationKind.SolutionContains, includeChildless: true),
+                new FactQueryRelationRequirement(DotNetRelationKind.ProjectContains, includeChildless: true),
+                new FactQueryRelationRequirement(DotNetRelationKind.NamespaceContains, includeChildless: true)
             ]);
 
         // Act
