@@ -12,7 +12,7 @@ public class DotNetFactProviderTest
     private const string _solutionPath = @"..\..\..\..\inputs\SampleSolution\SampleSolution.sln";
 
     [TestMethod]
-    public async Task ProvidesProjectStructure()
+    public async Task Provides_SolutionAndProjects()
     {
         // Arrange
 
@@ -45,7 +45,7 @@ public class DotNetFactProviderTest
     }
 
     [TestMethod]
-    public async Task ProvidesProjectStructureWithElementFilter()
+    public async Task Provides_SolutionAndProjects_WithElementFilter()
     {
         // Arrange
 
@@ -81,7 +81,7 @@ public class DotNetFactProviderTest
     }
 
     [TestMethod]
-    public async Task ProvidesProjectStructureWithRelationFilter()
+    public async Task Provides_SolutionAndProjects_WithRelationFilter()
     {
         // Arrange
 
@@ -117,7 +117,7 @@ public class DotNetFactProviderTest
     }
 
     [TestMethod]
-    public async Task ProvidesNamespacesAndTypes()
+    public async Task Provides_SolutionProjectsNamespacesAndTypes()
     {
         // Arrange
 
@@ -162,7 +162,7 @@ public class DotNetFactProviderTest
     }
 
     [TestMethod]
-    public async Task ProvidesNamespacesAndTypesWithFilters()
+    public async Task Provides_SolutionProjectsNamespacesAndTypes_WithElementFilters()
     {
         // Arrange
 
