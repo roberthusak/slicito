@@ -9,12 +9,14 @@ internal partial class FactQueryExecutor
     private readonly KnownRequirements _requirements;
     private readonly List<DotNetElement> _elements = [];
     private readonly List<DotNetLink> _solutionContainsLinks = [];
+    private readonly List<DotNetLink> _projectContainsLinks = [];
+    private readonly List<DotNetLink> _namespaceContainsLinks = [];
 
-    public static FactQueryResult ExecuteQuery(Solution solution, FactQuery query)
+    public static async Task<FactQueryResult> ExecuteQuery(Solution solution, FactQuery query)
     {
         var executor = new FactQueryExecutor(query);
 
-        return executor.ExecuteQuery(solution);
+        return await executor.ExecuteQuery(solution);
     }
 
     private FactQueryExecutor(FactQuery query)
@@ -22,36 +24,36 @@ internal partial class FactQueryExecutor
         _requirements = new KnownRequirements(query);
     }
 
-    private FactQueryResult ExecuteQuery(Solution solution)
+    private async Task<FactQueryResult> ExecuteQuery(Solution solution)
     {
-        ProcessSolution(solution);
+        await ProcessSolution(solution);
 
         return CreateResult();
     }
 
-    private void ProcessSolution(Solution solution)
+    private async Task ProcessSolution(Solution solution)
     {
         if (_requirements.Solution is null)
         {
             return;
         }
 
-        var element = new DotNetElement(
+        var solutionElement = new DotNetElement(
             DotNetElementKind.Solution,
-            solution.FilePath!,
-            Path.GetFileNameWithoutExtension(solution.FilePath!));
+            id: solution.FilePath!,
+            name: Path.GetFileNameWithoutExtension(solution.FilePath!));
 
-        if (_requirements.Solution.Filter is not null && !_requirements.Solution.Filter(element))
+        if (_requirements.Solution.Filter is not null && !_requirements.Solution.Filter(solutionElement))
         {
             return;
         }
 
-        _elements.Add(element);
+        _elements.Add(solutionElement);
 
-        ProcessSolutionContains(solution, element);
+        await ProcessSolutionContains(solution, solutionElement);
     }
 
-    private void ProcessSolutionContains(Solution solution, DotNetElement solutionElement)
+    private async Task ProcessSolutionContains(Solution solution, DotNetElement solutionElement)
     {
         if (_requirements.SolutionContains is null || _requirements.Project is null)
         {
@@ -60,16 +62,16 @@ internal partial class FactQueryExecutor
 
         foreach (var project in solution.Projects)
         {
-            ProcessProject(solutionElement, project);
+            await ProcessProject(solutionElement, project);
         }
     }
 
-    private void ProcessProject(DotNetElement solutionElement, Project project)
+    private async Task ProcessProject(DotNetElement solutionElement, Project project)
     {
         var projectElement = new DotNetElement(
             DotNetElementKind.Project,
-            project.FilePath!,
-            project.Name);
+            id: project.FilePath!,
+            name: project.Name);
 
         if (_requirements.Project?.Filter is not null && !_requirements.Project.Filter(projectElement))
         {
@@ -87,6 +89,111 @@ internal partial class FactQueryExecutor
 
         _elements.Add(projectElement);
         _solutionContainsLinks.Add(solutionProjectLink);
+
+        await ProcessProjectContains(project, projectElement);
+    }
+
+    private async Task ProcessProjectContains(Project project, DotNetElement projectElement)
+    {
+        if (_requirements.ProjectContains is null || _requirements.Namespace is null)
+        {
+            return;
+        }
+
+        var compilation = await project.GetCompilationAsync()
+            ?? throw new InvalidOperationException(
+                $"The project '{project.FilePath}' could not be loaded into a Roslyn Compilation.");
+
+        foreach (var @namespace in compilation.SourceModule.GlobalNamespace.GetMembers().OfType<INamespaceSymbol>())
+        {
+            ProcessNamespace(projectElement, @namespace);
+        }
+    }
+
+    private void ProcessNamespace(DotNetElement containingElement, INamespaceSymbol @namespace)
+    {
+        var namespaceElement = new DotNetElement(
+            DotNetElementKind.Namespace,
+            id: $"{containingElement.Id}.{@namespace.Name}",
+            name: @namespace.Name);
+
+        if (_requirements.Namespace?.Filter is not null && !_requirements.Namespace.Filter(namespaceElement))
+        {
+            return;
+        }
+
+        var containsLink = new DotNetLink(
+            source: containingElement,
+            target: namespaceElement);
+
+        var (filter, links) = containingElement.Kind.Name switch
+        {
+            DotNetElementKindNames.Namespace => (_requirements.NamespaceContains?.Filter, _namespaceContainsLinks),
+            DotNetElementKindNames.Project => (_requirements.ProjectContains?.Filter, _projectContainsLinks),
+            _ => throw new InvalidOperationException($"Unexpected containing element kind: {containingElement.Kind.Name}")
+        };
+
+        if (filter is not null && !filter(containsLink))
+        {
+            return;
+        }
+
+        _elements.Add(namespaceElement);
+        links.Add(containsLink);
+
+        ProcessNamespaceContains(@namespace, namespaceElement);
+    }
+
+    private void ProcessNamespaceContains(INamespaceSymbol @namespace, DotNetElement namespaceElement)
+    {
+        if (_requirements.NamespaceContains is null)
+        {
+            return;
+        }
+
+        foreach (var member in @namespace.GetMembers())
+        {
+            switch (member)
+            {
+                case INamespaceSymbol nestedNamespace:
+                    ProcessNamespace(namespaceElement, nestedNamespace);
+                    break;
+
+                case ITypeSymbol type:
+                    ProcessType(namespaceElement, type);
+                    break;
+            }
+        }
+    }
+
+    private void ProcessType(DotNetElement namespaceElement, ITypeSymbol type)
+    {
+        if (_requirements.Type is null)
+        {
+            return;
+        }
+
+        var typeElement = new DotNetElement(
+            DotNetElementKind.Type,
+            id: $"{namespaceElement.Id}.{type.Name}",
+            name: type.Name);
+
+        if (_requirements.Type.Filter is not null && !_requirements.Type.Filter(typeElement))
+        {
+            return;
+        }
+
+        var namespaceTypeLink = new DotNetLink(
+            source: namespaceElement,
+            target: typeElement);
+
+        if (_requirements.NamespaceContains?.Filter is not null && !_requirements.NamespaceContains.Filter(namespaceTypeLink))
+        {
+            return;
+        }
+
+        _elements.Add(typeElement);
+        _namespaceContainsLinks.Add(namespaceTypeLink);
     }
 
     private FactQueryResult CreateResult()
@@ -96,7 +203,17 @@ internal partial class FactQueryExecutor
         if (_requirements.SolutionContains is not null)
         {
             relations.Add(new DotNetRelation(DotNetRelationKind.SolutionContains, _solutionContainsLinks));
-        }   
+        }
+
+        if (_requirements.ProjectContains is not null)
+        {
+            relations.Add(new DotNetRelation(DotNetRelationKind.ProjectContains, _projectContainsLinks));
+        }
+
+        if (_requirements.NamespaceContains is not null)
+        {
+            relations.Add(new DotNetRelation(DotNetRelationKind.NamespaceContains, _namespaceContainsLinks));
+        }
 
         return new FactQueryResult(_elements, relations);
     }

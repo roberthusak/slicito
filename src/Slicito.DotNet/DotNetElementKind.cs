@@ -11,17 +11,17 @@ public class DotNetElementKind : IElementKind
         Name = name;
     }
 
-    public static DotNetElementKind Solution { get; } = new DotNetElementKind("Solution");
+    public static DotNetElementKind Solution { get; } = new DotNetElementKind(DotNetElementKindNames.Solution);
 
-    public static DotNetElementKind Project { get; } = new DotNetElementKind("Project");
+    public static DotNetElementKind Project { get; } = new DotNetElementKind(DotNetElementKindNames.Project);
 
-    public static DotNetElementKind Namespace { get; } = new DotNetElementKind("Namespace");
+    public static DotNetElementKind Namespace { get; } = new DotNetElementKind(DotNetElementKindNames.Namespace);
 
-    public static DotNetElementKind Type { get; } = new DotNetElementKind("Type");
+    public static DotNetElementKind Type { get; } = new DotNetElementKind(DotNetElementKindNames.Type);
 
-    public static DotNetElementKind Method { get; } = new DotNetElementKind("Method");
+    public static DotNetElementKind Method { get; } = new DotNetElementKind(DotNetElementKindNames.Method);
 
-    public static DotNetElementKind Field { get; } = new DotNetElementKind("Field");
+    public static DotNetElementKind Field { get; } = new DotNetElementKind(DotNetElementKindNames.Field);
 
-    public static DotNetElementKind Operation { get; } = new DotNetElementKind("Operation");
+    public static DotNetElementKind Operation { get; } = new DotNetElementKind(DotNetElementKindNames.Operation);
 }
