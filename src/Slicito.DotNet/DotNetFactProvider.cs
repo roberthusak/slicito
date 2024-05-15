@@ -50,11 +50,16 @@ public class DotNetFactProvider : IFactProvider
                             continue;
                         }
 
-                        elements.Add(projectElement);
-
                         var solutionProjectLink = new DotNetLink(
                             source: solutionElement,
                             target: projectElement);
+
+                        if (solutionContainsRequirement.Filter is not null && !solutionContainsRequirement.Filter(solutionProjectLink))
+                        {
+                            continue;
+                        }
+
+                        elements.Add(projectElement);
 
                         solutionContains.Add(solutionProjectLink);
                     }

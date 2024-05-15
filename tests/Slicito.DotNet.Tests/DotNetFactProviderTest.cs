@@ -45,7 +45,7 @@ public class DotNetFactProviderTest
     }
 
     [TestMethod]
-    public async Task ProvidesFilteredProjectStructure()
+    public async Task ProvidesProjectStructureWithElementFilter()
     {
         // Arrange
 
@@ -60,6 +60,42 @@ public class DotNetFactProviderTest
             ],
             [
                 new FactQueryRelationRequirement(DotNetRelationKind.SolutionContains, returnAll: true)
+            ]);
+
+        // Act
+
+        var result = await provider.QueryAsync(query);
+
+        // Assert
+
+        result.Should().NotBeNull();
+        result.Elements.Should().NotBeNull();
+        result.Relations.Should().NotBeNull();
+
+        result.Elements.Should().ContainSingle(e => e.Kind == DotNetElementKind.Solution);
+        result.Elements.Where(e => e.Kind == DotNetElementKind.Project)
+            .Should().HaveCount(2)
+            .And.NotContain(element => element.As<DotNetElement>().Name == "TestProject");
+
+        result.Relations.Should().ContainSingle().Which.Links.Should().HaveCount(2);
+    }
+
+    [TestMethod]
+    public async Task ProvidesProjectStructureWithRelationFilter()
+    {
+        // Arrange
+
+        var solution = await MSBuildWorkspace.Create().OpenSolutionAsync(_solutionPath);
+        var provider = new DotNetFactProvider(solution);
+
+        var query = new FactQuery(
+            [
+                new FactQueryElementRequirement(DotNetElementKind.Solution, returnAll: true),
+                new FactQueryElementRequirement(DotNetElementKind.Project, returnAll: true)
+            ],
+            [
+                new FactQueryRelationRequirement(DotNetRelationKind.SolutionContains, returnAll: true, filter: link =>
+                    (link.Target as DotNetElement)?.Name != "TestProject")
             ]);
 
         // Act
