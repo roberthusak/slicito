@@ -5,4 +5,4 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "All test methods should end with the -Test suffix, regardless of whether they are async or not.", Scope = "member", Target = "~M:Slicito.DotNet.Tests.DotNetFactProviderTest.BasicSampleSolutionStructureTest~System.Threading.Tasks.Task")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "All test methods should end with the -Test suffix, regardless of whether they are async or not.", Scope = "module")]
