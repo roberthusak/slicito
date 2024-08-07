@@ -6,14 +6,14 @@ using Slicito.DotNet;
 
 namespace StandaloneGui;
 
-public class DotNetTreeController : IController
+public class SampleDotNetController : IController
 {
     private const string _openActionName = "open";
     private const string _idActionParameterName = "id";
 
     private readonly DotNetFactProvider _factProvider;
 
-    public DotNetTreeController(DotNetFactProvider factProvider)
+    public SampleDotNetController(DotNetFactProvider factProvider)
     {
         _factProvider = factProvider;
     }
