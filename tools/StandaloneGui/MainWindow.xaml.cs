@@ -1,3 +1,4 @@
+using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Windows;
@@ -25,6 +26,8 @@ public partial class MainWindow : Window
     private readonly string _solutionPath;
     private readonly string _controllersPath;
 
+    private DotNetFactProvider? _factProvider;
+
     public MainWindow()
     {
         InitializeComponent();
@@ -36,24 +39,43 @@ public partial class MainWindow : Window
 
     private async void Window_LoadedAsync(object sender, RoutedEventArgs e)
     {
-        var solution = await MSBuildWorkspace.Create().OpenSolutionAsync(_solutionPath);
+        var controller = await LoadController();
 
-        var provider = new DotNetFactProvider(solution);
-
-        var controller = LoadController(provider);
-
-        _contentPanel.Children.Add(new ToolPanel(controller));
+        _contentControl.Content = new ToolPanel(controller);
     }
 
-    private IController LoadController(DotNetFactProvider provider)
+    private async void ReloadButton_Click(object sender, RoutedEventArgs e)
     {
-        var assembly = Assembly.LoadFrom(_controllersPath);
+        var controller = await LoadController();
+
+        _contentControl.Content = new ToolPanel(controller);
+    }
+
+    private async Task<IController> LoadController()
+    {
+        var assemblyBinary = await File.ReadAllBytesAsync(_controllersPath);
+
+        var assembly = Assembly.Load(assemblyBinary);
 
         var type = assembly.GetTypes().Single(t => typeof(IController).IsAssignableFrom(t));
+
+        var provider = await LoadFactProvider();
 
         var controller = Activator.CreateInstance(type, provider)
             ?? throw new ApplicationException($"Unable to create an instance of the type {type.Name}.");
 
-        return (IController)controller;
+        return (IController) controller;
+    }
+
+    private async Task<DotNetFactProvider> LoadFactProvider()
+    {
+        if (_factProvider == null)
+        {
+            var solution = await MSBuildWorkspace.Create().OpenSolutionAsync(_solutionPath);
+
+            _factProvider = new DotNetFactProvider(solution);
+        }
+
+        return _factProvider;
     }
 }
