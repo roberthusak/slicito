@@ -17,7 +17,7 @@
         </Grid.RowDefinitions>
 
         <ProgressBar x:Name="_progressBar" Grid.Row="0" Grid.Column="0" Height="5" />
-        <TreeView x:Name="_treeView" Grid.Row="1" Grid.Column="0" ItemsSource="{Binding Items}">
+        <TreeView x:Name="_treeView" Grid.Row="1" Grid.Column="0" ItemsSource="{Binding Items}" MouseDoubleClick="TreeView_MouseDoubleClick">
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate DataType="{x:Type models:TreeItem}" ItemsSource="{Binding Children}">
                     <TextBlock Text="{Binding Name}" />

@@ -8,6 +8,9 @@ namespace StandaloneGui;
 
 public class DotNetTreeController : IController
 {
+    private const string _openActionName = "open";
+    private const string _idActionParameterName = "id";
+
     private readonly DotNetFactProvider _factProvider;
 
     public DotNetTreeController(DotNetFactProvider factProvider)
@@ -16,6 +19,29 @@ public class DotNetTreeController : IController
     }
 
     public async Task<IModel> Init()
+    {
+        var facts = await GatherFacts();
+        var projects = facts.Elements.Where(e => e.Kind == DotNetElementKind.Project);
+
+        return CreateModel(projects);
+    }
+
+    public async Task<IModel?> ProcessCommand(Command command)
+    {
+        if (command.Name == _openActionName && command.Parameters.TryGetValue(_idActionParameterName, out var id))
+        {
+            var facts = await GatherFacts();
+            var nestedFacts = facts.Elements.Where(e => e.Id.StartsWith(id) && e.Id != id);
+
+            return CreateModel(nestedFacts);
+        }
+        else
+        {
+            return null;
+        }
+    }
+
+    private async Task<FactQueryResult> GatherFacts()
     {
         var query = new FactQuery(
             [
@@ -30,15 +56,20 @@ public class DotNetTreeController : IController
                 new FactQueryRelationRequirement(DotNetRelationKind.NamespaceContains, IncludeChildless: false)
             ]);
 
-        var result = await _factProvider.QueryAsync(query);
+        return await _factProvider.QueryAsync(query);
+    }
 
+    private static Tree CreateModel(IEnumerable<IElement> elements)
+    {
         return new Tree(
-            result
-            .Elements
+            elements
             .Select(e =>
                 new TreeItem(
                     e.Id,
-                    []))
+                    [],
+                    new Command(
+                        _openActionName,
+                        ImmutableDictionary<string, string>.Empty.Add(_idActionParameterName, e.Id))))
             .ToImmutableArray());
     }
 }
