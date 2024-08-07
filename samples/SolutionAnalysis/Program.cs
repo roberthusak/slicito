@@ -15,15 +15,15 @@ var provider = new DotNetFactProvider(solution);
 
 var query = new FactQuery(
     [
-        new FactQueryElementRequirement(DotNetElementKind.Solution, includeChildless: false),
-        new FactQueryElementRequirement(DotNetElementKind.Project, includeChildless: false),
-        new FactQueryElementRequirement(DotNetElementKind.Namespace, includeChildless: false),
-        new FactQueryElementRequirement(DotNetElementKind.Type, includeChildless: true),
+        new FactQueryElementRequirement(DotNetElementKind.Solution, IncludeChildless: false),
+        new FactQueryElementRequirement(DotNetElementKind.Project, IncludeChildless: false),
+        new FactQueryElementRequirement(DotNetElementKind.Namespace, IncludeChildless: false),
+        new FactQueryElementRequirement(DotNetElementKind.Type, IncludeChildless: true),
     ],
     [
-        new FactQueryRelationRequirement(DotNetRelationKind.SolutionContains, includeChildless: false),
-        new FactQueryRelationRequirement(DotNetRelationKind.ProjectContains, includeChildless: false),
-        new FactQueryRelationRequirement(DotNetRelationKind.NamespaceContains, includeChildless: false)
+        new FactQueryRelationRequirement(DotNetRelationKind.SolutionContains, IncludeChildless: false),
+        new FactQueryRelationRequirement(DotNetRelationKind.ProjectContains, IncludeChildless: false),
+        new FactQueryRelationRequirement(DotNetRelationKind.NamespaceContains, IncludeChildless: false)
     ]);
 
 var queryStopwatch = Stopwatch.StartNew();
