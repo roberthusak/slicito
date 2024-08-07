@@ -27,6 +27,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Slicito.DotNet.Tests", "tests\Slicito.DotNet.Tests\Slicito.DotNet.Tests.csproj", "{18EB7034-80AD-4379-B702-9DB44793E085}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StandaloneGui", "tools\StandaloneGui\StandaloneGui.csproj", "{2291BE18-AC01-465F-9A63-58F849D13CC4}"
+	ProjectSection(ProjectDependencies) = postProject
+		{CCA637E7-2AAC-4188-AADA-1314386BC45B} = {CCA637E7-2AAC-4188-AADA-1314386BC45B}
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{5043DC3E-B865-42D7-8DFC-8D89155E9AFE}"
 EndProject
