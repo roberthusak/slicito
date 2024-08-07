@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AutomaticGraphLayout.WpfGraphControl" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Slicito.Abstractions\Slicito.Abstractions.csproj" />
   </ItemGroup>
 

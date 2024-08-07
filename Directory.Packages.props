@@ -3,6 +3,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
+    <PackageVersion Include="AutomaticGraphLayout.WpfGraphControl" Version="1.1.12" />
     <PackageVersion Include="FluentAssertions" Version="6.12.0" />
     <PackageVersion Include="FluentAssertions.Analyzers" Version="0.31.0" />
     <PackageVersion Include="System.Collections.Immutable" Version="8.0.0" />

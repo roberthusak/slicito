@@ -23,7 +23,7 @@ public class SampleDotNetController : IController
         var facts = await GatherFacts();
         var projects = facts.Elements.Where(e => e.Kind == DotNetElementKind.Project);
 
-        return CreateModel(projects);
+        return CreateList(projects);
     }
 
     public async Task<IModel?> ProcessCommand(Command command)
@@ -31,9 +31,9 @@ public class SampleDotNetController : IController
         if (command.Name == _openActionName && command.Parameters.TryGetValue(_idActionParameterName, out var id))
         {
             var facts = await GatherFacts();
-            var nestedFacts = facts.Elements.Where(e => e.Id.StartsWith(id) && e.Id != id);
+            var nestedFacts = facts.Elements.Where(e => e.Id.StartsWith(id));
 
-            return CreateModel(nestedFacts);
+            return CreateGraph(nestedFacts, facts.Relations);
         }
         else
         {
@@ -59,7 +59,7 @@ public class SampleDotNetController : IController
         return await _factProvider.QueryAsync(query);
     }
 
-    private static Tree CreateModel(IEnumerable<IElement> elements)
+    private static Tree CreateList(IEnumerable<IElement> elements)
     {
         return new Tree(
             elements
@@ -67,9 +67,33 @@ public class SampleDotNetController : IController
                 new TreeItem(
                     e.Id,
                     [],
-                    new Command(
-                        _openActionName,
-                        ImmutableDictionary<string, string>.Empty.Add(_idActionParameterName, e.Id))))
+                    CreateOpenCommand(e.Id)))
             .ToImmutableArray());
+    }
+
+    private static Graph CreateGraph(IEnumerable<IElement> elements, IEnumerable<IRelation> relations)
+    {
+        var elementsSet = elements.ToHashSet();
+
+        var nodes = elementsSet
+            .Select(e => new Node(
+                e.Id,
+                (e as DotNetElement)?.Name ?? e.Id,
+                CreateOpenCommand(e.Id)))
+            .ToImmutableArray();
+
+        var edges = relations
+            .SelectMany(r =>
+                r.Links
+                .Where(l => elementsSet.Contains(l.Source) && elementsSet.Contains(l.Target))
+                .Select(l => new Edge(l.Source.Id, l.Target.Id, r.Kind.Name, null)))
+            .ToImmutableArray();
+
+        return new Graph(nodes, edges);
+    }
+
+    private static Command CreateOpenCommand(string id)
+    {
+        return new Command(_openActionName, ImmutableDictionary<string, string>.Empty.Add(_idActionParameterName, id));
     }
 }
