@@ -13,6 +13,7 @@ using Microsoft.CodeAnalysis.MSBuild;
 
 using Slicito.Abstractions;
 using Slicito.DotNet;
+using Slicito.Wpf;
 
 namespace StandaloneGui;
 /// <summary>
@@ -27,33 +28,13 @@ public partial class MainWindow : Window
 
     private async void Window_LoadedAsync(object sender, RoutedEventArgs e)
     {
-        progressBar.IsIndeterminate = true;
-
         var args = Environment.GetCommandLineArgs();
         var solution = await MSBuildWorkspace.Create().OpenSolutionAsync(args[1]);
 
         var provider = new DotNetFactProvider(solution);
 
-        var query = new FactQuery(
-            [
-                new FactQueryElementRequirement(DotNetElementKind.Solution, IncludeChildless: false),
-                new FactQueryElementRequirement(DotNetElementKind.Project, IncludeChildless: false),
-                new FactQueryElementRequirement(DotNetElementKind.Namespace, IncludeChildless: false),
-                new FactQueryElementRequirement(DotNetElementKind.Type, IncludeChildless: true),
-            ],
-            [
-                new FactQueryRelationRequirement(DotNetRelationKind.SolutionContains, IncludeChildless: false),
-                new FactQueryRelationRequirement(DotNetRelationKind.ProjectContains, IncludeChildless: false),
-                new FactQueryRelationRequirement(DotNetRelationKind.NamespaceContains, IncludeChildless: false)
-            ]);
+        var controller = new DotNetTreeController(provider);
 
-        var result = await provider.QueryAsync(query);
-
-        foreach (var element in result.Elements)
-        {
-            treeView.Items.Add(new TreeViewItem { Header = element.Id });
-        }
-
-        progressBar.IsIndeterminate = false;
+        _contentPanel.Children.Add(new ToolPanel(controller));
     }
 }

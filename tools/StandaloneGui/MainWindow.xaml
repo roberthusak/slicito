@@ -6,16 +6,5 @@
         xmlns:local="clr-namespace:StandaloneGui"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800" Loaded="Window_LoadedAsync">
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
-
-        <ProgressBar x:Name="progressBar" Grid.Row="0" Grid.Column="0" Height="20"/>
-        <TreeView x:Name="treeView" Grid.Row="1" Grid.Column="0"/>
-    </Grid>
+    <DockPanel x:Name="_contentPanel" />
 </Window>
