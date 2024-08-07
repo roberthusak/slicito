@@ -6,7 +6,7 @@ using Slicito.DotNet;
 
 namespace StandaloneGui;
 
-internal class DotNetTreeController : IController
+public class DotNetTreeController : IController
 {
     private readonly DotNetFactProvider _factProvider;
 

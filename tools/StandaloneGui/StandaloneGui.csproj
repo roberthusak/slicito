@@ -13,6 +13,7 @@
   </ItemGroup>
     
   <ItemGroup>
+    <ProjectReference Include="..\..\samples\Controllers\Controllers.csproj" />
     <ProjectReference Include="..\..\src\Slicito.DotNet\Slicito.DotNet.csproj" />
     <ProjectReference Include="..\..\src\Slicito.Wpf\Slicito.Wpf.csproj" />
   </ItemGroup>
