@@ -37,6 +37,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slicito.Wpf", "src\Slicito.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Controllers", "samples\Controllers\Controllers.csproj", "{CCA637E7-2AAC-4188-AADA-1314386BC45B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slicito.Queries", "src\Slicito.Queries\Slicito.Queries.csproj", "{58B6048C-F2AA-46A8-BEA1-2D585F1EA4BF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slicito.Queries.Tests", "tests\Slicito.Queries.Tests\Slicito.Queries.Tests.csproj", "{F77F2336-5EFF-4448-B777-EA224E1EBCB9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -75,6 +79,14 @@ Global
 		{CCA637E7-2AAC-4188-AADA-1314386BC45B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CCA637E7-2AAC-4188-AADA-1314386BC45B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CCA637E7-2AAC-4188-AADA-1314386BC45B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{58B6048C-F2AA-46A8-BEA1-2D585F1EA4BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58B6048C-F2AA-46A8-BEA1-2D585F1EA4BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58B6048C-F2AA-46A8-BEA1-2D585F1EA4BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58B6048C-F2AA-46A8-BEA1-2D585F1EA4BF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F77F2336-5EFF-4448-B777-EA224E1EBCB9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F77F2336-5EFF-4448-B777-EA224E1EBCB9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F77F2336-5EFF-4448-B777-EA224E1EBCB9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F77F2336-5EFF-4448-B777-EA224E1EBCB9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -88,6 +100,8 @@ Global
 		{2291BE18-AC01-465F-9A63-58F849D13CC4} = {5043DC3E-B865-42D7-8DFC-8D89155E9AFE}
 		{E4F0A9F3-EA1D-42B1-9260-583E42CBB972} = {DEB14B61-E010-4B08-A880-E956B20A5BE6}
 		{CCA637E7-2AAC-4188-AADA-1314386BC45B} = {2F138FD5-85D9-45DD-954A-E27FB1087800}
+		{58B6048C-F2AA-46A8-BEA1-2D585F1EA4BF} = {DEB14B61-E010-4B08-A880-E956B20A5BE6}
+		{F77F2336-5EFF-4448-B777-EA224E1EBCB9} = {CD7DB68A-219B-4824-BF80-F6C2BA302AEA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {878A59AE-1008-403F-91D2-E4072C3AE3F3}
