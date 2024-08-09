@@ -8,18 +8,18 @@ namespace Slicito.Queries;
 
 public class TypeSystem : ITypeSystem
 {
-    private readonly ConcurrentDictionary<string, ElementType> _elementTypes = new();
+    private readonly ConcurrentDictionary<string, FactType> _factTypes = new();
 
-    public IElementType GetElementType(IDictionary<string, IEnumerable<string>> attributeValues)
+    public IFactType GetFactType(IDictionary<string, IEnumerable<string>> attributeValues)
     {
         var immutableAttributeValues = attributeValues.ToImmutableSortedDictionary(
             kv => kv.Key,
             kv => (IEnumerable<string>)kv.Value.ToImmutableSortedSet());
         var uniqueSerialization = GetUniqueSerialization(immutableAttributeValues);
 
-        return _elementTypes.GetOrAdd(
+        return _factTypes.GetOrAdd(
             uniqueSerialization,
-            _ => new ElementType(this, immutableAttributeValues, uniqueSerialization));
+            _ => new FactType(this, immutableAttributeValues, uniqueSerialization));
     }
 
     private string GetUniqueSerialization(ImmutableSortedDictionary<string, IEnumerable<string>> attributeValues) =>

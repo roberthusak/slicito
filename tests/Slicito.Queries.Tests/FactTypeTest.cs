@@ -5,7 +5,7 @@ using Slicito.Abstractions.Queries;
 namespace Slicito.Queries.Tests;
 
 [TestClass]
-public class ElementTypeTest
+public class FactTypeTest
 {
     [TestMethod]
     public void SameTypes_AreEqual()
@@ -14,9 +14,9 @@ public class ElementTypeTest
         var typeSystem = new TypeSystem();
 
         // Act
-        var kindABType1 = typeSystem.GetElementType(
+        var kindABType1 = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A", "B"] } });
-        var kindABType2 = typeSystem.GetElementType(
+        var kindABType2 = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A", "B"] } });
 
         // Assert
@@ -30,9 +30,9 @@ public class ElementTypeTest
         var typeSystem = new TypeSystem();
 
         // Act
-        var kindAType = typeSystem.GetElementType(
+        var kindAType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
-        var kindBType = typeSystem.GetElementType(
+        var kindBType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["B"] } });
 
         // Assert
@@ -44,7 +44,7 @@ public class ElementTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetElementType(
+        var kindAType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
 
         // Act
@@ -55,15 +55,15 @@ public class ElementTypeTest
     }
 
     [TestMethod]
-    public void SmallestCommonSuperset_OfOrthogonalTypes_ContainsAllElements()
+    public void SmallestCommonSuperset_OfOrthogonalTypes_ContainsFactsOfAnyType()
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetElementType(
+        var kindAType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
-        var colorBlueType = typeSystem.GetElementType(
+        var colorBlueType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Color", ["Blue"] } });
-        var anyType = typeSystem.GetElementType(
+        var anyType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>>());
 
         // Act
@@ -78,11 +78,11 @@ public class ElementTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetElementType(
+        var kindAType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
-        var kindBType = typeSystem.GetElementType(
+        var kindBType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["B"] } });
-        var kindABType = typeSystem.GetElementType(
+        var kindABType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A", "B"] } });
 
         // Act
@@ -97,11 +97,11 @@ public class ElementTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetElementType(
+        var kindAType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
-        var kindB1Type = typeSystem.GetElementType(
+        var kindB1Type = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["B"] }, { "BKind", ["1"] } });
-        var kindABType = typeSystem.GetElementType(
+        var kindABType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A", "B"] } });
 
         // Act
@@ -116,7 +116,7 @@ public class ElementTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetElementType(
+        var kindAType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
 
         // Act
@@ -131,9 +131,9 @@ public class ElementTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetElementType(
+        var kindAType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
-        var colorBlueType = typeSystem.GetElementType(
+        var colorBlueType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Color", ["Blue"] } });
 
         // Act
@@ -148,11 +148,11 @@ public class ElementTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetElementType(
+        var kindAType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
-        var kindBType = typeSystem.GetElementType(
+        var kindBType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["B"] } });
-        var kindABType = typeSystem.GetElementType(
+        var kindABType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A", "B"] } });
 
         // Act
@@ -167,11 +167,11 @@ public class ElementTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAColorBlueType = typeSystem.GetElementType(
+        var kindAColorBlueType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] }, { "Color", ["Blue"] } });
-        var kindBColorBlueType = typeSystem.GetElementType(
+        var kindBColorBlueType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["B"] }, { "Color", ["Blue"] } });
-        var kindABColorBlueType = typeSystem.GetElementType(
+        var kindABColorBlueType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A", "B"] }, { "Color", ["Blue"] } });
 
         // Act
@@ -186,9 +186,9 @@ public class ElementTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAColorBlueType = typeSystem.GetElementType(
+        var kindAColorBlueType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] }, { "Color", ["Blue"] } });
-        var kindBColorRedType = typeSystem.GetElementType(
+        var kindBColorRedType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["B"] }, { "Color", ["Red"] } });
 
         // Act
@@ -203,7 +203,7 @@ public class ElementTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetElementType(
+        var kindAType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
 
         // Act
@@ -218,11 +218,11 @@ public class ElementTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetElementType(
+        var kindAType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
-        var colorBlueType = typeSystem.GetElementType(
+        var colorBlueType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Color", ["Blue"] } });
-        var kindAColorBlueType = typeSystem.GetElementType(
+        var kindAColorBlueType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] }, { "Color", ["Blue"] } });
 
         // Act
@@ -237,9 +237,9 @@ public class ElementTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetElementType(
+        var kindAType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
-        var kindBType = typeSystem.GetElementType(
+        var kindBType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["B"] } });
 
         // Act
@@ -254,11 +254,11 @@ public class ElementTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindABColorBlueSmellFlowersType = typeSystem.GetElementType(
+        var kindABColorBlueSmellFlowersType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A", "B"] }, { "Color", ["Blue"] }, { "Smell", ["Flowers"] } });
-        var kindBCColorBlueYellowType = typeSystem.GetElementType(
+        var kindBCColorBlueYellowType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["B", "C"] }, { "Color", ["Blue", "Yellow"] } });
-        var kindBcolorBlueSmellFlowersType = typeSystem.GetElementType(
+        var kindBcolorBlueSmellFlowersType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["B"] }, { "Color", ["Blue"] }, { "Smell", ["Flowers"] } });
 
         // Act
@@ -273,7 +273,7 @@ public class ElementTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetElementType(
+        var kindAType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
 
         // Act
@@ -288,9 +288,9 @@ public class ElementTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetElementType(
+        var kindAType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
-        var colorBlueType = typeSystem.GetElementType(
+        var colorBlueType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Color", ["Blue"] } });
 
         // Act
@@ -305,9 +305,9 @@ public class ElementTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetElementType(
+        var kindAType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
-        var kindABType = typeSystem.GetElementType(
+        var kindABType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A", "B"] } });
 
         // Act
@@ -322,9 +322,9 @@ public class ElementTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindABType = typeSystem.GetElementType(
+        var kindABType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A", "B"] } });
-        var kindAType = typeSystem.GetElementType(
+        var kindAType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
 
         // Act
@@ -339,7 +339,7 @@ public class ElementTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetElementType(
+        var kindAType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
 
         // Act
@@ -354,9 +354,9 @@ public class ElementTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetElementType(
+        var kindAType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
-        var colorBlueType = typeSystem.GetElementType(
+        var colorBlueType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Color", ["Blue"] } });
 
         // Act
@@ -371,9 +371,9 @@ public class ElementTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetElementType(
+        var kindAType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
-        var kindABType = typeSystem.GetElementType(
+        var kindABType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A", "B"] } });
 
         // Act
@@ -388,9 +388,9 @@ public class ElementTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindABType = typeSystem.GetElementType(
+        var kindABType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A", "B"] } });
-        var kindAType = typeSystem.GetElementType(
+        var kindAType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
 
         // Act
