@@ -26,6 +26,6 @@ public class TypeSystem : ITypeSystem
         string.Join(
             ";",
             attributeValues
-                .OrderBy(kv => HttpUtility.UrlEncode(kv.Key))
-                .Select(kv => $"{kv.Key}={string.Join(",", kv.Value.Select(HttpUtility.UrlEncode))}"));
+                .OrderBy(kv => kv.Key)
+                .Select(kv => $"{HttpUtility.UrlEncode(kv.Key)}={string.Join(",", kv.Value.Select(HttpUtility.UrlEncode))}"));
 }
