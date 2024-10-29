@@ -33,17 +33,17 @@ public class SliceTests
         // Arrange
         var typeSystem = new TypeSystem();
         var kindAType = typeSystem.GetFactType(
-                       new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
+            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
         var kindBType = typeSystem.GetFactType(
-                       new Dictionary<string, IEnumerable<string>> { { "Kind", ["B"] } });
+            new Dictionary<string, IEnumerable<string>> { { "Kind", ["B"] } });
         var kindABType = kindAType.TryGetUnion(kindBType)!;
 
         // Act
 
         var slice = new SliceBuilder()
-            .AddRootElements(new(kindAType), () => new ValueTask<IEnumerable<ElementId>>([new("1")]))
-            .AddRootElements(new(kindAType), () => new ValueTask<IEnumerable<ElementId>>([new("2")]))
-            .AddRootElements(new(kindBType), () => new ValueTask<IEnumerable<ElementId>>([new("3"), new("4")]))
+            .AddRootElements(new(kindAType), () => new ValueTask<IEnumerable<ISliceBuilder.ElementInfo>>([new(new("A1"))]))
+            .AddRootElements(new(kindAType), () => new ValueTask<IEnumerable<ISliceBuilder.ElementInfo>>([new(new("A2"))]))
+            .AddRootElements(new(kindBType), () => new ValueTask<IEnumerable<ISliceBuilder.ElementInfo>>([new(new("B1")), new(new("B2"))]))
             .BuildLazy();
 
         var aElementIds = await slice.GetRootElementIdsAsync(new(kindAType));
@@ -51,8 +51,53 @@ public class SliceTests
         var abElementIds = await slice.GetRootElementIdsAsync(new(kindABType));
 
         // Assert
-        aElementIds.Should().BeEquivalentTo([new ElementId("1"), new ElementId("2")]);
-        bElementIds.Should().BeEquivalentTo([new ElementId("3"), new ElementId("4")]);
-        abElementIds.Should().BeEquivalentTo([new ElementId("1"), new ElementId("2"), new ElementId("3"), new ElementId("4")]);
+        aElementIds.Select(id => id.Value)
+            .Should().BeEquivalentTo(["A1", "A2"]);
+        bElementIds.Select(id => id.Value)
+            .Should().BeEquivalentTo(["B1", "B2"]);
+        abElementIds.Select(id => id.Value)
+            .Should().BeEquivalentTo(["A1", "A2", "B1", "B2"]);
+    }
+
+    [TestMethod]
+    public async Task SliceBuilder_AddRootElements_DetailedFilter_Works()
+    {
+        // Arrange
+        var typeSystem = new TypeSystem();
+        var kindAType = typeSystem.GetFactType(
+            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
+        var kindAColorBlueType = typeSystem.GetFactType(
+            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] }, { "Color", ["Blue"] } });
+        var kindAColorRedType = typeSystem.GetFactType(
+            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] }, { "Color", ["Red"] } });
+        var kindAColorBlueRedType = kindAColorBlueType.TryGetUnion(kindAColorRedType)!;
+
+        // Act
+
+        var slice = new SliceBuilder()
+            .AddRootElements(new(kindAType), () => new ValueTask<IEnumerable<ISliceBuilder.ElementInfo>>([new(new("A1")), new(new("A2"))]))
+            .AddRootElements(new(kindAColorBlueType), () => new ValueTask<IEnumerable<ISliceBuilder.ElementInfo>>([new(new("ABlue1"))]))
+            .AddRootElements(new(kindAColorRedType), () => new ValueTask<IEnumerable<ISliceBuilder.ElementInfo>>([new(new("ARed1"))]))
+            .AddRootElements(new(kindAType), () => new ValueTask<IEnumerable<ISliceBuilder.ElementInfo>>(
+            [
+                new(new("ABlue2"), new(kindAColorBlueType)),
+                new(new("ARed2"), new(kindAColorRedType))
+            ]))
+            .BuildLazy();
+
+        var aElementIds = await slice.GetRootElementIdsAsync(new(kindAType));
+        var aBlueElementIds = await slice.GetRootElementIdsAsync(new(kindAColorBlueType));
+        var aRedElementIds = await slice.GetRootElementIdsAsync(new(kindAColorRedType));
+        var aBlueRedElementIds = await slice.GetRootElementIdsAsync(new(kindAColorBlueRedType));
+
+        // Assert
+        aElementIds.Select(id => id.Value)
+            .Should().BeEquivalentTo(["A1", "A2", "ABlue1", "ARed1", "ABlue2", "ARed2"]);
+        aBlueElementIds.Select(id => id.Value)
+            .Should().BeEquivalentTo(["ABlue1", "ABlue2"]);
+        aRedElementIds.Select(id => id.Value)
+            .Should().BeEquivalentTo(["ARed1", "ARed2"]);
+        aBlueRedElementIds.Select(id => id.Value)
+            .Should().BeEquivalentTo(["ABlue1", "ARed1", "ABlue2", "ARed2"]);
     }
 }

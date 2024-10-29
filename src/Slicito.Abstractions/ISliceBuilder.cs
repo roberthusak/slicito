@@ -1,16 +1,18 @@
-using System.Threading.Tasks;
-
 namespace Slicito.Abstractions;
 
 public interface ISliceBuilder
 {
-    public delegate ValueTask<IEnumerable<ElementId>> LoadRootElementsCallback();
+    public record struct ElementInfo(ElementId Id, ElementType? DetailedType = null);
+
+    public record struct LinkInfo(ElementInfo Target, LinkType? DetailedType = null);
+
+    public delegate ValueTask<IEnumerable<ElementInfo>> LoadRootElementsCallback();
 
     public delegate ValueTask<string> LoadElementAttributeCallback(ElementId elementId);
 
-    public delegate ValueTask<IEnumerable<ElementId>> LoadLinksCallback(ElementId sourceId);
+    public delegate ValueTask<IEnumerable<LinkInfo>> LoadLinksCallback(ElementId sourceId);
 
-    public delegate ValueTask<ElementId?> LoadLinkCallback(ElementId sourceId);
+    public delegate ValueTask<LinkInfo?> LoadLinkCallback(ElementId sourceId);
 
     ISliceBuilder AddRootElements(ElementType elementType, LoadRootElementsCallback loader);
 

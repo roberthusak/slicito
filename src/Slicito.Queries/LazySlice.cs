@@ -28,20 +28,32 @@ internal class LazySlice : ILazySlice
 
         foreach (var kvp in _rootElementsLoaders)
         {
+            IEnumerable<ISliceBuilder.ElementInfo> elementInfos;
+
             if (elementTypeFilter is not null)
             {
-                if (elementTypeFilter.Value.Value.TryGetIntersection(kvp.Key.Value) is null)
+                var typeFilter = elementTypeFilter.Value.Value;
+
+                if (typeFilter.TryGetIntersection(kvp.Key.Value) is null)
                 {
                     continue;
                 }
-                else if (elementTypeFilter.Value.Value.IsStrictSubsetOf(kvp.Key.Value))
+                else if (typeFilter.IsStrictSubsetOf(kvp.Key.Value))
                 {
-                    throw new NotSupportedException(
-                        $"The element type filter '{elementTypeFilter}' is a strict subset of the root element type '{kvp.Key}'. This is not supported.");
+                    elementInfos = (await kvp.Value())
+                        .Where(info => info.DetailedType?.Value.IsSubsetOfOrEquals(typeFilter) ?? false);
+                }
+                else
+                {
+                    elementInfos = await kvp.Value();
                 }
             }
+            else
+            {
+                elementInfos = await kvp.Value();
+            }
 
-            result = result.Concat(await kvp.Value());
+            result = result.Concat(elementInfos.Select(i => i.Id));
         }
 
         return result;
