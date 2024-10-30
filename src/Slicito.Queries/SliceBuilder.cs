@@ -10,8 +10,6 @@ public class SliceBuilder : ISliceBuilder
 
     private readonly Dictionary<LinkType, ISliceBuilder.LoadLinksCallback> _linksLoaders = [];
 
-    private readonly Dictionary<LinkType, ISliceBuilder.LoadLinkCallback> _linkLoaders = [];
-
     public ISliceBuilder AddRootElements(ElementType elementType, ISliceBuilder.LoadRootElementsCallback loader)
     {
         if (_rootElementsLoaders.TryGetValue(elementType, out var existingLoader))
@@ -65,12 +63,6 @@ public class SliceBuilder : ISliceBuilder
         ElementType targetType,
         ISliceBuilder.LoadLinksCallback loader)
     {
-        if (_linkLoaders.ContainsKey(linkType))
-        {
-            throw new NotSupportedException(
-                $"A single link loader for link type '{linkType}' has already been added, the combination with a multiple link loader isn't supported.");
-        }
-
         if (_linksLoaders.TryGetValue(linkType, out var existingLoader))
         {
             async ValueTask<IEnumerable<ISliceBuilder.LinkInfo>> MergedLoaderAsync(ElementId sourceId)
@@ -96,40 +88,28 @@ public class SliceBuilder : ISliceBuilder
         ElementType targetType,
         ISliceBuilder.LoadLinkCallback loader)
     {
-        if (_linksLoaders.ContainsKey(linkType))
+        if (_linksLoaders.TryGetValue(linkType, out var existingLoader))
         {
-            throw new NotSupportedException(
-                $"A multiple link loader for link type '{linkType}' has already been added, the combination with a single link loader isn't supported.");
-        }
-
-        if (_linkLoaders.TryGetValue(linkType, out var existingLoader))
-        {
-            IEnumerable<ISliceBuilder.LinkInfo> EnumerateTwoLinkInfos(ISliceBuilder.LinkInfo? first, ISliceBuilder.LinkInfo? second)
-            {
-                if (first is not null)
-                {
-                    yield return first.Value;
-                }
-
-                if (second is not null)
-                {
-                    yield return second.Value;
-                }
-            }
-
             async ValueTask<IEnumerable<ISliceBuilder.LinkInfo>> MergedLoaderAsync(ElementId sourceId)
             {
-                var existingId = await existingLoader(sourceId);
+                var existingIds = await existingLoader(sourceId);
                 var newId = await loader(sourceId);
-                return EnumerateTwoLinkInfos(existingId, newId);
+
+                return newId is not null ? existingIds.Concat([newId.Value]) : existingIds;
             }
 
-            _linkLoaders.Remove(linkType);
             _linksLoaders[linkType] = MergedLoaderAsync;
         }
         else
         {
-            _linkLoaders.Add(linkType, loader);
+            async ValueTask<IEnumerable<ISliceBuilder.LinkInfo>> SingleLoaderAsync(ElementId sourceId)
+            {
+                var newId = await loader(sourceId);
+
+                return newId is not null ?[newId.Value] : [];
+            }
+
+            _linksLoaders.Add(linkType, SingleLoaderAsync);
         }
 
         return this;
@@ -138,6 +118,5 @@ public class SliceBuilder : ISliceBuilder
     public ILazySlice BuildLazy() => new LazySlice(
         _rootElementsLoaders,
         _elementAttributeLoaders,
-        _linksLoaders,
-        _linkLoaders);
+        _linksLoaders);
 }

@@ -10,20 +10,17 @@ internal class LazySlice : ILazySlice
     private readonly Dictionary<ElementType, ISliceBuilder.LoadRootElementsCallback> _rootElementsLoaders;
     private readonly Dictionary<(ElementType elementType, string attributeName), ISliceBuilder.LoadElementAttributeCallback> _elementAttributeLoaders;
     private readonly Dictionary<LinkType, ISliceBuilder.LoadLinksCallback> _linksLoaders;
-    private readonly Dictionary<LinkType, ISliceBuilder.LoadLinkCallback> _linkLoaders;
 
     private readonly ConcurrentDictionary<ElementId, ElementType> _elementTypes = new();
 
     public LazySlice(
         Dictionary<ElementType, ISliceBuilder.LoadRootElementsCallback> rootElementsLoaders,
         Dictionary<(ElementType, string attributeName), ISliceBuilder.LoadElementAttributeCallback> elementAttributeLoaders,
-        Dictionary<LinkType, ISliceBuilder.LoadLinksCallback> linksLoaders,
-        Dictionary<LinkType, ISliceBuilder.LoadLinkCallback> linkLoaders)
+        Dictionary<LinkType, ISliceBuilder.LoadLinksCallback> linksLoaders)
     {
         _rootElementsLoaders = rootElementsLoaders;
         _elementAttributeLoaders = elementAttributeLoaders;
         _linksLoaders = linksLoaders;
-        _linkLoaders = linkLoaders;
     }
 
     public async ValueTask<IEnumerable<ElementId>> GetRootElementIdsAsync(ElementType? elementTypeFilter = null)
@@ -121,13 +118,7 @@ internal class LazySlice : ILazySlice
                 .Where(kvp => kvp.Key.Value.TryGetIntersection(linkType.Value.Value) is not null)
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
-        var typeLinkLoader = linkType is null
-            ? _linkLoaders
-            : _linkLoaders
-                .Where(kvp => kvp.Key.Value.TryGetIntersection(linkType.Value.Value) is not null)
-                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-
-        return new LazyLinkExplorer(this, typeLinksLoaders, typeLinkLoader, linkType);
+        return new LazyLinkExplorer(this, typeLinksLoaders, linkType);
     }
 
     private ISliceBuilder.ElementInfo CacheType(ISliceBuilder.ElementInfo elementInfo, ElementType groupType)
@@ -141,24 +132,23 @@ internal class LazySlice : ILazySlice
     {
         private readonly LazySlice _slice;
         private readonly Dictionary<LinkType, ISliceBuilder.LoadLinksCallback> _linksLoaders;
-        private readonly Dictionary<LinkType, ISliceBuilder.LoadLinkCallback> _linkLoaders;
         private readonly LinkType? _linkTypeFilter;
 
         public LazyLinkExplorer(
             LazySlice slice,
             Dictionary<LinkType, ISliceBuilder.LoadLinksCallback> linksLoaders,
-            Dictionary<LinkType, ISliceBuilder.LoadLinkCallback> linkLoaders,
             LinkType? linkTypeFilter)
         {
             _slice = slice;
             _linksLoaders = linksLoaders;
-            _linkLoaders = linkLoaders;
             _linkTypeFilter = linkTypeFilter;
         }
 
-        public async ValueTask<ElementId> GetTargetElementIdAsync(ElementId sourceId)
+        public async ValueTask<ElementId?> TryGetTargetElementIdAsync(ElementId sourceId)
         {
-            throw new NotImplementedException();
+            var validOrDefaultId = (await GetTargetElementIdsAsync(sourceId)).SingleOrDefault();
+
+            return validOrDefaultId == default ? null : validOrDefaultId;
         }
 
         public async ValueTask<IEnumerable<ElementId>> GetTargetElementIdsAsync(ElementId sourceId)

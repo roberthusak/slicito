@@ -248,8 +248,8 @@ public class SliceTests
             {
                 return sourceId.Value switch
                 {
-                    "B" => new([new ISliceBuilder.LinkInfo(new(new("C")))]),
-                    _ => new([])
+                    "B" => new(new ISliceBuilder.LinkInfo(new(new("C")))),
+                    _ => new((ISliceBuilder.LinkInfo?)null)
                 };
             })
             .AddLinks(new(kindPointsToColorRedType), new(anyType), new(anyType), sourceId =>
@@ -274,6 +274,7 @@ public class SliceTests
         var allLinksExplorer = slice.GetLinkExplorer(new(anyType));
         var pointsToLinksExplorer = slice.GetLinkExplorer(new(kindPointsToType));
         var pointsToColorBlueLinksExplorer = slice.GetLinkExplorer(new(kindPointsToColorBlueType));
+        var pointsToColorRedLinksExplorer = slice.GetLinkExplorer(new(kindPointsToColorRedType));
         var pointsToColorBlackLinksExplorer = slice.GetLinkExplorer(new(kindPointsToColorBlackType));
         var pointsToColorRedGreenLinksExplorer = slice.GetLinkExplorer(new(kindPointsToColorRedGreenType));
 
@@ -295,6 +296,11 @@ public class SliceTests
         var cPointsToColorBlueTargets = await pointsToColorBlueLinksExplorer.GetTargetElementIdsAsync(new("C"));
         var dPointsToColorBlueTargets = await pointsToColorBlueLinksExplorer.GetTargetElementIdsAsync(new("D"));
 
+        var aPointsToColorRedTargets = await pointsToColorRedLinksExplorer.GetTargetElementIdsAsync(new("A"));
+        var bPointsToColorRedTargets = await pointsToColorRedLinksExplorer.GetTargetElementIdsAsync(new("B"));
+        var cPointsToColorRedTargets = await pointsToColorRedLinksExplorer.GetTargetElementIdsAsync(new("C"));
+        var dPointsToColorRedTargets = await pointsToColorRedLinksExplorer.GetTargetElementIdsAsync(new("D"));
+
         var aPointsToColorBlackTargets = await pointsToColorBlackLinksExplorer.GetTargetElementIdsAsync(new("A"));
         var bPointsToColorBlackTargets = await pointsToColorBlackLinksExplorer.GetTargetElementIdsAsync(new("B"));
         var cPointsToColorBlackTargets = await pointsToColorBlackLinksExplorer.GetTargetElementIdsAsync(new("C"));
@@ -304,6 +310,10 @@ public class SliceTests
         var bPointsToColorRedGreenTargets = await pointsToColorRedGreenLinksExplorer.GetTargetElementIdsAsync(new("B"));
         var cPointsToColorRedGreenTargets = await pointsToColorRedGreenLinksExplorer.GetTargetElementIdsAsync(new("C"));
         var dPointsToColorRedGreenTargets = await pointsToColorRedGreenLinksExplorer.GetTargetElementIdsAsync(new("D"));
+
+        var aPointsToColorRedGreenTarget = await pointsToColorRedGreenLinksExplorer.TryGetTargetElementIdAsync(new("A"));
+        var bPointsToColorRedGreenTarget = await pointsToColorRedGreenLinksExplorer.TryGetTargetElementIdAsync(new("B"));
+        var dPointsToColorRedGreenTarget = await pointsToColorRedGreenLinksExplorer.TryGetTargetElementIdAsync(new("D"));
 
         // Assert
 
@@ -324,6 +334,11 @@ public class SliceTests
         cPointsToColorBlueTargets.Select(id => id.Value).Should().BeEquivalentTo(["D"]);
         dPointsToColorBlueTargets.Should().BeEmpty();
 
+        aPointsToColorRedTargets.Should().BeEmpty();
+        bPointsToColorRedTargets.Select(id => id.Value).Should().BeEquivalentTo(["C"]);
+        cPointsToColorRedTargets.Select(id => id.Value).Should().BeEquivalentTo(["D"]);
+        dPointsToColorRedTargets.Select(id => id.Value).Should().BeEquivalentTo(["A"]);
+
         aPointsToColorBlackTargets.Should().BeEmpty();
         bPointsToColorBlackTargets.Should().BeEmpty();
         cPointsToColorBlackTargets.Should().BeEmpty();
@@ -333,5 +348,11 @@ public class SliceTests
         bPointsToColorRedGreenTargets.Select(id => id.Value).Should().BeEquivalentTo(["C"]);
         cPointsToColorRedGreenTargets.Select(id => id.Value).Should().BeEquivalentTo(["D", "D"]);
         dPointsToColorRedGreenTargets.Select(id => id.Value).Should().BeEquivalentTo(["A"]);
+
+        aPointsToColorRedGreenTarget.HasValue.Should().BeFalse();
+        bPointsToColorRedGreenTarget.Should().Be(new ElementId("C"));
+        await pointsToColorRedGreenLinksExplorer.Invoking(async e => await e.TryGetTargetElementIdAsync(new("C")))
+            .Should().ThrowAsync<InvalidOperationException>();
+        dPointsToColorRedGreenTarget.Should().Be(new ElementId("A"));
     }
 }
