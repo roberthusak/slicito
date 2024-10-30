@@ -14,6 +14,7 @@
     
   <ItemGroup>
     <ProjectReference Include="..\..\src\Slicito.DotNet\Slicito.DotNet.csproj" />
+    <ProjectReference Include="..\..\src\Slicito.Queries\Slicito.Queries.csproj" />
     <ProjectReference Include="..\..\src\Slicito.Wpf\Slicito.Wpf.csproj" />
   </ItemGroup>
 

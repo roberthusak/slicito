@@ -25,6 +25,7 @@ public partial class MainWindow : Window
 {
     private readonly string _solutionPath;
     private readonly string _controllersPath;
+    private readonly string _controllerType;
 
     private DotNetFactProvider? _factProvider;
 
@@ -35,6 +36,7 @@ public partial class MainWindow : Window
         var args = Environment.GetCommandLineArgs();
         _solutionPath = args[1];
         _controllersPath = args[2];
+        _controllerType = args[3];
     }
 
     private async void Window_LoadedAsync(object sender, RoutedEventArgs e)
@@ -57,14 +59,38 @@ public partial class MainWindow : Window
 
         var assembly = Assembly.Load(assemblyBinary);
 
-        var type = assembly.GetTypes().Single(t => typeof(IController).IsAssignableFrom(t));
+        var type = assembly.GetTypes()
+            .Where(t => typeof(IController).IsAssignableFrom(t) && t.Name == _controllerType)
+            .Single();
 
-        var provider = await LoadFactProvider();
+        var constructor = type.GetConstructors().Single();
 
-        var controller = Activator.CreateInstance(type, provider)
+        var arguments = await LoadDependencies(constructor);
+
+        var controller = Activator.CreateInstance(type, arguments)
             ?? throw new ApplicationException($"Unable to create an instance of the type {type.Name}.");
 
         return (IController) controller;
+    }
+
+    private async Task<object[]> LoadDependencies(ConstructorInfo constructor)
+    {
+        var dependencies = new List<object>();
+
+        foreach (var parameter in constructor.GetParameters())
+        {
+            switch (parameter.ParameterType)
+            {
+                case var t when t == typeof(DotNetFactProvider):
+                    dependencies.Add(await LoadFactProvider());
+                    break;
+
+                default:
+                    throw new ApplicationException($"Unsupported parameter type {parameter.ParameterType.Name}.");
+            }
+        }
+
+        return [.. dependencies];
     }
 
     private async Task<DotNetFactProvider> LoadFactProvider()
