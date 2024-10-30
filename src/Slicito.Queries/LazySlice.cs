@@ -28,30 +28,31 @@ internal class LazySlice : ILazySlice
 
         foreach (var kvp in _rootElementsLoaders)
         {
-            IEnumerable<ISliceBuilder.ElementInfo> elementInfos;
+            var (groupElementType, loader) = (kvp.Key, kvp.Value);
+
+            IEnumerable<ISliceBuilder.ElementInfo>? elementInfos = null;
 
             if (elementTypeFilter is not null)
             {
                 var typeFilter = elementTypeFilter.Value.Value;
 
-                if (typeFilter.TryGetIntersection(kvp.Key.Value) is null)
+                var restrictedGroupType = typeFilter.TryGetIntersection(groupElementType.Value);
+                if (restrictedGroupType is null)
                 {
+                    // No elements of this group match the filter
                     continue;
                 }
-                else if (typeFilter.IsStrictSubsetOf(kvp.Key.Value))
+
+                if (!groupElementType.Value.IsSubsetOfOrEquals(restrictedGroupType))
                 {
-                    elementInfos = (await kvp.Value())
-                        .Where(info => info.DetailedType?.Value.IsSubsetOfOrEquals(typeFilter) ?? false);
-                }
-                else
-                {
-                    elementInfos = await kvp.Value();
+                    // Only elements with more specific types match the filter
+                    elementInfos = (await loader())
+                        .Where(info => info.DetailedType?.Value.IsSubsetOfOrEquals(restrictedGroupType) ?? false);
                 }
             }
-            else
-            {
-                elementInfos = await kvp.Value();
-            }
+
+            // Otherwise, all elements of this group match the filter (if any)
+            elementInfos ??= await loader();
 
             result = result.Concat(elementInfos.Select(i => i.Id));
         }
