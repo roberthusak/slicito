@@ -1,4 +1,5 @@
 using Slicito.Abstractions;
+using Slicito.Queries.Implementation;
 
 namespace Slicito.Queries;
 

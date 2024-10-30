@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using Slicito.Abstractions;
 using Slicito.Abstractions.Queries;
 
-namespace Slicito.Queries;
+namespace Slicito.Queries.Implementation;
 
 internal class LazySlice : ILazySlice
 {

@@ -3,6 +3,7 @@ using System.Collections.Immutable;
 using System.Web;
 
 using Slicito.Abstractions.Queries;
+using Slicito.Queries.Implementation;
 
 namespace Slicito.Queries;
 
