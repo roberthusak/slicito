@@ -115,7 +115,7 @@ public class SliceTests
     }
 
     [TestMethod]
-    public async Task SliceBuilder_AddElementAttributes_Works()
+    public async Task SliceBuilder_AddElementAttributes_RootElements_Works()
     {
         // Arrange
         var typeSystem = new TypeSystem();
@@ -198,6 +198,111 @@ public class SliceTests
         b2Greeting.Should().Be("Hello, B2!");
         aBlue1Greeting.Should().Be("Hello, ABlue1!");
         aBlue2Greeting.Should().Be("Hello, ABlue2!");
+    }
+
+    [TestMethod]
+    public async Task SliceBuilder_AddElementAttributes_NestedElements_Works()
+    {
+        // Arrange
+        var typeSystem = new TypeSystem();
+        var anyType = typeSystem.GetFactType(new Dictionary<string, IEnumerable<string>>());
+        var kindAType = typeSystem.GetFactType(
+            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
+        var kindBType = typeSystem.GetFactType(
+            new Dictionary<string, IEnumerable<string>> { { "Kind", ["B"] } });
+        var kindABType = kindAType.TryGetUnion(kindBType)!;
+        var kindAColorBlueType = typeSystem.GetFactType(
+            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] }, { "Color", ["Blue"] } });
+        var kindContainsType = typeSystem.GetFactType(
+            new Dictionary<string, IEnumerable<string>> { { "Kind", ["Contains"] } });
+
+        // Act
+
+        var slice = new SliceBuilder()
+            .AddRootElements(new(kindAType), () => new([new(new("A1Root")), new(new("A2Root"))]))
+            .AddHierarchyLinks(new(kindContainsType), new(kindAType), new(kindABType), sourceId =>
+            {
+                return sourceId.Value switch
+                {
+                    "A1Root" => new([new ISliceBuilder.LinkInfo(new(new("A1NestedA3"), new(kindAType)))]),
+                    "A2Root" => new([new ISliceBuilder.LinkInfo(new(new("A2NestedB1"), new(kindBType)))]),
+                    _ => new([])
+                };
+            })
+            .AddHierarchyLinks(new(kindContainsType), new(kindAType), new(kindAType), sourceId =>
+            {
+                return sourceId.Value switch
+                {
+                    "A1Root" => new([new ISliceBuilder.LinkInfo(new(new("A1NestedA4")))]),
+                    _ => new([])
+                };
+            })
+            .AddHierarchyLinks(new(kindContainsType), new(kindAType), new(kindBType), sourceId =>
+            {
+                return sourceId.Value switch
+                {
+                    "A2Root" => new([new ISliceBuilder.LinkInfo(new(new("A2NestedB2"), new(kindAColorBlueType)))]),
+                    _ => new([])
+                };
+            })
+            .AddElementAttribute(new(kindAType), "name", id => new($"Mr. {id.Value} A"))
+            .AddElementAttribute(new(kindBType), "name", id => new($"Mr. {id.Value} B"))
+            .AddElementAttribute(new(anyType), "greeting", id => new($"Hello, {id.Value}!"))
+            .BuildLazy();
+
+        var containsLinksExplorer = slice.GetLinkExplorer(new(kindContainsType));
+
+        // It's expected that the user will only use the element IDs that were previously obtained from the slice.
+        var rootElementIds = (await slice.GetRootElementIdsAsync()).ToArray();
+
+        var nestedElementIds = new List<ElementId>();
+        foreach (var rootElementId in rootElementIds)
+        {
+            nestedElementIds.AddRange(await containsLinksExplorer.GetTargetElementIdsAsync(rootElementId));
+        }
+
+        var nameProvider = slice.GetElementAttributeProviderAsyncCallback("name");
+        var greetingProvider = slice.GetElementAttributeProviderAsyncCallback("greeting");
+
+        var a1RootName = await nameProvider(new("A1Root"));
+        var a2RootName = await nameProvider(new("A2Root"));
+        var a1NestedA3Name = await nameProvider(new("A1NestedA3"));
+        var a2NestedB1Name = await nameProvider(new("A2NestedB1"));
+        var a1NestedA4Name = await nameProvider(new("A1NestedA4"));
+        var a2NestedB2Name = await nameProvider(new("A2NestedB2"));
+
+        var a1RootGreeting = await greetingProvider(new("A1Root"));
+        var a2RootGreeting = await greetingProvider(new("A2Root"));
+        var a1NestedA3Greeting = await greetingProvider(new("A1NestedA3"));
+        var a2NestedB1Greeting = await greetingProvider(new("A2NestedB1"));
+        var a1NestedA4Greeting = await greetingProvider(new("A1NestedA4"));
+        var a2NestedB2Greeting = await greetingProvider(new("A2NestedB2"));
+
+        // Assert
+
+        rootElementIds.Select(id => id.Value).Should().BeEquivalentTo(["A1Root", "A2Root"]);
+
+        nestedElementIds.Select(id => id.Value).Should().BeEquivalentTo(
+        [
+            "A1NestedA3",
+            "A2NestedB1",
+            "A1NestedA4",
+            "A2NestedB2"
+        ]);
+
+        a1RootName.Should().Be("Mr. A1Root A");
+        a2RootName.Should().Be("Mr. A2Root A");
+        a1NestedA3Name.Should().Be("Mr. A1NestedA3 A");
+        a2NestedB1Name.Should().Be("Mr. A2NestedB1 B");
+        a1NestedA4Name.Should().Be("Mr. A1NestedA4 A");
+        a2NestedB2Name.Should().Be("Mr. A2NestedB2 A");
+
+        a1RootGreeting.Should().Be("Hello, A1Root!");
+        a2RootGreeting.Should().Be("Hello, A2Root!");
+        a1NestedA3Greeting.Should().Be("Hello, A1NestedA3!");
+        a2NestedB1Greeting.Should().Be("Hello, A2NestedB1!");
+        a1NestedA4Greeting.Should().Be("Hello, A1NestedA4!");
+        a2NestedB2Greeting.Should().Be("Hello, A2NestedB2!");
     }
 
     [TestMethod]

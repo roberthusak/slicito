@@ -9,7 +9,7 @@ public class SliceBuilder : ISliceBuilder
 
     private readonly Dictionary<ElementTypeAttribute, ISliceBuilder.LoadElementAttributeCallback> _elementAttributeLoaders = [];
 
-    private readonly Dictionary<LinkType, ISliceBuilder.LoadLinksCallback> _linksLoaders = [];
+    private readonly Dictionary<LinkLoaderTypes, ISliceBuilder.LoadLinksCallback> _linksLoaders = [];
 
     public ISliceBuilder AddRootElements(ElementType elementType, ISliceBuilder.LoadRootElementsCallback loader)
     {
@@ -64,7 +64,9 @@ public class SliceBuilder : ISliceBuilder
         ElementType targetType,
         ISliceBuilder.LoadLinksCallback loader)
     {
-        if (_linksLoaders.TryGetValue(linkType, out var existingLoader))
+        LinkLoaderTypes types = new(linkType, sourceType, targetType);
+
+        if (_linksLoaders.TryGetValue(types, out var existingLoader))
         {
             async ValueTask<IEnumerable<ISliceBuilder.LinkInfo>> MergedLoaderAsync(ElementId sourceId)
             {
@@ -73,11 +75,11 @@ public class SliceBuilder : ISliceBuilder
                 return existingIds.Concat(newIds);
             }
 
-            _linksLoaders[linkType] = MergedLoaderAsync;
+            _linksLoaders[types] = MergedLoaderAsync;
         }
         else
         {
-            _linksLoaders.Add(linkType, loader);
+            _linksLoaders.Add(types, loader);
         }
 
         return this;
@@ -89,7 +91,9 @@ public class SliceBuilder : ISliceBuilder
         ElementType targetType,
         ISliceBuilder.LoadLinkCallback loader)
     {
-        if (_linksLoaders.TryGetValue(linkType, out var existingLoader))
+        LinkLoaderTypes types = new(linkType, sourceType, targetType);
+
+        if (_linksLoaders.TryGetValue(types, out var existingLoader))
         {
             async ValueTask<IEnumerable<ISliceBuilder.LinkInfo>> MergedLoaderAsync(ElementId sourceId)
             {
@@ -99,7 +103,7 @@ public class SliceBuilder : ISliceBuilder
                 return newId is not null ? existingIds.Concat([newId.Value]) : existingIds;
             }
 
-            _linksLoaders[linkType] = MergedLoaderAsync;
+            _linksLoaders[types] = MergedLoaderAsync;
         }
         else
         {
@@ -110,7 +114,7 @@ public class SliceBuilder : ISliceBuilder
                 return newId is not null ?[newId.Value] : [];
             }
 
-            _linksLoaders.Add(linkType, SingleLoaderAsync);
+            _linksLoaders.Add(types, SingleLoaderAsync);
         }
 
         return this;
