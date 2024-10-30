@@ -7,7 +7,7 @@ public class SliceBuilder : ISliceBuilder
 {
     private readonly Dictionary<ElementType, ISliceBuilder.LoadRootElementsCallback> _rootElementsLoaders = [];
 
-    private readonly Dictionary<(ElementType elementType, string attributeName), ISliceBuilder.LoadElementAttributeCallback> _elementAttributeLoaders = [];
+    private readonly Dictionary<ElementTypeAttribute, ISliceBuilder.LoadElementAttributeCallback> _elementAttributeLoaders = [];
 
     private readonly Dictionary<LinkType, ISliceBuilder.LoadLinksCallback> _linksLoaders = [];
 
@@ -44,7 +44,7 @@ public class SliceBuilder : ISliceBuilder
 
         }
 
-        _elementAttributeLoaders.Add((elementType, attributeName), loader);
+        _elementAttributeLoaders.Add(new(elementType, attributeName), loader);
 
         return this;
     }

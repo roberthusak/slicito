@@ -8,14 +8,14 @@ namespace Slicito.Queries.Implementation;
 internal class LazySlice : ILazySlice
 {
     private readonly Dictionary<ElementType, ISliceBuilder.LoadRootElementsCallback> _rootElementsLoaders;
-    private readonly Dictionary<(ElementType elementType, string attributeName), ISliceBuilder.LoadElementAttributeCallback> _elementAttributeLoaders;
+    private readonly Dictionary<ElementTypeAttribute, ISliceBuilder.LoadElementAttributeCallback> _elementAttributeLoaders;
     private readonly Dictionary<LinkType, ISliceBuilder.LoadLinksCallback> _linksLoaders;
 
     private readonly ConcurrentDictionary<ElementId, ElementType> _elementTypes = new();
 
     public LazySlice(
         Dictionary<ElementType, ISliceBuilder.LoadRootElementsCallback> rootElementsLoaders,
-        Dictionary<(ElementType, string attributeName), ISliceBuilder.LoadElementAttributeCallback> elementAttributeLoaders,
+        Dictionary<ElementTypeAttribute, ISliceBuilder.LoadElementAttributeCallback> elementAttributeLoaders,
         Dictionary<LinkType, ISliceBuilder.LoadLinksCallback> linksLoaders)
     {
         _rootElementsLoaders = rootElementsLoaders;
@@ -64,8 +64,8 @@ internal class LazySlice : ILazySlice
     public Func<ElementId, ValueTask<string>> GetElementAttributeProviderAsyncCallback(string attributeName)
     {
         var typeLoaders = _elementAttributeLoaders
-            .Where(kvp => kvp.Key.attributeName == attributeName)
-            .ToDictionary(kvp => kvp.Key.elementType, kvp => kvp.Value);
+            .Where(kvp => kvp.Key.AttributeName == attributeName)
+            .ToDictionary(kvp => kvp.Key.ElementType, kvp => kvp.Value);
 
         return async elementId =>
         {
