@@ -6,7 +6,7 @@ public class SliceBuilder : ISliceBuilder
 {
     private readonly Dictionary<ElementType, ISliceBuilder.LoadRootElementsCallback> _rootElementsLoaders = [];
 
-    private readonly Dictionary<(ElementType, string attributeName), ISliceBuilder.LoadElementAttributeCallback> _elementAttributeLoaders = [];
+    private readonly Dictionary<(ElementType elementType, string attributeName), ISliceBuilder.LoadElementAttributeCallback> _elementAttributeLoaders = [];
 
     private readonly Dictionary<LinkType, ISliceBuilder.LoadLinksCallback> _linksLoaders = [];
 
@@ -40,7 +40,7 @@ public class SliceBuilder : ISliceBuilder
             if (existingAttributeName == attributeName && existingElementType.Value.TryGetIntersection(elementType.Value) is not null)
             {
                 throw new InvalidOperationException(
-                    $"An attribute loader for attribute '{attributeName}' of element type '{existingElementType}' related to '{elementType}' has already been added.");
+                    $"An attribute loader for attribute '{attributeName}' of element type '{existingElementType}' overlapping with '{elementType}' has already been added.");
             }
 
         }
