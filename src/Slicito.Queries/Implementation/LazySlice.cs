@@ -13,11 +13,16 @@ internal class LazySlice : ILazySlice
 
     private readonly ConcurrentDictionary<ElementId, ElementType> _elementTypes = new();
 
+    public SliceSchema Schema { get; }
+
     public LazySlice(
+        SliceSchema schema,
         Dictionary<ElementType, ISliceBuilder.LoadRootElementsCallback> rootElementsLoaders,
         Dictionary<ElementTypeAttribute, ISliceBuilder.LoadElementAttributeCallback> elementAttributeLoaders,
         Dictionary<LinkLoaderTypes, ISliceBuilder.LoadLinksCallback> linksLoaders)
     {
+        Schema = schema;
+
         _rootElementsLoaders = rootElementsLoaders;
         _elementAttributeLoaders = elementAttributeLoaders;
         _linksLoaders = linksLoaders;

@@ -460,4 +460,82 @@ public class SliceTests
             .Should().ThrowAsync<InvalidOperationException>();
         dPointsToColorRedGreenTarget.Should().Be(new ElementId("A"));
     }
+
+    [TestMethod]
+    public void SliceBuilder_Schema_IsCorrect()
+    {
+        // Arrange
+        var typeSystem = new TypeSystem();
+        var anyType = typeSystem.GetFactType(new Dictionary<string, IEnumerable<string>>());
+        var containsType = typeSystem.GetFactType(
+            new Dictionary<string, IEnumerable<string>> { { "Kind", ["Contains"] } });
+        var kindPointsToType = typeSystem.GetFactType(
+            new Dictionary<string, IEnumerable<string>> { { "Kind", ["PointsTo"] } });
+        var kindPointsToColorBlueType = typeSystem.GetFactType(
+            new Dictionary<string, IEnumerable<string>> { { "Kind", ["PointsTo"] }, { "Color", ["Blue"] } });
+        var kindAType = typeSystem.GetFactType(
+            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
+        var kindAColorBlueType = typeSystem.GetFactType(
+            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] }, { "Color", ["Blue"] } });
+        var kindBType = typeSystem.GetFactType(
+            new Dictionary<string, IEnumerable<string>> { { "Kind", ["B"] } });
+        var kindABType = kindAType.TryGetUnion(kindBType)!;
+
+        // Act
+        var schema = new SliceBuilder()
+            .AddRootElements(new(anyType), () => new([]))
+            .AddRootElements(new(kindAType), () => new([]))
+            .AddElementAttribute(new(kindAColorBlueType), "attr1", _ => new(""))
+            .AddElementAttribute(new(kindBType), "attr1", _ => new(""))
+            .AddElementAttribute(new(kindAType), "attr2", _ => new(""))
+            .AddElementAttribute(new(kindBType), "attr2", _ => new(""))
+            .AddHierarchyLinks(new(containsType), new(kindAType), new(kindABType), _ => new([]))
+            .AddLinks(new(kindPointsToType), new(kindAType), new(kindAType), _ => new([]))
+            .AddLinks(new(kindPointsToType), new(kindAType), new(kindBType), _ => new([]))
+            .AddLinks(new(kindPointsToColorBlueType), new(kindAType), new(kindBType), _ => new([]))
+            .BuildLazy()
+            .Schema;
+
+        // Assert
+
+        schema.ElementTypes.Should().BeEquivalentTo<ElementType>(
+        [
+            new(anyType), new(kindAType), new(kindAColorBlueType), new(kindBType), new(kindABType)
+        ]);
+
+        schema.LinkTypes.Keys.Should().BeEquivalentTo<LinkType>(
+        [
+            new(containsType), new(kindPointsToType), new(kindPointsToColorBlueType)
+        ]);
+        schema.LinkTypes[new(containsType)].Should().BeEquivalentTo<LinkElementTypes>(
+        [
+            new(new(kindAType), new(kindABType))
+        ]);
+        schema.LinkTypes[new(kindPointsToType)].Should().BeEquivalentTo<LinkElementTypes>(
+        [
+            new(new(kindAType), new(kindAType)),
+            new(new(kindAType), new(kindBType))
+        ]);
+        schema.LinkTypes[new(kindPointsToColorBlueType)].Should().BeEquivalentTo<LinkElementTypes>(
+        [
+            new(new(kindAType), new(kindBType))
+        ]);
+
+        schema.ElementAttributes.Keys.Should().BeEquivalentTo<ElementType>(
+        [
+            new(kindAColorBlueType),
+            new(kindBType),
+            new(kindAType)
+        ]);
+        schema.ElementAttributes[new(kindAColorBlueType)].Should().BeEquivalentTo(["attr1"]);
+        schema.ElementAttributes[new(kindBType)].Should().BeEquivalentTo(["attr1", "attr2"]);
+        schema.ElementAttributes[new(kindAType)].Should().BeEquivalentTo(["attr2"]);
+
+        schema.RootElementTypes.Should().BeEquivalentTo<ElementType>(
+        [
+            new(anyType), new(kindAType)
+        ]);
+
+        schema.HierarchyLinkType.Should().Be(new LinkType(containsType));
+    }
 }

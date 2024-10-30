@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+
 using Slicito.Abstractions;
 using Slicito.Queries.Implementation;
 
@@ -10,6 +12,8 @@ public class SliceBuilder : ISliceBuilder
     private readonly Dictionary<ElementTypeAttribute, ISliceBuilder.LoadElementAttributeCallback> _elementAttributeLoaders = [];
 
     private readonly Dictionary<LinkLoaderTypes, ISliceBuilder.LoadLinksCallback> _linksLoaders = [];
+
+    private LinkType? _hierarchyLinkType;
 
     public ISliceBuilder AddRootElements(ElementType elementType, ISliceBuilder.LoadRootElementsCallback loader)
     {
@@ -55,6 +59,13 @@ public class SliceBuilder : ISliceBuilder
         ElementType targetType,
         ISliceBuilder.LoadLinksCallback loader)
     {
+        if (_hierarchyLinkType is not null && linkType != _hierarchyLinkType)
+        {
+            throw new InvalidOperationException($"Only one hierarchy link type can be added, {_hierarchyLinkType} is set now.");
+        }
+
+        _hierarchyLinkType = linkType;
+
         return AddLinks(linkType, sourceType, targetType, loader);
     }
 
@@ -111,7 +122,7 @@ public class SliceBuilder : ISliceBuilder
             {
                 var newId = await loader(sourceId);
 
-                return newId is not null ?[newId.Value] : [];
+                return newId is not null ? [newId.Value] : [];
             }
 
             _linksLoaders.Add(types, SingleLoaderAsync);
@@ -120,8 +131,38 @@ public class SliceBuilder : ISliceBuilder
         return this;
     }
 
-    public ILazySlice BuildLazy() => new LazySlice(
-        _rootElementsLoaders,
-        _elementAttributeLoaders,
-        _linksLoaders);
+    public ILazySlice BuildLazy()
+    {
+        var elementTypes = _rootElementsLoaders.Keys
+            .Concat(_elementAttributeLoaders.Keys.Select(key => key.ElementType))
+            .Concat(_linksLoaders.Keys.SelectMany<LinkLoaderTypes, ElementType>(key => [key.SourceType, key.TargetType]))
+            .Distinct()
+            .ToImmutableArray();
+
+        var linkTypes = _linksLoaders.Keys
+            .GroupBy(kvp => kvp.LinkType)
+            .ToImmutableDictionary(
+                g => g.Key,
+                g => g.Select(linkTypes => new LinkElementTypes(linkTypes.SourceType, linkTypes.TargetType))
+                    .ToImmutableArray());
+
+        var elementAttributes = _elementAttributeLoaders
+            .GroupBy(kvp => kvp.Key.ElementType)
+            .ToImmutableDictionary(
+                g => g.Key,
+                g => g.Select(kvp => kvp.Key.AttributeName).ToImmutableArray());
+
+        var schema = new SliceSchema(
+            elementTypes,
+            linkTypes,
+            elementAttributes,
+            [.. _rootElementsLoaders.Keys],
+            _hierarchyLinkType);
+
+        return new LazySlice(
+            schema,
+            _rootElementsLoaders,
+            _elementAttributeLoaders,
+            _linksLoaders);
+    }
 }
