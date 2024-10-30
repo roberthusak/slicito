@@ -8,26 +8,6 @@ namespace Slicito.Queries.Tests;
 public class SliceTests
 {
     [TestMethod]
-    public void SliceBuilder_AddElementAttributes_OverlappingTypes_Throws()
-    {
-        // Arrange
-        var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
-        var kindABType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A", "B"] } });
-
-        // Act
-        var builder = new SliceBuilder().AddElementAttribute(new(kindAType), "name", _ => new(""));
-
-        // Assert
-        builder.Invoking(b => b.AddElementAttribute(new(kindAType), "name", _ => new("")))
-            .Should().Throw<InvalidOperationException>();
-        builder.Invoking(b => b.AddElementAttribute(new(kindABType), "name", _ => new("")))
-            .Should().Throw<InvalidOperationException>();
-    }
-
-    [TestMethod]
     public async Task SliceBuilder_AddRootElements_MultipleTimes_Merges()
     {
         // Arrange
@@ -112,5 +92,25 @@ public class SliceTests
             .Should().BeEquivalentTo(["ABlue1", "ARed1", "ABlue2", "ARed2", "ABlue3", "ARed3"]);
         aRedGreenElementIds.Select(id => id.Value)
             .Should().BeEquivalentTo(["ARed1", "AGreen1", "ARed2", "AGreen2", "ARed3"]);
+    }
+
+    [TestMethod]
+    public void SliceBuilder_AddElementAttributes_OverlappingTypes_Throws()
+    {
+        // Arrange
+        var typeSystem = new TypeSystem();
+        var kindAType = typeSystem.GetFactType(
+            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
+        var kindABType = typeSystem.GetFactType(
+            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A", "B"] } });
+
+        // Act
+        var builder = new SliceBuilder().AddElementAttribute(new(kindAType), "name", _ => new(""));
+
+        // Assert
+        builder.Invoking(b => b.AddElementAttribute(new(kindAType), "name", _ => new("")))
+            .Should().Throw<InvalidOperationException>();
+        builder.Invoking(b => b.AddElementAttribute(new(kindABType), "name", _ => new("")))
+            .Should().Throw<InvalidOperationException>();
     }
 }
