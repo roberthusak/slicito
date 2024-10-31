@@ -2,7 +2,7 @@ namespace Slicito.Abstractions;
 
 public interface ILazyLinkExplorer
 {
-    ValueTask<ElementId?> TryGetTargetElementIdAsync(ElementId sourceId);
+    ValueTask<ElementInfo?> TryGetTargetElementAsync(ElementId sourceId);
 
-    ValueTask<IEnumerable<ElementId>> GetTargetElementIdsAsync(ElementId sourceId);
+    ValueTask<IEnumerable<ElementInfo>> GetTargetElementsAsync(ElementId sourceId);
 }

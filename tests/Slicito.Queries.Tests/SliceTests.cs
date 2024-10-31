@@ -26,17 +26,19 @@ public class SliceTests
             .AddRootElements(new(kindBType), () => new([new(new("B1")), new(new("B2"))]))
             .BuildLazy();
 
-        var aElementIds = await slice.GetRootElementIdsAsync(new(kindAType));
-        var bElementIds = await slice.GetRootElementIdsAsync(new(kindBType));
-        var abElementIds = await slice.GetRootElementIdsAsync(new(kindABType));
+        var aElements = await slice.GetRootElementsAsync(new(kindAType));
+        var bElements = await slice.GetRootElementsAsync(new(kindBType));
+        var abElements = await slice.GetRootElementsAsync(new(kindABType));
+
+        var a1 = new ElementInfo(new("A1"), new(kindAType));
+        var a2 = new ElementInfo(new("A2"), new(kindAType));
+        var b1 = new ElementInfo(new("B1"), new(kindBType));
+        var b2 = new ElementInfo(new("B2"), new(kindBType));
 
         // Assert
-        aElementIds.Select(id => id.Value)
-            .Should().BeEquivalentTo(["A1", "A2"]);
-        bElementIds.Select(id => id.Value)
-            .Should().BeEquivalentTo(["B1", "B2"]);
-        abElementIds.Select(id => id.Value)
-            .Should().BeEquivalentTo(["A1", "A2", "B1", "B2"]);
+        aElements.Should().BeEquivalentTo([a1, a2]);
+        bElements.Should().BeEquivalentTo([b1, b2]);
+        abElements.Should().BeEquivalentTo([a1, a2, b1, b2]);
     }
 
     [TestMethod]
@@ -75,23 +77,29 @@ public class SliceTests
             ]))
             .BuildLazy();
 
-        var aElementIds = await slice.GetRootElementIdsAsync(new(kindAType));
-        var aBlueElementIds = await slice.GetRootElementIdsAsync(new(kindAColorBlueType));
-        var aRedElementIds = await slice.GetRootElementIdsAsync(new(kindAColorRedType));
-        var aBlueRedElementIds = await slice.GetRootElementIdsAsync(new(kindAColorBlueRedType));
-        var aRedGreenElementIds = await slice.GetRootElementIdsAsync(new(kindAColorRedGreenType));
+        var aElements = await slice.GetRootElementsAsync(new(kindAType));
+        var aBlueElements = await slice.GetRootElementsAsync(new(kindAColorBlueType));
+        var aRedElements = await slice.GetRootElementsAsync(new(kindAColorRedType));
+        var aBlueRedElements = await slice.GetRootElementsAsync(new(kindAColorBlueRedType));
+        var aRedGreenElements = await slice.GetRootElementsAsync(new(kindAColorRedGreenType));
+
+        var a1 = new ElementInfo(new("A1"), new(kindAType));
+        var a2 = new ElementInfo(new("A2"), new(kindAType));
+        var aBlue1 = new ElementInfo(new("ABlue1"), new(kindAColorBlueType));
+        var aBlue2 = new ElementInfo(new("ABlue2"), new(kindAColorBlueType));
+        var aBlue3 = new ElementInfo(new("ABlue3"), new(kindAColorBlueType));
+        var aRed1 = new ElementInfo(new("ARed1"), new(kindAColorRedType));
+        var aRed2 = new ElementInfo(new("ARed2"), new(kindAColorRedType));
+        var aRed3 = new ElementInfo(new("ARed3"), new(kindAColorRedType));
+        var aGreen1 = new ElementInfo(new("AGreen1"), new(kindAColorGreenType));
+        var aGreen2 = new ElementInfo(new("AGreen2"), new(kindAColorGreenType));
 
         // Assert
-        aElementIds.Select(id => id.Value)
-            .Should().BeEquivalentTo(["A1", "A2", "ABlue1", "ARed1", "AGreen1", "ABlue2", "ARed2", "AGreen2", "ABlue3", "ARed3"]);
-        aBlueElementIds.Select(id => id.Value)
-            .Should().BeEquivalentTo(["ABlue1", "ABlue2", "ABlue3"]);
-        aRedElementIds.Select(id => id.Value)
-            .Should().BeEquivalentTo(["ARed1", "ARed2", "ARed3"]);
-        aBlueRedElementIds.Select(id => id.Value)
-            .Should().BeEquivalentTo(["ABlue1", "ARed1", "ABlue2", "ARed2", "ABlue3", "ARed3"]);
-        aRedGreenElementIds.Select(id => id.Value)
-            .Should().BeEquivalentTo(["ARed1", "AGreen1", "ARed2", "AGreen2", "ARed3"]);
+        aElements.Should().BeEquivalentTo([a1, a2, aBlue1, aRed1, aGreen1, aBlue2, aRed2, aGreen2, aBlue3, aRed3]);
+        aBlueElements.Should().BeEquivalentTo([aBlue1, aBlue2, aBlue3]);
+        aRedElements.Should().BeEquivalentTo([aRed1, aRed2, aRed3]);
+        aBlueRedElements.Should().BeEquivalentTo([aBlue1, aRed1, aBlue2, aRed2, aBlue3, aRed3]);
+        aRedGreenElements.Should().BeEquivalentTo([aRed1, aGreen1, aRed2, aGreen2, aRed3]);
     }
 
     [TestMethod]
@@ -149,7 +157,7 @@ public class SliceTests
         var greetingProvider = slice.GetElementAttributeProviderAsyncCallback("greeting");
 
         // It's expected that the user will only use the element IDs that were previously obtained from the slice.
-        var rootElementIds = (await slice.GetRootElementIdsAsync()).ToArray();
+        var rootElements = (await slice.GetRootElementsAsync()).ToArray();
 
         var a1Name = await nameProvider(new("A1"));
         var a2Name = await nameProvider(new("A2"));
@@ -168,15 +176,15 @@ public class SliceTests
 
         // Assert
 
-        rootElementIds.Should().BeEquivalentTo(new[]
+        rootElements.Should().BeEquivalentTo(new[]
         {
-            new ElementId("A1"),
-            new ElementId("B1"),
-            new ElementId("ABlue1"),
-            new ElementId("Any1"),
-            new ElementId("A2"),
-            new ElementId("B2"),
-            new ElementId("ABlue2")
+            new ElementInfo(new("A1"), new(kindAType)),
+            new ElementInfo(new("B1"), new(kindBType)),
+            new ElementInfo(new("ABlue1"), new(kindAColorBlueType)),
+            new ElementInfo(new("Any1"), new(anyType)),
+            new ElementInfo(new("A2"), new(kindAType)),
+            new ElementInfo(new("B2"), new(kindBType)),
+            new ElementInfo(new("ABlue2"), new(kindAColorBlueType))
         });
 
         await nameProvider.Invoking(async p => await p(new("NonExistent")))
@@ -253,12 +261,12 @@ public class SliceTests
         var containsLinksExplorer = slice.GetLinkExplorer(new(kindContainsType));
 
         // It's expected that the user will only use the element IDs that were previously obtained from the slice.
-        var rootElementIds = (await slice.GetRootElementIdsAsync()).ToArray();
+        var rootElements = (await slice.GetRootElementsAsync()).ToArray();
 
-        var nestedElementIds = new List<ElementId>();
-        foreach (var rootElementId in rootElementIds)
+        var nestedElements = new List<ElementInfo>();
+        foreach (var rootElement in rootElements)
         {
-            nestedElementIds.AddRange(await containsLinksExplorer.GetTargetElementIdsAsync(rootElementId));
+            nestedElements.AddRange(await containsLinksExplorer.GetTargetElementsAsync(rootElement.Id));
         }
 
         var nameProvider = slice.GetElementAttributeProviderAsyncCallback("name");
@@ -278,17 +286,18 @@ public class SliceTests
         var a1NestedA4Greeting = await greetingProvider(new("A1NestedA4"));
         var a2NestedB2Greeting = await greetingProvider(new("A2NestedB2"));
 
+        var a1Root = new ElementInfo(new("A1Root"), new(kindAType));
+        var a2Root = new ElementInfo(new("A2Root"), new(kindAType));
+        var a1NestedA3 = new ElementInfo(new("A1NestedA3"), new(kindAType));
+        var a2NestedB1 = new ElementInfo(new("A2NestedB1"), new(kindBType));
+        var a1NestedA4 = new ElementInfo(new("A1NestedA4"), new(kindAType));
+        var a2NestedB2 = new ElementInfo(new("A2NestedB2"), new(kindAColorBlueType));
+
         // Assert
 
-        rootElementIds.Select(id => id.Value).Should().BeEquivalentTo(["A1Root", "A2Root"]);
+        rootElements.Should().BeEquivalentTo([a1Root, a2Root]);
 
-        nestedElementIds.Select(id => id.Value).Should().BeEquivalentTo(
-        [
-            "A1NestedA3",
-            "A2NestedB1",
-            "A1NestedA4",
-            "A2NestedB2"
-        ]);
+        nestedElements.Should().BeEquivalentTo([a1NestedA3, a2NestedB1, a1NestedA4, a2NestedB2]);
 
         a1RootName.Should().Be("Mr. A1Root A");
         a2RootName.Should().Be("Mr. A2Root A");
@@ -384,65 +393,70 @@ public class SliceTests
         var pointsToColorRedGreenLinksExplorer = slice.GetLinkExplorer(new(kindPointsToColorRedGreenType));
 
         // It's expected that the user will only use the element IDs that were previously obtained from the slice.
-        var rootElementIds = (await slice.GetRootElementIdsAsync()).ToArray();
+        var rootElementIds = (await slice.GetRootElementsAsync()).ToArray();
 
-        var aAllTargets = await allLinksExplorer.GetTargetElementIdsAsync(new("A"));
-        var bAllTargets = await allLinksExplorer.GetTargetElementIdsAsync(new("B"));
-        var cAllTargets = await allLinksExplorer.GetTargetElementIdsAsync(new("C"));
-        var dAllTargets = await allLinksExplorer.GetTargetElementIdsAsync(new("D"));
+        var aAllTargets = await allLinksExplorer.GetTargetElementsAsync(new("A"));
+        var bAllTargets = await allLinksExplorer.GetTargetElementsAsync(new("B"));
+        var cAllTargets = await allLinksExplorer.GetTargetElementsAsync(new("C"));
+        var dAllTargets = await allLinksExplorer.GetTargetElementsAsync(new("D"));
 
-        var aPointsToTargets = await pointsToLinksExplorer.GetTargetElementIdsAsync(new("A"));
-        var bPointsToTargets = await pointsToLinksExplorer.GetTargetElementIdsAsync(new("B"));
-        var cPointsToTargets = await pointsToLinksExplorer.GetTargetElementIdsAsync(new("C"));
-        var dPointsToTargets = await pointsToLinksExplorer.GetTargetElementIdsAsync(new("D"));
+        var aPointsToTargets = await pointsToLinksExplorer.GetTargetElementsAsync(new("A"));
+        var bPointsToTargets = await pointsToLinksExplorer.GetTargetElementsAsync(new("B"));
+        var cPointsToTargets = await pointsToLinksExplorer.GetTargetElementsAsync(new("C"));
+        var dPointsToTargets = await pointsToLinksExplorer.GetTargetElementsAsync(new("D"));
 
-        var aPointsToColorBlueTargets = await pointsToColorBlueLinksExplorer.GetTargetElementIdsAsync(new("A"));
-        var bPointsToColorBlueTargets = await pointsToColorBlueLinksExplorer.GetTargetElementIdsAsync(new("B"));
-        var cPointsToColorBlueTargets = await pointsToColorBlueLinksExplorer.GetTargetElementIdsAsync(new("C"));
-        var dPointsToColorBlueTargets = await pointsToColorBlueLinksExplorer.GetTargetElementIdsAsync(new("D"));
+        var aPointsToColorBlueTargets = await pointsToColorBlueLinksExplorer.GetTargetElementsAsync(new("A"));
+        var bPointsToColorBlueTargets = await pointsToColorBlueLinksExplorer.GetTargetElementsAsync(new("B"));
+        var cPointsToColorBlueTargets = await pointsToColorBlueLinksExplorer.GetTargetElementsAsync(new("C"));
+        var dPointsToColorBlueTargets = await pointsToColorBlueLinksExplorer.GetTargetElementsAsync(new("D"));
 
-        var aPointsToColorRedTargets = await pointsToColorRedLinksExplorer.GetTargetElementIdsAsync(new("A"));
-        var bPointsToColorRedTargets = await pointsToColorRedLinksExplorer.GetTargetElementIdsAsync(new("B"));
-        var cPointsToColorRedTargets = await pointsToColorRedLinksExplorer.GetTargetElementIdsAsync(new("C"));
-        var dPointsToColorRedTargets = await pointsToColorRedLinksExplorer.GetTargetElementIdsAsync(new("D"));
+        var aPointsToColorRedTargets = await pointsToColorRedLinksExplorer.GetTargetElementsAsync(new("A"));
+        var bPointsToColorRedTargets = await pointsToColorRedLinksExplorer.GetTargetElementsAsync(new("B"));
+        var cPointsToColorRedTargets = await pointsToColorRedLinksExplorer.GetTargetElementsAsync(new("C"));
+        var dPointsToColorRedTargets = await pointsToColorRedLinksExplorer.GetTargetElementsAsync(new("D"));
 
-        var aPointsToColorBlackTargets = await pointsToColorBlackLinksExplorer.GetTargetElementIdsAsync(new("A"));
-        var bPointsToColorBlackTargets = await pointsToColorBlackLinksExplorer.GetTargetElementIdsAsync(new("B"));
-        var cPointsToColorBlackTargets = await pointsToColorBlackLinksExplorer.GetTargetElementIdsAsync(new("C"));
-        var dPointsToColorBlackTargets = await pointsToColorBlackLinksExplorer.GetTargetElementIdsAsync(new("D"));
+        var aPointsToColorBlackTargets = await pointsToColorBlackLinksExplorer.GetTargetElementsAsync(new("A"));
+        var bPointsToColorBlackTargets = await pointsToColorBlackLinksExplorer.GetTargetElementsAsync(new("B"));
+        var cPointsToColorBlackTargets = await pointsToColorBlackLinksExplorer.GetTargetElementsAsync(new("C"));
+        var dPointsToColorBlackTargets = await pointsToColorBlackLinksExplorer.GetTargetElementsAsync(new("D"));
 
-        var aPointsToColorRedGreenTargets = await pointsToColorRedGreenLinksExplorer.GetTargetElementIdsAsync(new("A"));
-        var bPointsToColorRedGreenTargets = await pointsToColorRedGreenLinksExplorer.GetTargetElementIdsAsync(new("B"));
-        var cPointsToColorRedGreenTargets = await pointsToColorRedGreenLinksExplorer.GetTargetElementIdsAsync(new("C"));
-        var dPointsToColorRedGreenTargets = await pointsToColorRedGreenLinksExplorer.GetTargetElementIdsAsync(new("D"));
+        var aPointsToColorRedGreenTargets = await pointsToColorRedGreenLinksExplorer.GetTargetElementsAsync(new("A"));
+        var bPointsToColorRedGreenTargets = await pointsToColorRedGreenLinksExplorer.GetTargetElementsAsync(new("B"));
+        var cPointsToColorRedGreenTargets = await pointsToColorRedGreenLinksExplorer.GetTargetElementsAsync(new("C"));
+        var dPointsToColorRedGreenTargets = await pointsToColorRedGreenLinksExplorer.GetTargetElementsAsync(new("D"));
 
-        var aPointsToColorRedGreenTarget = await pointsToColorRedGreenLinksExplorer.TryGetTargetElementIdAsync(new("A"));
-        var bPointsToColorRedGreenTarget = await pointsToColorRedGreenLinksExplorer.TryGetTargetElementIdAsync(new("B"));
-        var dPointsToColorRedGreenTarget = await pointsToColorRedGreenLinksExplorer.TryGetTargetElementIdAsync(new("D"));
+        var aPointsToColorRedGreenTarget = await pointsToColorRedGreenLinksExplorer.TryGetTargetElementAsync(new("A"));
+        var bPointsToColorRedGreenTarget = await pointsToColorRedGreenLinksExplorer.TryGetTargetElementAsync(new("B"));
+        var dPointsToColorRedGreenTarget = await pointsToColorRedGreenLinksExplorer.TryGetTargetElementAsync(new("D"));
+
+        var a = new ElementInfo(new("A"), new(anyType));
+        var b = new ElementInfo(new("B"), new(anyType));
+        var c = new ElementInfo(new("C"), new(anyType));
+        var d = new ElementInfo(new("D"), new(anyType));
 
         // Assert
 
-        rootElementIds.Select(id => id.Value).Should().BeEquivalentTo(["A", "B", "C", "D"]);
+        rootElementIds.Should().BeEquivalentTo([a, b, c, d]);
 
-        aAllTargets.Select(id => id.Value).Should().BeEquivalentTo(["B"]);
-        bAllTargets.Select(id => id.Value).Should().BeEquivalentTo(["C", "C"]);
-        cAllTargets.Select(id => id.Value).Should().BeEquivalentTo(["D", "D", "D"]);
-        dAllTargets.Select(id => id.Value).Should().BeEquivalentTo(["A", "A"]);
+        aAllTargets.Should().BeEquivalentTo([b]);
+        bAllTargets.Should().BeEquivalentTo([c, c]);
+        cAllTargets.Should().BeEquivalentTo([d, d, d]);
+        dAllTargets.Should().BeEquivalentTo([a, a]);
 
-        aPointsToTargets.Select(id => id.Value).Should().BeEquivalentTo(["B"]);
-        bPointsToTargets.Select(id => id.Value).Should().BeEquivalentTo(["C", "C"]);
-        cPointsToTargets.Select(id => id.Value).Should().BeEquivalentTo(["D", "D", "D"]);
-        dPointsToTargets.Select(id => id.Value).Should().BeEquivalentTo(["A", "A"]);
+        aPointsToTargets.Should().BeEquivalentTo([b]);
+        bPointsToTargets.Should().BeEquivalentTo([c, c]);
+        cPointsToTargets.Should().BeEquivalentTo([d, d, d]);
+        dPointsToTargets.Should().BeEquivalentTo([a, a]);
 
-        aPointsToColorBlueTargets.Select(id => id.Value).Should().BeEquivalentTo(["B"]);
-        bPointsToColorBlueTargets.Select(id => id.Value).Should().BeEquivalentTo(["C"]);
-        cPointsToColorBlueTargets.Select(id => id.Value).Should().BeEquivalentTo(["D"]);
+        aPointsToColorBlueTargets.Should().BeEquivalentTo([b]);
+        bPointsToColorBlueTargets.Should().BeEquivalentTo([c]);
+        cPointsToColorBlueTargets.Should().BeEquivalentTo([d]);
         dPointsToColorBlueTargets.Should().BeEmpty();
 
         aPointsToColorRedTargets.Should().BeEmpty();
-        bPointsToColorRedTargets.Select(id => id.Value).Should().BeEquivalentTo(["C"]);
-        cPointsToColorRedTargets.Select(id => id.Value).Should().BeEquivalentTo(["D"]);
-        dPointsToColorRedTargets.Select(id => id.Value).Should().BeEquivalentTo(["A"]);
+        bPointsToColorRedTargets.Should().BeEquivalentTo([c]);
+        cPointsToColorRedTargets.Should().BeEquivalentTo([d]);
+        dPointsToColorRedTargets.Should().BeEquivalentTo([a]);
 
         aPointsToColorBlackTargets.Should().BeEmpty();
         bPointsToColorBlackTargets.Should().BeEmpty();
@@ -450,15 +464,15 @@ public class SliceTests
         dPointsToColorBlackTargets.Should().BeEmpty();
 
         aPointsToColorRedGreenTargets.Should().BeEmpty();
-        bPointsToColorRedGreenTargets.Select(id => id.Value).Should().BeEquivalentTo(["C"]);
-        cPointsToColorRedGreenTargets.Select(id => id.Value).Should().BeEquivalentTo(["D", "D"]);
-        dPointsToColorRedGreenTargets.Select(id => id.Value).Should().BeEquivalentTo(["A"]);
+        bPointsToColorRedGreenTargets.Should().BeEquivalentTo([c]);
+        cPointsToColorRedGreenTargets.Should().BeEquivalentTo([d, d]);
+        dPointsToColorRedGreenTargets.Should().BeEquivalentTo([a]);
 
         aPointsToColorRedGreenTarget.HasValue.Should().BeFalse();
-        bPointsToColorRedGreenTarget.Should().Be(new ElementId("C"));
-        await pointsToColorRedGreenLinksExplorer.Invoking(async e => await e.TryGetTargetElementIdAsync(new("C")))
+        bPointsToColorRedGreenTarget.Should().Be(c);
+        await pointsToColorRedGreenLinksExplorer.Invoking(async e => await e.TryGetTargetElementAsync(new("C")))
             .Should().ThrowAsync<InvalidOperationException>();
-        dPointsToColorRedGreenTarget.Should().Be(new ElementId("A"));
+        dPointsToColorRedGreenTarget.Should().Be(a);
     }
 
     [TestMethod]

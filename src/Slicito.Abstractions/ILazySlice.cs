@@ -4,7 +4,7 @@ public interface ILazySlice
 {
     SliceSchema Schema { get; }
 
-    ValueTask<IEnumerable<ElementId>> GetRootElementIdsAsync(ElementType? elementTypeFilter = null);
+    ValueTask<IEnumerable<ElementInfo>> GetRootElementsAsync(ElementType? elementTypeFilter = null);
 
     Func<ElementId, ValueTask<string>> GetElementAttributeProviderAsyncCallback(string attributeName);
 

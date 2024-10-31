@@ -86,7 +86,7 @@ public class SampleStructureBrowser : IController
 
     public Task<IModel> Init()
     {
-        return DisplayCurrentLevel();
+        return DisplayCurrentLevelAsync();
     }
 
     public async Task<IModel?> ProcessCommand(Command command)
@@ -95,7 +95,7 @@ public class SampleStructureBrowser : IController
         {
             _selectedElementId = new(id);
 
-            return await DisplayCurrentLevel();
+            return await DisplayCurrentLevelAsync();
         }
         else
         {
@@ -103,44 +103,44 @@ public class SampleStructureBrowser : IController
         }
     }
 
-    private async Task<IModel> DisplayCurrentLevel()
+    private async Task<IModel> DisplayCurrentLevelAsync()
     {
-        ElementId[] elementIds;
+        ElementInfo[] elements;
         if (_selectedElementId is ElementId selectedElementId)
         {
             if (_slice.Schema.HierarchyLinkType is LinkType hierarchyType)
             {
                 var hierarchyExplorer = _slice.GetLinkExplorer(hierarchyType);
-                elementIds = [.. await hierarchyExplorer.GetTargetElementIdsAsync(selectedElementId)];
+                elements = [.. await hierarchyExplorer.GetTargetElementsAsync(selectedElementId)];
             }
             else
             {
-                elementIds = [];
+                elements = [];
             }
         }
         else
         {
-            elementIds = [.. await _slice.GetRootElementIdsAsync()];
+            elements = [.. await _slice.GetRootElementsAsync()];
         }
 
         var nameProvider = _slice.GetElementAttributeProviderAsyncCallback("Name");
 
         var nodes = new List<Node>();
-        foreach (var elementId in elementIds)
+        foreach (var element in elements)
         {
-            var name = await nameProvider(elementId);
+            var name = await nameProvider(element.Id);
 
             nodes.Add(new(
-                elementId.Value,
+                element.Id.Value,
                 name,
-                CreateOpenCommand(elementId)));
+                CreateOpenCommand(element)));
         }
 
         return new Graph([.. nodes], []);
     }
 
-    private static Command CreateOpenCommand(ElementId id)
+    private static Command CreateOpenCommand(ElementInfo element)
     {
-        return new(_openActionName, ImmutableDictionary<string, string>.Empty.Add(_idActionParameterName, id.Value));
+        return new(_openActionName, ImmutableDictionary<string, string>.Empty.Add(_idActionParameterName, element.Id.Value));
     }
 }

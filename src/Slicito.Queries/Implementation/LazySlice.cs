@@ -28,9 +28,9 @@ internal class LazySlice : ILazySlice
         _linksLoaders = linksLoaders;
     }
 
-    public async ValueTask<IEnumerable<ElementId>> GetRootElementIdsAsync(ElementType? elementTypeFilter = null)
+    public async ValueTask<IEnumerable<ElementInfo>> GetRootElementsAsync(ElementType? elementTypeFilter = null)
     {
-        var result = Enumerable.Empty<ElementId>();
+        var result = Enumerable.Empty<ElementInfo>();
 
         foreach (var kvp in _rootElementsLoaders)
         {
@@ -60,7 +60,7 @@ internal class LazySlice : ILazySlice
             // Otherwise, all elements of this group match the filter (if any)
             elementInfos ??= await loader();
 
-            result = result.Concat(elementInfos.Select(info => CacheType(info, groupElementType).Id));
+            result = result.Concat(elementInfos.Select(info => CacheAndIncludeType(info, groupElementType)));
         }
 
         return result;
@@ -126,11 +126,13 @@ internal class LazySlice : ILazySlice
         return new LazyLinkExplorer(this, typeLinksLoaders, linkType);
     }
 
-    private ISliceBuilder.PartialElementInfo CacheType(ISliceBuilder.PartialElementInfo elementInfo, ElementType groupType)
+    private ElementInfo CacheAndIncludeType(ISliceBuilder.PartialElementInfo elementInfo, ElementType groupType)
     {
-        _elementTypes.TryAdd(elementInfo.Id, elementInfo.DetailedType ?? groupType);
+        var elementType = elementInfo.DetailedType ?? groupType;
 
-        return elementInfo;
+        _elementTypes.TryAdd(elementInfo.Id, elementType);
+
+        return new(elementInfo.Id, elementType);
     }
 
     private class LazyLinkExplorer : ILazyLinkExplorer
@@ -149,16 +151,16 @@ internal class LazySlice : ILazySlice
             _linkTypeFilter = linkTypeFilter;
         }
 
-        public async ValueTask<ElementId?> TryGetTargetElementIdAsync(ElementId sourceId)
+        public async ValueTask<ElementInfo?> TryGetTargetElementAsync(ElementId sourceId)
         {
-            var validOrDefaultId = (await GetTargetElementIdsAsync(sourceId)).SingleOrDefault();
+            var validOrDefaultId = (await GetTargetElementsAsync(sourceId)).SingleOrDefault();
 
             return validOrDefaultId == default ? null : validOrDefaultId;
         }
 
-        public async ValueTask<IEnumerable<ElementId>> GetTargetElementIdsAsync(ElementId sourceId)
+        public async ValueTask<IEnumerable<ElementInfo>> GetTargetElementsAsync(ElementId sourceId)
         {
-            var result = Enumerable.Empty<ElementId>();
+            var result = Enumerable.Empty<ElementInfo>();
 
             foreach (var kvp in _linksLoaders)
             {
@@ -185,7 +187,7 @@ internal class LazySlice : ILazySlice
                 // Otherwise, all links of this group match the filter (if any)
                 linkInfos ??= await loader(sourceId);
 
-                result = result.Concat(linkInfos.Select(info => _slice.CacheType(info.Target, loaderTypes.TargetType).Id));
+                result = result.Concat(linkInfos.Select(info => _slice.CacheAndIncludeType(info.Target, loaderTypes.TargetType)));
             }
 
             return result;
