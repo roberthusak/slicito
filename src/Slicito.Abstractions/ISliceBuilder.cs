@@ -2,17 +2,17 @@ namespace Slicito.Abstractions;
 
 public interface ISliceBuilder
 {
-    public record struct ElementInfo(ElementId Id, ElementType? DetailedType = null);
+    public record struct PartialElementInfo(ElementId Id, ElementType? DetailedType = null);
 
-    public record struct LinkInfo(ElementInfo Target, LinkType? DetailedType = null);
+    public record struct PartialLinkInfo(PartialElementInfo Target, LinkType? DetailedType = null);
 
-    public delegate ValueTask<IEnumerable<ElementInfo>> LoadRootElementsCallback();
+    public delegate ValueTask<IEnumerable<PartialElementInfo>> LoadRootElementsCallback();
 
     public delegate ValueTask<string> LoadElementAttributeCallback(ElementId elementId);
 
-    public delegate ValueTask<IEnumerable<LinkInfo>> LoadLinksCallback(ElementId sourceId);
+    public delegate ValueTask<IEnumerable<PartialLinkInfo>> LoadLinksCallback(ElementId sourceId);
 
-    public delegate ValueTask<LinkInfo?> LoadLinkCallback(ElementId sourceId);
+    public delegate ValueTask<PartialLinkInfo?> LoadLinkCallback(ElementId sourceId);
 
     ISliceBuilder AddRootElements(ElementType elementType, LoadRootElementsCallback loader);
 

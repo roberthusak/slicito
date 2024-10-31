@@ -224,8 +224,8 @@ public class SliceTests
             {
                 return sourceId.Value switch
                 {
-                    "A1Root" => new([new ISliceBuilder.LinkInfo(new(new("A1NestedA3"), new(kindAType)))]),
-                    "A2Root" => new([new ISliceBuilder.LinkInfo(new(new("A2NestedB1"), new(kindBType)))]),
+                    "A1Root" => new([new ISliceBuilder.PartialLinkInfo(new(new("A1NestedA3"), new(kindAType)))]),
+                    "A2Root" => new([new ISliceBuilder.PartialLinkInfo(new(new("A2NestedB1"), new(kindBType)))]),
                     _ => new([])
                 };
             })
@@ -233,7 +233,7 @@ public class SliceTests
             {
                 return sourceId.Value switch
                 {
-                    "A1Root" => new([new ISliceBuilder.LinkInfo(new(new("A1NestedA4")))]),
+                    "A1Root" => new([new ISliceBuilder.PartialLinkInfo(new(new("A1NestedA4")))]),
                     _ => new([])
                 };
             })
@@ -241,7 +241,7 @@ public class SliceTests
             {
                 return sourceId.Value switch
                 {
-                    "A2Root" => new([new ISliceBuilder.LinkInfo(new(new("A2NestedB2"), new(kindAColorBlueType)))]),
+                    "A2Root" => new([new ISliceBuilder.PartialLinkInfo(new(new("A2NestedB2"), new(kindAColorBlueType)))]),
                     _ => new([])
                 };
             })
@@ -335,8 +335,8 @@ public class SliceTests
             {
                 return sourceId.Value switch
                 {
-                    "A" => new([new ISliceBuilder.LinkInfo(new(new("B")), new(kindPointsToColorBlueType))]),
-                    "B" => new([new ISliceBuilder.LinkInfo(new(new("C")), new(kindPointsToColorRedType))]),
+                    "A" => new([new ISliceBuilder.PartialLinkInfo(new(new("B")), new(kindPointsToColorBlueType))]),
+                    "B" => new([new ISliceBuilder.PartialLinkInfo(new(new("C")), new(kindPointsToColorRedType))]),
                     _ => new([])
                 };
             })
@@ -344,8 +344,8 @@ public class SliceTests
             {
                 return sourceId.Value switch
                 {
-                    "C" => new([new ISliceBuilder.LinkInfo(new(new("D")), new(kindPointsToColorGreenType))]),
-                    "D" => new([new ISliceBuilder.LinkInfo(new(new("A")))]),
+                    "C" => new([new ISliceBuilder.PartialLinkInfo(new(new("D")), new(kindPointsToColorGreenType))]),
+                    "D" => new([new ISliceBuilder.PartialLinkInfo(new(new("A")))]),
                     _ => new([])
                 };
             })
@@ -353,15 +353,15 @@ public class SliceTests
             {
                 return sourceId.Value switch
                 {
-                    "B" => new(new ISliceBuilder.LinkInfo(new(new("C")))),
-                    _ => new((ISliceBuilder.LinkInfo?)null)
+                    "B" => new(new ISliceBuilder.PartialLinkInfo(new(new("C")))),
+                    _ => new((ISliceBuilder.PartialLinkInfo?)null)
                 };
             })
             .AddLinks(new(kindPointsToColorRedType), new(anyType), new(anyType), sourceId =>
             {
                 return sourceId.Value switch
                 {
-                    "C" => new([new ISliceBuilder.LinkInfo(new(new("D")))]),
+                    "C" => new([new ISliceBuilder.PartialLinkInfo(new(new("D")))]),
                     _ => new([])
                 };
             })
@@ -369,8 +369,8 @@ public class SliceTests
             {
                 return sourceId.Value switch
                 {
-                    "C" => new([new ISliceBuilder.LinkInfo(new(new("D")), new(kindPointsToColorBlueType))]),
-                    "D" => new([new ISliceBuilder.LinkInfo(new(new("A")), new(kindPointsToColorRedType))]),
+                    "C" => new([new ISliceBuilder.PartialLinkInfo(new(new("D")), new(kindPointsToColorBlueType))]),
+                    "D" => new([new ISliceBuilder.PartialLinkInfo(new(new("A")), new(kindPointsToColorRedType))]),
                     _ => new([])
                 };
             })

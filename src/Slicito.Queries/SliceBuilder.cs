@@ -19,7 +19,7 @@ public class SliceBuilder : ISliceBuilder
     {
         if (_rootElementsLoaders.TryGetValue(elementType, out var existingLoader))
         {
-            async ValueTask<IEnumerable<ISliceBuilder.ElementInfo>> MergedLoaderAsync()
+            async ValueTask<IEnumerable<ISliceBuilder.PartialElementInfo>> MergedLoaderAsync()
             {
                 var existingIds = await existingLoader();
                 var newIds = await loader();
@@ -79,7 +79,7 @@ public class SliceBuilder : ISliceBuilder
 
         if (_linksLoaders.TryGetValue(types, out var existingLoader))
         {
-            async ValueTask<IEnumerable<ISliceBuilder.LinkInfo>> MergedLoaderAsync(ElementId sourceId)
+            async ValueTask<IEnumerable<ISliceBuilder.PartialLinkInfo>> MergedLoaderAsync(ElementId sourceId)
             {
                 var existingIds = await existingLoader(sourceId);
                 var newIds = await loader(sourceId);
@@ -106,7 +106,7 @@ public class SliceBuilder : ISliceBuilder
 
         if (_linksLoaders.TryGetValue(types, out var existingLoader))
         {
-            async ValueTask<IEnumerable<ISliceBuilder.LinkInfo>> MergedLoaderAsync(ElementId sourceId)
+            async ValueTask<IEnumerable<ISliceBuilder.PartialLinkInfo>> MergedLoaderAsync(ElementId sourceId)
             {
                 var existingIds = await existingLoader(sourceId);
                 var newId = await loader(sourceId);
@@ -118,7 +118,7 @@ public class SliceBuilder : ISliceBuilder
         }
         else
         {
-            async ValueTask<IEnumerable<ISliceBuilder.LinkInfo>> SingleLoaderAsync(ElementId sourceId)
+            async ValueTask<IEnumerable<ISliceBuilder.PartialLinkInfo>> SingleLoaderAsync(ElementId sourceId)
             {
                 var newId = await loader(sourceId);
 

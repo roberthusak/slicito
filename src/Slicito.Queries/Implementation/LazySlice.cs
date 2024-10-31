@@ -36,7 +36,7 @@ internal class LazySlice : ILazySlice
         {
             var (groupElementType, loader) = (kvp.Key, kvp.Value);
 
-            IEnumerable<ISliceBuilder.ElementInfo>? elementInfos = null;
+            IEnumerable<ISliceBuilder.PartialElementInfo>? elementInfos = null;
 
             if (elementTypeFilter is not null)
             {
@@ -126,7 +126,7 @@ internal class LazySlice : ILazySlice
         return new LazyLinkExplorer(this, typeLinksLoaders, linkType);
     }
 
-    private ISliceBuilder.ElementInfo CacheType(ISliceBuilder.ElementInfo elementInfo, ElementType groupType)
+    private ISliceBuilder.PartialElementInfo CacheType(ISliceBuilder.PartialElementInfo elementInfo, ElementType groupType)
     {
         _elementTypes.TryAdd(elementInfo.Id, elementInfo.DetailedType ?? groupType);
 
@@ -165,7 +165,7 @@ internal class LazySlice : ILazySlice
                 var (loaderTypes, loader) = (kvp.Key, kvp.Value);
                 var groupLinkType = loaderTypes.LinkType;
 
-                IEnumerable<ISliceBuilder.LinkInfo>? linkInfos = null;
+                IEnumerable<ISliceBuilder.PartialLinkInfo>? linkInfos = null;
 
                 if (_linkTypeFilter is not null)
                 {
