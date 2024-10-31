@@ -18,9 +18,9 @@ public class SampleStructureBrowser : IController
 
     private ElementId? _selectedElementId;
 
-    public SampleStructureBrowser(ITypeSystem typeSystem)
+    public SampleStructureBrowser(ITypeSystem typeSystem, ILazySlice? slice = null)
     {
-        _slice = CreateSampleSlice(typeSystem);
+        _slice = slice ?? CreateSampleSlice(typeSystem);
     }
 
     private static ILazySlice CreateSampleSlice(ITypeSystem typeSystem)
