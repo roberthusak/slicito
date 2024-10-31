@@ -467,7 +467,7 @@ public class SliceTests
         // Arrange
         var typeSystem = new TypeSystem();
         var anyType = typeSystem.GetFactType(new Dictionary<string, IEnumerable<string>>());
-        var containsType = typeSystem.GetFactType(
+        var kindContainsType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["Contains"] } });
         var kindPointsToType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["PointsTo"] } });
@@ -489,7 +489,7 @@ public class SliceTests
             .AddElementAttribute(new(kindBType), "attr1", _ => new(""))
             .AddElementAttribute(new(kindAType), "attr2", _ => new(""))
             .AddElementAttribute(new(kindBType), "attr2", _ => new(""))
-            .AddHierarchyLinks(new(containsType), new(kindAType), new(kindABType), _ => new([]))
+            .AddHierarchyLinks(new(kindContainsType), new(kindAType), new(kindABType), _ => new([]))
             .AddLinks(new(kindPointsToType), new(kindAType), new(kindAType), _ => new([]))
             .AddLinks(new(kindPointsToType), new(kindAType), new(kindBType), _ => new([]))
             .AddLinks(new(kindPointsToColorBlueType), new(kindAType), new(kindBType), _ => new([]))
@@ -505,9 +505,9 @@ public class SliceTests
 
         schema.LinkTypes.Keys.Should().BeEquivalentTo<LinkType>(
         [
-            new(containsType), new(kindPointsToType), new(kindPointsToColorBlueType)
+            new(kindContainsType), new(kindPointsToType), new(kindPointsToColorBlueType)
         ]);
-        schema.LinkTypes[new(containsType)].Should().BeEquivalentTo<LinkElementTypes>(
+        schema.LinkTypes[new(kindContainsType)].Should().BeEquivalentTo<LinkElementTypes>(
         [
             new(new(kindAType), new(kindABType))
         ]);
@@ -536,6 +536,6 @@ public class SliceTests
             new(anyType), new(kindAType)
         ]);
 
-        schema.HierarchyLinkType.Should().Be(new LinkType(containsType));
+        schema.HierarchyLinkType.Should().Be(new LinkType(kindContainsType));
     }
 }
