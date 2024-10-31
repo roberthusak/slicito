@@ -1,5 +1,7 @@
 using System.Collections.Immutable;
 
+using Microsoft.CodeAnalysis;
+
 using Slicito.Abstractions;
 using Slicito.Abstractions.Models;
 using Slicito.Abstractions.Queries;
@@ -25,6 +27,10 @@ public class SampleStructureBrowser : IController
     {
         var containsType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["Contains"] } });
+        var isFollowedByType = typeSystem.GetFactType(
+            new Dictionary<string, IEnumerable<string>> { { "Kind", ["IsFollowedBy"] } });
+        var callsType = typeSystem.GetFactType(
+            new Dictionary<string, IEnumerable<string>> { { "Kind", ["Calls"] } });
         var namespaceType = typeSystem.GetFactType(
             new Dictionary<string, IEnumerable<string>> { { "Kind", ["Namespace"] } });
         var functionType = typeSystem.GetFactType(
@@ -42,7 +48,7 @@ public class SampleStructureBrowser : IController
             .AddElementAttribute(new(functionType), "Name", id => new("function " + id.Value))
             .AddElementAttribute(new(operationType), "Name", id => new(id.Value))
             .AddRootElements(new(namespaceType), () => new([new(new("root")), new(new("dependency"))]))
-            .AddHierarchyLinks(new(containsType), new(namespaceType), new(functionType), sourceId => new(sourceId.Value switch
+            .AddHierarchyLinks(new(containsType), new(namespaceType), new(namespaceOrFunctionType), sourceId => new(sourceId.Value switch
             {
                 "root" =>
                 [
@@ -64,22 +70,43 @@ public class SampleStructureBrowser : IController
             {
                 "root::main" =>
                 [
-                    new(new(new("root::main::assignment"), new(assignmentOperationType))),
+                    new(new(new("root::main::assignment1"), new(assignmentOperationType))),
                     new(new(new("root::main::call"), new(invocationOperationType))),
+                    new(new(new("root::main::assignment2"), new(assignmentOperationType))),
                 ],
                 "root::helper" =>
                 [
-                    new(new(new("root::helper::call"), new(invocationOperationType))),
+                    new(new(new("root::helper::call1"), new(invocationOperationType))),
+                    new(new(new("root::helper::call2"), new(invocationOperationType))),
+                    new(new(new("root::helper::call3"), new(invocationOperationType))),
                 ],
                 "root::internal::compute" =>
                 [
-                    new(new(new("root::internal::compute::assignment"), new(assignmentOperationType))),
+                    new(new(new("root::internal::compute::assignment1"), new(assignmentOperationType))),
+                    new(new(new("root::internal::compute::assignment2"), new(assignmentOperationType))),
                 ],
                 "dependency::external_function" =>
                 [
-                    new(new(new("dependency::external_function::call"), new(invocationOperationType))),
+                    new(new(new("dependency::external_function::assignment"), new(assignmentOperationType))),
                 ],
                 _ => []
+            }))
+            .AddLinks(new(isFollowedByType), new(operationType), new(operationType), sourceId => new(sourceId.Value switch
+            {
+                "root::main::assignment1" => new(new(new("root::main::call"), new(invocationOperationType))),
+                "root::main::call" => new(new(new("root::main::assignment2"), new(assignmentOperationType))),
+                "root::helper::call1" => new(new(new("root::helper::call2"), new(invocationOperationType))),
+                "root::helper::call2" => new(new(new("root::helper::call3"), new(invocationOperationType))),
+                "root::internal::compute::assignment1" => new(new(new("root::internal::compute::assignment2"), new(assignmentOperationType))),
+                _ => (ISliceBuilder.PartialLinkInfo?)null
+            }))
+            .AddLinks(new(callsType), new(invocationOperationType), new(functionType), sourceId => new(sourceId.Value switch
+            {
+                "root::main::call" => new(new(new("root::helper"))),
+                "root::helper::call1" => new(new(new("root::internal::compute"))),
+                "root::helper::call2" => new(new(new("dependency::external_function"))),
+                "root::helper::call3" => new(new(new("dependency::external_function"))),
+                _ => (ISliceBuilder.PartialLinkInfo?) null
             }))
             .BuildLazy();
     }
@@ -125,7 +152,10 @@ public class SampleStructureBrowser : IController
 
         var nameProvider = _slice.GetElementAttributeProviderAsyncCallback("Name");
 
+        var externalElements = new List<ElementInfo>();
+
         var nodes = new List<Node>();
+        var edges = new List<Edge>();
         foreach (var element in elements)
         {
             var name = await nameProvider(element.Id);
@@ -134,9 +164,53 @@ public class SampleStructureBrowser : IController
                 element.Id.Value,
                 name,
                 CreateOpenCommand(element)));
+
+            foreach (var kvp in _slice.Schema.LinkTypes)
+            {
+                var (linkType, elementTypes) = (kvp.Key, kvp.Value);
+
+                if (linkType == _slice.Schema.HierarchyLinkType)
+                {
+                    continue;
+                }
+
+                if (elementTypes.Any(t => t.SourceType.Value.IsSupersetOfOrEquals(element.Type.Value)))
+                {
+                    var linkExplorer = _slice.GetLinkExplorer(linkType);
+                    foreach (var targetElement in await linkExplorer.GetTargetElementsAsync(element.Id))
+                    {
+                        edges.Add(new(
+                            element.Id.Value,
+                            targetElement.Id.Value,
+                            TryGetLinkTypeLabel(linkType)));
+
+                        if (!elements.Contains(targetElement) && !externalElements.Contains(targetElement))
+                        {
+                            nodes.Add(new(
+                                targetElement.Id.Value,
+                                "external: " + await nameProvider(targetElement.Id),
+                                CreateOpenCommand(targetElement)));
+
+                            externalElements.Add(targetElement);
+                        }
+                    }
+                }
+            }
         }
 
-        return new Graph([.. nodes], []);
+        return new Graph([.. nodes], [.. edges]);
+    }
+
+    private string? TryGetLinkTypeLabel(LinkType linkType)
+    {
+        if (linkType.Value.AttributeValues.TryGetValue("Kind", out var kinds) && kinds.Count() == 1)
+        {
+            return kinds.Single();
+        }
+        else
+        {
+            return null;
+        }
     }
 
     private static Command CreateOpenCommand(ElementInfo element)
