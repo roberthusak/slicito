@@ -26,23 +26,14 @@ internal class SliceCreator
     private ILazySlice CreateSlice()
     {
         return _sliceManager.CreateBuilder()
-            .AddRootElements(_types.Project, LoadProjectElementsAsync)
-            .AddElementAttribute(_types.Project, "Name", LoadProjectNameAsync)
+            .AddRootElements(_types.Project, LoadProjectElements)
+            .AddElementAttribute(_types.Project, "Name", LoadProjectName)
             .BuildLazy();
     }
 
-    private ValueTask<IEnumerable<ISliceBuilder.PartialElementInfo>> LoadProjectElementsAsync()
-    {
-        var elements = _solution.Projects
+    private IEnumerable<ISliceBuilder.PartialElementInfo> LoadProjectElements() =>
+        _solution.Projects
             .Select(project => new ISliceBuilder.PartialElementInfo(ElementIdProvider.GetElementId(project)));
 
-        return new(elements);
-    }
-
-    private ValueTask<string> LoadProjectNameAsync(ElementId elementId)
-    {
-        var name = Path.GetFileName(elementId.Value);
-
-        return new(name);
-    }
+    private string LoadProjectName(ElementId elementId) => Path.GetFileName(elementId.Value);
 }
