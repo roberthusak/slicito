@@ -31,14 +31,16 @@ public static class TypeSystemExtensions
     public static ElementType GetElementType(
         this ITypeSystem typeSystem,
         IEnumerable<(string name, string value)> attributeValues)
-    =>
-        new(typeSystem.GetFactType(attributeValues));
+    {
+        return new(typeSystem.GetFactType(attributeValues));
+    }
 
     public static ElementType GetElementType(
         this ITypeSystem typeSystem,
         IEnumerable<(string name, IEnumerable<string> values)> attributeValues)
-    =>
-        new(typeSystem.GetFactType(attributeValues));
+    {
+        return new(typeSystem.GetFactType(attributeValues));
+    }
 
     public static ElementType GetUnrestrictedElementType(this ITypeSystem typeSystem) =>
         new(typeSystem.GetUnrestrictedFactType());
@@ -46,14 +48,16 @@ public static class TypeSystemExtensions
     public static LinkType GetLinkType(
         this ITypeSystem typeSystem,
         IEnumerable<(string name, string value)> attributeValues)
-    =>
-        new(typeSystem.GetFactType(attributeValues));
+    {
+        return new(typeSystem.GetFactType(attributeValues));
+    }
 
     public static LinkType GetLinkType(
         this ITypeSystem typeSystem,
         IEnumerable<(string name, IEnumerable<string> values)> attributeValues)
-    =>
-        new(typeSystem.GetFactType(attributeValues));
+    {
+        return new(typeSystem.GetFactType(attributeValues));
+    }
 
     public static LinkType GetUnrestrictedLinkType(this ITypeSystem typeSystem) =>
         new(typeSystem.GetUnrestrictedFactType());
