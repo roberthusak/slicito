@@ -11,11 +11,11 @@ public class TypeSystem : ITypeSystem
 {
     private readonly ConcurrentDictionary<string, FactType> _factTypes = new();
 
-    public IFactType GetFactType(IDictionary<string, IEnumerable<string>> attributeValues)
+    public IFactType GetFactType(IDictionary<string, IReadOnlyList<string>> attributeValues)
     {
         var immutableAttributeValues = attributeValues.ToImmutableSortedDictionary(
             kv => kv.Key,
-            kv => (IEnumerable<string>)kv.Value.ToImmutableSortedSet());
+            kv => (IReadOnlyList<string>)kv.Value.ToImmutableSortedSet());
         var uniqueSerialization = GetUniqueSerialization(immutableAttributeValues);
 
         return _factTypes.GetOrAdd(
@@ -23,7 +23,7 @@ public class TypeSystem : ITypeSystem
             _ => new FactType(this, immutableAttributeValues, uniqueSerialization));
     }
 
-    private string GetUniqueSerialization(ImmutableSortedDictionary<string, IEnumerable<string>> attributeValues) =>
+    private string GetUniqueSerialization(ImmutableSortedDictionary<string, IReadOnlyList<string>> attributeValues) =>
         string.Join(
             ";",
             attributeValues

@@ -14,10 +14,8 @@ public class FactTypeTest
         var typeSystem = new TypeSystem();
 
         // Act
-        var kindABType1 = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A", "B"] } });
-        var kindABType2 = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A", "B"] } });
+        var kindABType1 = typeSystem.GetFactType([("Kind", ["A", "B"])]);
+        var kindABType2 = typeSystem.GetFactType([("Kind", ["A", "B"])]);
 
         // Assert
         kindABType1.Should().BeEquivalentTo(kindABType2);
@@ -30,10 +28,8 @@ public class FactTypeTest
         var typeSystem = new TypeSystem();
 
         // Act
-        var kindAType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
-        var kindBType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["B"] } });
+        var kindAType = typeSystem.GetFactType([("Kind", "A")]);
+        var kindBType = typeSystem.GetFactType([("Kind", "B")]);
 
         // Assert
         kindAType.Should().NotBeEquivalentTo(kindBType);
@@ -44,8 +40,7 @@ public class FactTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
+        var kindAType = typeSystem.GetFactType([("Kind", "A")]);
 
         // Act
         var smallestCommonSuperset = kindAType.GetSmallestCommonSuperset(kindAType);
@@ -59,12 +54,9 @@ public class FactTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
-        var colorBlueType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Color", ["Blue"] } });
-        var anyType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>>());
+        var kindAType = typeSystem.GetFactType([("Kind", "A")]);
+        var colorBlueType = typeSystem.GetFactType([("Color", "Blue")]);
+        var anyType = typeSystem.GetUnrestrictedFactType();
 
         // Act
         var smallestCommonSuperset = kindAType.GetSmallestCommonSuperset(colorBlueType);
@@ -78,12 +70,9 @@ public class FactTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
-        var kindBType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["B"] } });
-        var kindABType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A", "B"] } });
+        var kindAType = typeSystem.GetFactType([("Kind", "A")]);
+        var kindBType = typeSystem.GetFactType([("Kind", "B")]);
+        var kindABType = typeSystem.GetFactType([("Kind", ["A", "B"])]);
 
         // Act
         var smallestCommonSuperset = kindAType.GetSmallestCommonSuperset(kindBType);
@@ -97,12 +86,9 @@ public class FactTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
-        var kindB1Type = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["B"] }, { "BKind", ["1"] } });
-        var kindABType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A", "B"] } });
+        var kindAType = typeSystem.GetFactType([("Kind", "A")]);
+        var kindB1Type = typeSystem.GetFactType([("Kind", "B"), ("BKind", "1")]);
+        var kindABType = typeSystem.GetFactType([("Kind", ["A", "B"])]);
 
         // Act
         var smallestCommonSuperset = kindAType.GetSmallestCommonSuperset(kindB1Type);
@@ -116,8 +102,7 @@ public class FactTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
+        var kindAType = typeSystem.GetFactType([("Kind", "A")]);
 
         // Act
         var union = kindAType.TryGetUnion(kindAType);
@@ -131,10 +116,8 @@ public class FactTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
-        var colorBlueType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Color", ["Blue"] } });
+        var kindAType = typeSystem.GetFactType([("Kind", "A")]);
+        var colorBlueType = typeSystem.GetFactType([("Color", "Blue")]);
 
         // Act
         var union = kindAType.TryGetUnion(colorBlueType);
@@ -148,12 +131,9 @@ public class FactTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
-        var kindBType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["B"] } });
-        var kindABType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A", "B"] } });
+        var kindAType = typeSystem.GetFactType([("Kind", "A")]);
+        var kindBType = typeSystem.GetFactType([("Kind", "B")]);
+        var kindABType = typeSystem.GetFactType([("Kind", ["A", "B"])]);
 
         // Act
         var union = kindAType.TryGetUnion(kindBType);
@@ -167,12 +147,9 @@ public class FactTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAColorBlueType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] }, { "Color", ["Blue"] } });
-        var kindBColorBlueType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["B"] }, { "Color", ["Blue"] } });
-        var kindABColorBlueType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A", "B"] }, { "Color", ["Blue"] } });
+        var kindAColorBlueType = typeSystem.GetFactType([("Kind", "A"), ("Color", "Blue")]);
+        var kindBColorBlueType = typeSystem.GetFactType([("Kind", "B"), ("Color", "Blue")]);
+        var kindABColorBlueType = typeSystem.GetFactType([("Kind", ["A", "B"]), ("Color", ["Blue"])]);
 
         // Act
         var union = kindAColorBlueType.TryGetUnion(kindBColorBlueType);
@@ -186,10 +163,8 @@ public class FactTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAColorBlueType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] }, { "Color", ["Blue"] } });
-        var kindBColorRedType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["B"] }, { "Color", ["Red"] } });
+        var kindAColorBlueType = typeSystem.GetFactType([("Kind", "A"), ("Color", "Blue")]);
+        var kindBColorRedType = typeSystem.GetFactType([("Kind", "B"), ("Color", "Red")]);
 
         // Act
         var union = kindAColorBlueType.TryGetUnion(kindBColorRedType);
@@ -203,8 +178,7 @@ public class FactTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
+        var kindAType = typeSystem.GetFactType([("Kind", "A")]);
 
         // Act
         var intersection = kindAType.TryGetIntersection(kindAType);
@@ -218,12 +192,9 @@ public class FactTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
-        var colorBlueType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Color", ["Blue"] } });
-        var kindAColorBlueType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] }, { "Color", ["Blue"] } });
+        var kindAType = typeSystem.GetFactType([("Kind", "A")]);
+        var colorBlueType = typeSystem.GetFactType([("Color", "Blue")]);
+        var kindAColorBlueType = typeSystem.GetFactType([("Kind", "A"), ("Color", "Blue")]);
 
         // Act
         var intersection = kindAType.TryGetIntersection(colorBlueType);
@@ -237,10 +208,8 @@ public class FactTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
-        var kindBType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["B"] } });
+        var kindAType = typeSystem.GetFactType([("Kind", "A")]);
+        var kindBType = typeSystem.GetFactType([("Kind", "B")]);
 
         // Act
         var intersection = kindAType.TryGetIntersection(kindBType);
@@ -255,11 +224,22 @@ public class FactTypeTest
         // Arrange
         var typeSystem = new TypeSystem();
         var kindABColorBlueSmellFlowersType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A", "B"] }, { "Color", ["Blue"] }, { "Smell", ["Flowers"] } });
+        [
+            ("Kind", ["A", "B"]),
+            ("Color", ["Blue"]),
+            ("Smell", ["Flowers"])
+        ]);
         var kindBCColorBlueYellowType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["B", "C"] }, { "Color", ["Blue", "Yellow"] } });
+        [
+            ("Kind", ["B", "C"]),
+            ("Color", ["Blue", "Yellow"])
+        ]);
         var kindBcolorBlueSmellFlowersType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["B"] }, { "Color", ["Blue"] }, { "Smell", ["Flowers"] } });
+        [
+            ("Kind", "B"),
+            ("Color", "Blue"),
+            ("Smell", "Flowers")
+        ]);
 
         // Act
         var intersection = kindABColorBlueSmellFlowersType.TryGetIntersection(kindBCColorBlueYellowType);
@@ -273,8 +253,7 @@ public class FactTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
+        var kindAType = typeSystem.GetFactType([("Kind", "A")]);
 
         // Act
         var isSupersetOf = kindAType.IsSupersetOfOrEquals(kindAType);
@@ -288,10 +267,8 @@ public class FactTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
-        var colorBlueType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Color", ["Blue"] } });
+        var kindAType = typeSystem.GetFactType([("Kind", "A")]);
+        var colorBlueType = typeSystem.GetFactType([("Color", "Blue")]);
 
         // Act
         var isSupersetOf = kindAType.IsSupersetOfOrEquals(colorBlueType);
@@ -305,10 +282,8 @@ public class FactTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
-        var kindABType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A", "B"] } });
+        var kindAType = typeSystem.GetFactType([("Kind", "A")]);
+        var kindABType = typeSystem.GetFactType([("Kind", ["A", "B"])]);
 
         // Act
         var isSupersetOf = kindAType.IsSupersetOfOrEquals(kindABType);
@@ -322,10 +297,8 @@ public class FactTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindABType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A", "B"] } });
-        var kindAType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
+        var kindABType = typeSystem.GetFactType([("Kind", ["A", "B"])]);
+        var kindAType = typeSystem.GetFactType([("Kind", "A")]);
 
         // Act
         var isSupersetOf = kindABType.IsSupersetOfOrEquals(kindAType);
@@ -339,8 +312,7 @@ public class FactTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
+        var kindAType = typeSystem.GetFactType([("Kind", "A")]);
 
         // Act
         var isSubsetOf = kindAType.IsSubsetOfOrEquals(kindAType);
@@ -354,10 +326,8 @@ public class FactTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
-        var colorBlueType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Color", ["Blue"] } });
+        var kindAType = typeSystem.GetFactType([("Kind", "A")]);
+        var colorBlueType = typeSystem.GetFactType([("Color", "Blue")]);
 
         // Act
         var isSubsetOf = kindAType.IsSubsetOfOrEquals(colorBlueType);
@@ -371,10 +341,8 @@ public class FactTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
-        var kindABType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A", "B"] } });
+        var kindAType = typeSystem.GetFactType([("Kind", "A")]);
+        var kindABType = typeSystem.GetFactType([("Kind", ["A", "B"])]);
 
         // Act
         var isSubsetOf = kindAType.IsSubsetOfOrEquals(kindABType);
@@ -388,10 +356,8 @@ public class FactTypeTest
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindABType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A", "B"] } });
-        var kindAType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
+        var kindABType = typeSystem.GetFactType([("Kind", ["A", "B"])]);
+        var kindAType = typeSystem.GetFactType([("Kind", "A")]);
 
         // Act
         var isSubsetOf = kindABType.IsSubsetOfOrEquals(kindAType);

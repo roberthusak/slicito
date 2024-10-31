@@ -1,6 +1,7 @@
 using FluentAssertions;
 
 using Slicito.Abstractions;
+using Slicito.Abstractions.Queries;
 
 namespace Slicito.Queries.Tests;
 
@@ -12,28 +13,26 @@ public class SliceTests
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
-        var kindBType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["B"] } });
-        var kindABType = kindAType.TryGetUnion(kindBType)!;
+        var kindAType = typeSystem.GetElementType([("Kind", "A")]);
+        var kindBType = typeSystem.GetElementType([("Kind", "B")]);
+        var kindABType = (kindAType | kindBType)!;
 
         // Act
 
         var slice = new SliceBuilder()
-            .AddRootElements(new(kindAType), () => new([new(new("A1"))]))
-            .AddRootElements(new(kindAType), () => new([new(new("A2"))]))
-            .AddRootElements(new(kindBType), () => new([new(new("B1")), new(new("B2"))]))
+            .AddRootElements(kindAType, () => new([new(new("A1"))]))
+            .AddRootElements(kindAType, () => new([new(new("A2"))]))
+            .AddRootElements(kindBType, () => new([new(new("B1")), new(new("B2"))]))
             .BuildLazy();
 
-        var aElements = await slice.GetRootElementsAsync(new(kindAType));
-        var bElements = await slice.GetRootElementsAsync(new(kindBType));
-        var abElements = await slice.GetRootElementsAsync(new(kindABType));
+        var aElements = await slice.GetRootElementsAsync(kindAType);
+        var bElements = await slice.GetRootElementsAsync(kindBType);
+        var abElements = await slice.GetRootElementsAsync(kindABType);
 
-        var a1 = new ElementInfo(new("A1"), new(kindAType));
-        var a2 = new ElementInfo(new("A2"), new(kindAType));
-        var b1 = new ElementInfo(new("B1"), new(kindBType));
-        var b2 = new ElementInfo(new("B2"), new(kindBType));
+        var a1 = new ElementInfo(new("A1"), kindAType);
+        var a2 = new ElementInfo(new("A2"), kindAType);
+        var b1 = new ElementInfo(new("B1"), kindBType);
+        var b2 = new ElementInfo(new("B2"), kindBType);
 
         // Assert
         aElements.Should().BeEquivalentTo([a1, a2]);
@@ -46,53 +45,49 @@ public class SliceTests
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
-        var kindAColorBlueType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] }, { "Color", ["Blue"] } });
-        var kindAColorRedType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] }, { "Color", ["Red"] } });
-        var kindAColorGreenType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] }, { "Color", ["Green"] } });
-        var kindAColorBlueRedType = kindAColorBlueType.TryGetUnion(kindAColorRedType)!;
-        var kindAColorRedGreenType = kindAColorRedType.TryGetUnion(kindAColorGreenType)!;
+        var kindAType = typeSystem.GetElementType([("Kind", "A")]);
+        var kindAColorBlueType = typeSystem.GetElementType([("Kind", "A"), ("Color", "Blue")]);
+        var kindAColorRedType = typeSystem.GetElementType([("Kind", "A"), ("Color", "Red")]);
+        var kindAColorGreenType = typeSystem.GetElementType([("Kind", "A"), ("Color", "Green")]);
+        var kindAColorBlueRedType = (kindAColorBlueType | kindAColorRedType)!.Value;
+        var kindAColorRedGreenType = (kindAColorRedType | kindAColorGreenType)!.Value;
 
         // Act
 
         var slice = new SliceBuilder()
-            .AddRootElements(new(kindAType), () => new([new(new("A1")), new(new("A2"))]))
-            .AddRootElements(new(kindAColorBlueType), () => new([new(new("ABlue1"))]))
-            .AddRootElements(new(kindAColorRedType), () => new([new(new("ARed1"))]))
-            .AddRootElements(new(kindAColorGreenType), () => new([new(new("AGreen1"))]))
-            .AddRootElements(new(kindAType), () => new(
+            .AddRootElements(kindAType, () => new([new(new("A1")), new(new("A2"))]))
+            .AddRootElements(kindAColorBlueType, () => new([new(new("ABlue1"))]))
+            .AddRootElements(kindAColorRedType, () => new([new(new("ARed1"))]))
+            .AddRootElements(kindAColorGreenType, () => new([new(new("AGreen1"))]))
+            .AddRootElements(kindAType, () => new(
             [
-                new(new("ABlue2"), new(kindAColorBlueType)),
-                new(new("ARed2"), new(kindAColorRedType)),
-                new(new("AGreen2"), new(kindAColorGreenType))
+                new(new("ABlue2"), kindAColorBlueType),
+                new(new("ARed2"), kindAColorRedType),
+                new(new("AGreen2"), kindAColorGreenType),
             ]))
-            .AddRootElements(new(kindAColorBlueRedType), () => new(
+            .AddRootElements(kindAColorBlueRedType, () => new(
             [
-                new(new("ABlue3"), new(kindAColorBlueType)),
-                new(new("ARed3"), new(kindAColorRedType))
+                new(new("ABlue3"), kindAColorBlueType),
+                new(new("ARed3"), kindAColorRedType),
             ]))
             .BuildLazy();
 
-        var aElements = await slice.GetRootElementsAsync(new(kindAType));
-        var aBlueElements = await slice.GetRootElementsAsync(new(kindAColorBlueType));
-        var aRedElements = await slice.GetRootElementsAsync(new(kindAColorRedType));
-        var aBlueRedElements = await slice.GetRootElementsAsync(new(kindAColorBlueRedType));
-        var aRedGreenElements = await slice.GetRootElementsAsync(new(kindAColorRedGreenType));
+        var aElements = await slice.GetRootElementsAsync(kindAType);
+        var aBlueElements = await slice.GetRootElementsAsync(kindAColorBlueType);
+        var aRedElements = await slice.GetRootElementsAsync(kindAColorRedType);
+        var aBlueRedElements = await slice.GetRootElementsAsync(kindAColorBlueRedType);
+        var aRedGreenElements = await slice.GetRootElementsAsync(kindAColorRedGreenType);
 
-        var a1 = new ElementInfo(new("A1"), new(kindAType));
-        var a2 = new ElementInfo(new("A2"), new(kindAType));
-        var aBlue1 = new ElementInfo(new("ABlue1"), new(kindAColorBlueType));
-        var aBlue2 = new ElementInfo(new("ABlue2"), new(kindAColorBlueType));
-        var aBlue3 = new ElementInfo(new("ABlue3"), new(kindAColorBlueType));
-        var aRed1 = new ElementInfo(new("ARed1"), new(kindAColorRedType));
-        var aRed2 = new ElementInfo(new("ARed2"), new(kindAColorRedType));
-        var aRed3 = new ElementInfo(new("ARed3"), new(kindAColorRedType));
-        var aGreen1 = new ElementInfo(new("AGreen1"), new(kindAColorGreenType));
-        var aGreen2 = new ElementInfo(new("AGreen2"), new(kindAColorGreenType));
+        var a1 = new ElementInfo(new("A1"), kindAType);
+        var a2 = new ElementInfo(new("A2"), kindAType);
+        var aBlue1 = new ElementInfo(new("ABlue1"), kindAColorBlueType);
+        var aBlue2 = new ElementInfo(new("ABlue2"), kindAColorBlueType);
+        var aBlue3 = new ElementInfo(new("ABlue3"), kindAColorBlueType);
+        var aRed1 = new ElementInfo(new("ARed1"), kindAColorRedType);
+        var aRed2 = new ElementInfo(new("ARed2"), kindAColorRedType);
+        var aRed3 = new ElementInfo(new("ARed3"), kindAColorRedType);
+        var aGreen1 = new ElementInfo(new("AGreen1"), kindAColorGreenType);
+        var aGreen2 = new ElementInfo(new("AGreen2"), kindAColorGreenType);
 
         // Assert
         aElements.Should().BeEquivalentTo([a1, a2, aBlue1, aRed1, aGreen1, aBlue2, aRed2, aGreen2, aBlue3, aRed3]);
@@ -107,18 +102,16 @@ public class SliceTests
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var kindAType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
-        var kindABType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A", "B"] } });
+        var kindAType = typeSystem.GetElementType([("Kind", "A")]);
+        var kindABType = typeSystem.GetElementType([("Kind", ["A", "B"])]);
 
         // Act
-        var builder = new SliceBuilder().AddElementAttribute(new(kindAType), "name", _ => new(""));
+        var builder = new SliceBuilder().AddElementAttribute(kindAType, "name", _ => new(""));
 
         // Assert
-        builder.Invoking(b => b.AddElementAttribute(new(kindAType), "name", _ => new("")))
+        builder.Invoking(b => b.AddElementAttribute(kindAType, "name", _ => new("")))
             .Should().Throw<InvalidOperationException>();
-        builder.Invoking(b => b.AddElementAttribute(new(kindABType), "name", _ => new("")))
+        builder.Invoking(b => b.AddElementAttribute(kindABType, "name", _ => new("")))
             .Should().Throw<InvalidOperationException>();
     }
 
@@ -127,30 +120,27 @@ public class SliceTests
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var anyType = typeSystem.GetFactType(new Dictionary<string, IEnumerable<string>>());
-        var kindAType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
-        var kindBType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["B"] } });
-        var kindAColorBlueType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] }, { "Color", ["Blue"] } });
+        var anyType = typeSystem.GetUnrestrictedElementType();
+        var kindAType = typeSystem.GetElementType([("Kind", "A")]);
+        var kindBType = typeSystem.GetElementType([("Kind", "B")]);
+        var kindAColorBlueType = typeSystem.GetElementType([("Kind", "A"), ("Color", "Blue")]);
 
         // Act
 
         var slice = new SliceBuilder()
-            .AddRootElements(new(kindAType), () => new([new(new("A1"))]))
-            .AddRootElements(new(kindBType), () => new([new(new("B1"))]))
-            .AddRootElements(new(kindAColorBlueType), () => new([new(new("ABlue1"))]))
-            .AddRootElements(new(anyType), () => new(
+            .AddRootElements(kindAType, () => new([new(new("A1"))]))
+            .AddRootElements(kindBType, () => new([new(new("B1"))]))
+            .AddRootElements(kindAColorBlueType, () => new([new(new("ABlue1"))]))
+            .AddRootElements(anyType, () => new(
             [
                 new(new("Any1")),
-                new(new("A2"), new(kindAType)),
-                new(new("B2"), new(kindBType)),
-                new(new("ABlue2"), new(kindAColorBlueType))
+                new(new("A2"), kindAType),
+                new(new("B2"), kindBType),
+                new(new("ABlue2"), kindAColorBlueType),
             ]))
-            .AddElementAttribute(new(kindAType), "name", id => new($"Mr. {id.Value} A"))
-            .AddElementAttribute(new(kindBType), "name", id => new($"Mr. {id.Value} B"))
-            .AddElementAttribute(new(anyType), "greeting", id => new($"Hello, {id.Value}!"))
+            .AddElementAttribute(kindAType, "name", id => new($"Mr. {id.Value} A"))
+            .AddElementAttribute(kindBType, "name", id => new($"Mr. {id.Value} B"))
+            .AddElementAttribute(anyType, "greeting", id => new($"Hello, {id.Value}!"))
             .BuildLazy();
 
         var nameProvider = slice.GetElementAttributeProviderAsyncCallback("name");
@@ -178,13 +168,13 @@ public class SliceTests
 
         rootElements.Should().BeEquivalentTo(new[]
         {
-            new ElementInfo(new("A1"), new(kindAType)),
-            new ElementInfo(new("B1"), new(kindBType)),
-            new ElementInfo(new("ABlue1"), new(kindAColorBlueType)),
-            new ElementInfo(new("Any1"), new(anyType)),
-            new ElementInfo(new("A2"), new(kindAType)),
-            new ElementInfo(new("B2"), new(kindBType)),
-            new ElementInfo(new("ABlue2"), new(kindAColorBlueType))
+            new ElementInfo(new("A1"), kindAType),
+            new ElementInfo(new("B1"), kindBType),
+            new ElementInfo(new("ABlue1"), kindAColorBlueType),
+            new ElementInfo(new("Any1"), anyType),
+            new ElementInfo(new("A2"), kindAType),
+            new ElementInfo(new("B2"), kindBType),
+            new ElementInfo(new("ABlue2"), kindAColorBlueType),
         });
 
         await nameProvider.Invoking(async p => await p(new("NonExistent")))
@@ -213,31 +203,27 @@ public class SliceTests
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var anyType = typeSystem.GetFactType(new Dictionary<string, IEnumerable<string>>());
-        var kindAType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
-        var kindBType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["B"] } });
-        var kindABType = kindAType.TryGetUnion(kindBType)!;
-        var kindAColorBlueType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] }, { "Color", ["Blue"] } });
-        var kindContainsType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["Contains"] } });
+        var anyType = typeSystem.GetUnrestrictedElementType();
+        var kindAType = typeSystem.GetElementType([("Kind", "A")]);
+        var kindBType = typeSystem.GetElementType([("Kind", "B")]);
+        var kindABType = (kindAType | kindBType)!.Value;
+        var kindAColorBlueType = typeSystem.GetElementType([("Kind", "A"), ("Color", "Blue")]);
+        var kindContainsType = typeSystem.GetLinkType([("Kind", "Contains")]);
 
         // Act
 
         var slice = new SliceBuilder()
-            .AddRootElements(new(kindAType), () => new([new(new("A1Root")), new(new("A2Root"))]))
-            .AddHierarchyLinks(new(kindContainsType), new(kindAType), new(kindABType), sourceId =>
+            .AddRootElements(kindAType, () => new([new(new("A1Root")), new(new("A2Root"))]))
+            .AddHierarchyLinks(kindContainsType, kindAType, kindABType, sourceId =>
             {
                 return sourceId.Value switch
                 {
-                    "A1Root" => new([new ISliceBuilder.PartialLinkInfo(new(new("A1NestedA3"), new(kindAType)))]),
-                    "A2Root" => new([new ISliceBuilder.PartialLinkInfo(new(new("A2NestedB1"), new(kindBType)))]),
+                    "A1Root" => new([new ISliceBuilder.PartialLinkInfo(new(new("A1NestedA3"), kindAType))]),
+                    "A2Root" => new([new ISliceBuilder.PartialLinkInfo(new(new("A2NestedB1"), kindBType))]),
                     _ => new([])
                 };
             })
-            .AddHierarchyLinks(new(kindContainsType), new(kindAType), new(kindAType), sourceId =>
+            .AddHierarchyLinks(kindContainsType, kindAType, kindAType, sourceId =>
             {
                 return sourceId.Value switch
                 {
@@ -245,20 +231,20 @@ public class SliceTests
                     _ => new([])
                 };
             })
-            .AddHierarchyLinks(new(kindContainsType), new(kindAType), new(kindBType), sourceId =>
+            .AddHierarchyLinks(kindContainsType, kindAType, kindBType, sourceId =>
             {
                 return sourceId.Value switch
                 {
-                    "A2Root" => new([new ISliceBuilder.PartialLinkInfo(new(new("A2NestedB2"), new(kindAColorBlueType)))]),
+                    "A2Root" => new([new ISliceBuilder.PartialLinkInfo(new(new("A2NestedB2"), kindAColorBlueType))]),
                     _ => new([])
                 };
             })
-            .AddElementAttribute(new(kindAType), "name", id => new($"Mr. {id.Value} A"))
-            .AddElementAttribute(new(kindBType), "name", id => new($"Mr. {id.Value} B"))
-            .AddElementAttribute(new(anyType), "greeting", id => new($"Hello, {id.Value}!"))
+            .AddElementAttribute(kindAType, "name", id => new($"Mr. {id.Value} A"))
+            .AddElementAttribute(kindBType, "name", id => new($"Mr. {id.Value} B"))
+            .AddElementAttribute(anyType, "greeting", id => new($"Hello, {id.Value}!"))
             .BuildLazy();
 
-        var containsLinksExplorer = slice.GetLinkExplorer(new(kindContainsType));
+        var containsLinksExplorer = slice.GetLinkExplorer(kindContainsType);
 
         // It's expected that the user will only use the element IDs that were previously obtained from the slice.
         var rootElements = (await slice.GetRootElementsAsync()).ToArray();
@@ -286,12 +272,12 @@ public class SliceTests
         var a1NestedA4Greeting = await greetingProvider(new("A1NestedA4"));
         var a2NestedB2Greeting = await greetingProvider(new("A2NestedB2"));
 
-        var a1Root = new ElementInfo(new("A1Root"), new(kindAType));
-        var a2Root = new ElementInfo(new("A2Root"), new(kindAType));
-        var a1NestedA3 = new ElementInfo(new("A1NestedA3"), new(kindAType));
-        var a2NestedB1 = new ElementInfo(new("A2NestedB1"), new(kindBType));
-        var a1NestedA4 = new ElementInfo(new("A1NestedA4"), new(kindAType));
-        var a2NestedB2 = new ElementInfo(new("A2NestedB2"), new(kindAColorBlueType));
+        var a1Root = new ElementInfo(new("A1Root"), kindAType);
+        var a2Root = new ElementInfo(new("A2Root"), kindAType);
+        var a1NestedA3 = new ElementInfo(new("A1NestedA3"), kindAType);
+        var a2NestedB1 = new ElementInfo(new("A2NestedB1"), kindBType);
+        var a1NestedA4 = new ElementInfo(new("A1NestedA4"), kindAType);
+        var a2NestedB2 = new ElementInfo(new("A2NestedB2"), kindAColorBlueType);
 
         // Assert
 
@@ -319,46 +305,42 @@ public class SliceTests
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var anyType = typeSystem.GetFactType(new Dictionary<string, IEnumerable<string>>());
-        var kindPointsToType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["PointsTo"] } });
-        var kindPointsToColorBlueType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["PointsTo"] }, { "Color", ["Blue"] } });
-        var kindPointsToColorRedType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["PointsTo"] }, { "Color", ["Red"] } });
-        var kindPointsToColorGreenType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["PointsTo"] }, { "Color", ["Green"] } });
-        var kindPointsToColorBlackType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["PointsTo"] }, { "Color", ["Black"] } });
-        var kindPointsToColorBlueRedType = kindPointsToColorBlueType.TryGetUnion(kindPointsToColorRedType)!;
-        var kindPointsToColorRedGreenType = kindPointsToColorRedType.TryGetUnion(kindPointsToColorGreenType)!;
+        var anyElementType = typeSystem.GetUnrestrictedElementType();
+        var anyLinkType = typeSystem.GetUnrestrictedLinkType();
+        var kindPointsToType = typeSystem.GetLinkType([("Kind", "PointsTo")]);
+        var kindPointsToColorBlueType = typeSystem.GetLinkType([("Kind", "PointsTo"), ("Color", "Blue")]);
+        var kindPointsToColorRedType = typeSystem.GetLinkType([("Kind", "PointsTo"), ("Color", "Red")]);
+        var kindPointsToColorGreenType = typeSystem.GetLinkType([("Kind", "PointsTo"), ("Color", "Green")]);
+        var kindPointsToColorBlackType = typeSystem.GetLinkType([("Kind", "PointsTo"), ("Color", "Black")]);
+        var kindPointsToColorBlueRedType = (kindPointsToColorBlueType | kindPointsToColorRedType)!.Value;
+        var kindPointsToColorRedGreenType = (kindPointsToColorRedType | kindPointsToColorGreenType)!.Value;
 
         // Act
 
         var slice = new SliceBuilder()
-            .AddRootElements(new(anyType), () => new(
+            .AddRootElements(anyElementType, () => new(
             [
                 new(new("A")), new(new("B")), new(new("C")), new(new("D")),
             ]))
-            .AddLinks(new(kindPointsToType), new(anyType), new(anyType), sourceId =>
+            .AddLinks(kindPointsToType, anyElementType, anyElementType, sourceId =>
             {
                 return sourceId.Value switch
                 {
-                    "A" => new([new ISliceBuilder.PartialLinkInfo(new(new("B")), new(kindPointsToColorBlueType))]),
-                    "B" => new([new ISliceBuilder.PartialLinkInfo(new(new("C")), new(kindPointsToColorRedType))]),
+                    "A" => new([new ISliceBuilder.PartialLinkInfo(new(new("B")), kindPointsToColorBlueType)]),
+                    "B" => new([new ISliceBuilder.PartialLinkInfo(new(new("C")), kindPointsToColorRedType)]),
                     _ => new([])
                 };
             })
-            .AddLinks(new(kindPointsToType), new(anyType), new(anyType), sourceId =>
+            .AddLinks(kindPointsToType, anyElementType, anyElementType, sourceId =>
             {
                 return sourceId.Value switch
                 {
-                    "C" => new([new ISliceBuilder.PartialLinkInfo(new(new("D")), new(kindPointsToColorGreenType))]),
+                    "C" => new([new ISliceBuilder.PartialLinkInfo(new(new("D")), kindPointsToColorGreenType)]),
                     "D" => new([new ISliceBuilder.PartialLinkInfo(new(new("A")))]),
                     _ => new([])
                 };
             })
-            .AddLinks(new(kindPointsToColorBlueType), new(anyType), new(anyType), sourceId =>
+            .AddLinks(kindPointsToColorBlueType, anyElementType, anyElementType, sourceId =>
             {
                 return sourceId.Value switch
                 {
@@ -366,7 +348,7 @@ public class SliceTests
                     _ => new((ISliceBuilder.PartialLinkInfo?)null)
                 };
             })
-            .AddLinks(new(kindPointsToColorRedType), new(anyType), new(anyType), sourceId =>
+            .AddLinks(kindPointsToColorRedType, anyElementType, anyElementType, sourceId =>
             {
                 return sourceId.Value switch
                 {
@@ -374,23 +356,23 @@ public class SliceTests
                     _ => new([])
                 };
             })
-            .AddLinks(new(kindPointsToColorBlueRedType), new(anyType), new(anyType), sourceId =>
+            .AddLinks(kindPointsToColorBlueRedType, anyElementType, anyElementType, sourceId =>
             {
                 return sourceId.Value switch
                 {
-                    "C" => new([new ISliceBuilder.PartialLinkInfo(new(new("D")), new(kindPointsToColorBlueType))]),
-                    "D" => new([new ISliceBuilder.PartialLinkInfo(new(new("A")), new(kindPointsToColorRedType))]),
+                    "C" => new([new ISliceBuilder.PartialLinkInfo(new(new("D")), kindPointsToColorBlueType)]),
+                    "D" => new([new ISliceBuilder.PartialLinkInfo(new(new("A")), kindPointsToColorRedType)]),
                     _ => new([])
                 };
             })
             .BuildLazy();
             
-        var allLinksExplorer = slice.GetLinkExplorer(new(anyType));
-        var pointsToLinksExplorer = slice.GetLinkExplorer(new(kindPointsToType));
-        var pointsToColorBlueLinksExplorer = slice.GetLinkExplorer(new(kindPointsToColorBlueType));
-        var pointsToColorRedLinksExplorer = slice.GetLinkExplorer(new(kindPointsToColorRedType));
-        var pointsToColorBlackLinksExplorer = slice.GetLinkExplorer(new(kindPointsToColorBlackType));
-        var pointsToColorRedGreenLinksExplorer = slice.GetLinkExplorer(new(kindPointsToColorRedGreenType));
+        var allLinksExplorer = slice.GetLinkExplorer(anyLinkType);
+        var pointsToLinksExplorer = slice.GetLinkExplorer(kindPointsToType);
+        var pointsToColorBlueLinksExplorer = slice.GetLinkExplorer(kindPointsToColorBlueType);
+        var pointsToColorRedLinksExplorer = slice.GetLinkExplorer(kindPointsToColorRedType);
+        var pointsToColorBlackLinksExplorer = slice.GetLinkExplorer(kindPointsToColorBlackType);
+        var pointsToColorRedGreenLinksExplorer = slice.GetLinkExplorer(kindPointsToColorRedGreenType);
 
         // It's expected that the user will only use the element IDs that were previously obtained from the slice.
         var rootElementIds = (await slice.GetRootElementsAsync()).ToArray();
@@ -429,10 +411,10 @@ public class SliceTests
         var bPointsToColorRedGreenTarget = await pointsToColorRedGreenLinksExplorer.TryGetTargetElementAsync(new("B"));
         var dPointsToColorRedGreenTarget = await pointsToColorRedGreenLinksExplorer.TryGetTargetElementAsync(new("D"));
 
-        var a = new ElementInfo(new("A"), new(anyType));
-        var b = new ElementInfo(new("B"), new(anyType));
-        var c = new ElementInfo(new("C"), new(anyType));
-        var d = new ElementInfo(new("D"), new(anyType));
+        var a = new ElementInfo(new("A"), anyElementType);
+        var b = new ElementInfo(new("B"), anyElementType);
+        var c = new ElementInfo(new("C"), anyElementType);
+        var d = new ElementInfo(new("D"), anyElementType);
 
         // Assert
 
@@ -480,76 +462,70 @@ public class SliceTests
     {
         // Arrange
         var typeSystem = new TypeSystem();
-        var anyType = typeSystem.GetFactType(new Dictionary<string, IEnumerable<string>>());
-        var kindContainsType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["Contains"] } });
-        var kindPointsToType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["PointsTo"] } });
-        var kindPointsToColorBlueType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["PointsTo"] }, { "Color", ["Blue"] } });
-        var kindAType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] } });
-        var kindAColorBlueType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["A"] }, { "Color", ["Blue"] } });
-        var kindBType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["B"] } });
-        var kindABType = kindAType.TryGetUnion(kindBType)!;
+        var anyType = typeSystem.GetUnrestrictedElementType();
+        var kindContainsType = typeSystem.GetLinkType([("Kind", "Contains")]);
+        var kindPointsToType = typeSystem.GetLinkType([("Kind", "PointsTo")]);
+        var kindPointsToColorBlueType = typeSystem.GetLinkType([("Kind", "PointsTo"), ("Color", "Blue")]);
+        var kindAType = typeSystem.GetElementType([("Kind", "A")]);
+        var kindAColorBlueType = typeSystem.GetElementType([("Kind", "A"), ("Color", "Blue")]);
+        var kindBType = typeSystem.GetElementType([("Kind", "B")]);
+        var kindABType = (kindAType | kindBType)!.Value;
 
         // Act
         var schema = new SliceBuilder()
-            .AddRootElements(new(anyType), () => new([]))
-            .AddRootElements(new(kindAType), () => new([]))
-            .AddElementAttribute(new(kindAColorBlueType), "attr1", _ => new(""))
-            .AddElementAttribute(new(kindBType), "attr1", _ => new(""))
-            .AddElementAttribute(new(kindAType), "attr2", _ => new(""))
-            .AddElementAttribute(new(kindBType), "attr2", _ => new(""))
-            .AddHierarchyLinks(new(kindContainsType), new(kindAType), new(kindABType), _ => new([]))
-            .AddLinks(new(kindPointsToType), new(kindAType), new(kindAType), _ => new([]))
-            .AddLinks(new(kindPointsToType), new(kindAType), new(kindBType), _ => new([]))
-            .AddLinks(new(kindPointsToColorBlueType), new(kindAType), new(kindBType), _ => new([]))
+            .AddRootElements(anyType, () => new([]))
+            .AddRootElements(kindAType, () => new([]))
+            .AddElementAttribute(kindAColorBlueType, "attr1", _ => new(""))
+            .AddElementAttribute(kindBType, "attr1", _ => new(""))
+            .AddElementAttribute(kindAType, "attr2", _ => new(""))
+            .AddElementAttribute(kindBType, "attr2", _ => new(""))
+            .AddHierarchyLinks(kindContainsType, kindAType, kindABType, _ => new([]))
+            .AddLinks(kindPointsToType, kindAType, kindAType, _ => new([]))
+            .AddLinks(kindPointsToType, kindAType, kindBType, _ => new([]))
+            .AddLinks(kindPointsToColorBlueType, kindAType, kindBType, _ => new([]))
             .BuildLazy()
             .Schema;
 
         // Assert
 
-        schema.ElementTypes.Should().BeEquivalentTo<ElementType>(
+        schema.ElementTypes.Should().BeEquivalentTo(
         [
-            new(anyType), new(kindAType), new(kindAColorBlueType), new(kindBType), new(kindABType)
+            anyType, kindAType, kindAColorBlueType, kindBType, kindABType
         ]);
 
-        schema.LinkTypes.Keys.Should().BeEquivalentTo<LinkType>(
+        schema.LinkTypes.Keys.Should().BeEquivalentTo(
         [
-            new(kindContainsType), new(kindPointsToType), new(kindPointsToColorBlueType)
+            kindContainsType, kindPointsToType, kindPointsToColorBlueType
         ]);
-        schema.LinkTypes[new(kindContainsType)].Should().BeEquivalentTo<LinkElementTypes>(
+        schema.LinkTypes[kindContainsType].Should().BeEquivalentTo<LinkElementTypes>(
         [
-            new(new(kindAType), new(kindABType))
+            new(kindAType, kindABType)
         ]);
-        schema.LinkTypes[new(kindPointsToType)].Should().BeEquivalentTo<LinkElementTypes>(
+        schema.LinkTypes[kindPointsToType].Should().BeEquivalentTo<LinkElementTypes>(
         [
-            new(new(kindAType), new(kindAType)),
-            new(new(kindAType), new(kindBType))
+            new(kindAType, kindAType),
+            new(kindAType, kindBType)
         ]);
-        schema.LinkTypes[new(kindPointsToColorBlueType)].Should().BeEquivalentTo<LinkElementTypes>(
+        schema.LinkTypes[kindPointsToColorBlueType].Should().BeEquivalentTo<LinkElementTypes>(
         [
-            new(new(kindAType), new(kindBType))
+            new(kindAType, kindBType)
         ]);
 
-        schema.ElementAttributes.Keys.Should().BeEquivalentTo<ElementType>(
+        schema.ElementAttributes.Keys.Should().BeEquivalentTo(
         [
-            new(kindAColorBlueType),
-            new(kindBType),
-            new(kindAType)
+            kindAColorBlueType,
+            kindBType,
+            kindAType
         ]);
-        schema.ElementAttributes[new(kindAColorBlueType)].Should().BeEquivalentTo(["attr1"]);
-        schema.ElementAttributes[new(kindBType)].Should().BeEquivalentTo(["attr1", "attr2"]);
-        schema.ElementAttributes[new(kindAType)].Should().BeEquivalentTo(["attr2"]);
+        schema.ElementAttributes[kindAColorBlueType].Should().BeEquivalentTo(["attr1"]);
+        schema.ElementAttributes[kindBType].Should().BeEquivalentTo(["attr1", "attr2"]);
+        schema.ElementAttributes[kindAType].Should().BeEquivalentTo(["attr2"]);
 
         schema.RootElementTypes.Should().BeEquivalentTo<ElementType>(
         [
-            new(anyType), new(kindAType)
+            anyType, kindAType
         ]);
 
-        schema.HierarchyLinkType.Should().Be(new LinkType(kindContainsType));
+        schema.HierarchyLinkType.Should().Be(kindContainsType);
     }
 }

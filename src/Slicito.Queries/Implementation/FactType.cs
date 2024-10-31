@@ -8,17 +8,17 @@ namespace Slicito.Queries.Implementation;
 internal class FactType : IFactType
 {
     private readonly TypeSystem _typeSystem;
-    private readonly ImmutableSortedDictionary<string, IEnumerable<string>> _attributeValues;     // The values are ImmutableSortedSets.
+    private readonly ImmutableSortedDictionary<string, IReadOnlyList<string>> _attributeValues;     // The values are ImmutableSortedSets.
     private readonly string _uniqueSerialization;
 
-    public FactType(TypeSystem typeSystem, ImmutableSortedDictionary<string, IEnumerable<string>> attributeValues, string uniqueSerialization)
+    public FactType(TypeSystem typeSystem, ImmutableSortedDictionary<string, IReadOnlyList<string>> attributeValues, string uniqueSerialization)
     {
         _typeSystem = typeSystem;
         _attributeValues = attributeValues;
         _uniqueSerialization = uniqueSerialization;
     }
 
-    public IReadOnlyDictionary<string, IEnumerable<string>> AttributeValues => _attributeValues;
+    public IReadOnlyDictionary<string, IReadOnlyList<string>> AttributeValues => _attributeValues;
 
     public bool Equals(IFactType other)
     {
@@ -50,8 +50,9 @@ internal class FactType : IFactType
         var attributeValues = ImmutableSortedDictionary.CreateRange(
             keys.Select(key =>
             {
-                var values = _attributeValues[key].Union(otherFactType._attributeValues[key]);
-                return new KeyValuePair<string, IEnumerable<string>>(key, values);
+                return new KeyValuePair<string, IReadOnlyList<string>>(
+                    key,
+                    [.. _attributeValues[key].Union(otherFactType._attributeValues[key])]);
             }));
 
         return _typeSystem.GetFactType(attributeValues);
@@ -94,7 +95,7 @@ internal class FactType : IFactType
 
         var attributeValues = _attributeValues.SetItem(
             keyToMerge,
-            _attributeValues[keyToMerge].Union(otherFactType._attributeValues[keyToMerge]));
+            [.. _attributeValues[keyToMerge].Union(otherFactType._attributeValues[keyToMerge])]);
 
         return _typeSystem.GetFactType(attributeValues);
     }
@@ -130,7 +131,7 @@ internal class FactType : IFactType
                     values = values1.Intersect(values2);
                 }
 
-                return new KeyValuePair<string, IEnumerable<string>>(key, values);
+                return new KeyValuePair<string, IReadOnlyList<string>>(key, [.. values]);
             }));
 
         if (attributeValues.Values.Any(values => !values.Any()))

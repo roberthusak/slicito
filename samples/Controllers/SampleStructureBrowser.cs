@@ -25,82 +25,74 @@ public class SampleStructureBrowser : IController
 
     private static ILazySlice CreateSampleSlice(ITypeSystem typeSystem)
     {
-        var containsType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["Contains"] } });
-        var isFollowedByType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["IsFollowedBy"] } });
-        var callsType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["Calls"] } });
-        var namespaceType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["Namespace"] } });
-        var functionType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["Function"] } });
-        var namespaceOrFunctionType = namespaceType.TryGetUnion(functionType)!;
-        var operationType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["Operation"] } });
-        var assignmentOperationType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["Operation"] }, { "OperationKind", ["Assignment"] } });
-        var invocationOperationType = typeSystem.GetFactType(
-            new Dictionary<string, IEnumerable<string>> { { "Kind", ["Operation"] }, { "OperationKind", ["Invocation"] } });
+        var containsType = typeSystem.GetLinkType([("Kind", "Contains")]);
+        var isFollowedByType = typeSystem.GetLinkType([("Kind", "IsFollowedBy")]);
+        var callsType = typeSystem.GetLinkType([("Kind", "Calls")]);
+        var namespaceType = typeSystem.GetElementType([("Kind", "Namespace")]);
+        var functionType = typeSystem.GetElementType([("Kind", "Function")]);
+        var namespaceOrFunctionType = (namespaceType | functionType)!.Value;
+        var operationType = typeSystem.GetElementType([("Kind", "Operation")]);
+        var assignmentOperationType = typeSystem.GetElementType([("Kind", "Operation"), ("OperationKind", "Assignment")]);
+        var invocationOperationType = typeSystem.GetElementType([("Kind", "Operation"), ("OperationKind", "Invocation")]);
 
         return new SliceBuilder()
-            .AddElementAttribute(new(namespaceType), "Name", id => new("namespace " + id.Value))
-            .AddElementAttribute(new(functionType), "Name", id => new("function " + id.Value))
-            .AddElementAttribute(new(operationType), "Name", id => new(id.Value))
-            .AddRootElements(new(namespaceType), () => new([new(new("root")), new(new("dependency"))]))
-            .AddHierarchyLinks(new(containsType), new(namespaceType), new(namespaceOrFunctionType), sourceId => new(sourceId.Value switch
+            .AddElementAttribute(namespaceType, "Name", id => new("namespace " + id.Value))
+            .AddElementAttribute(functionType, "Name", id => new("function " + id.Value))
+            .AddElementAttribute(operationType, "Name", id => new(id.Value))
+            .AddRootElements(namespaceType, () => new([new(new("root")), new(new("dependency"))]))
+            .AddHierarchyLinks(containsType, namespaceType, namespaceOrFunctionType, sourceId => new(sourceId.Value switch
             {
                 "root" =>
                 [
-                    new(new(new("root::main"), new(functionType))),
-                    new(new(new("root::helper"), new(functionType))),
-                    new(new(new("root::internal"), new(namespaceType))),
+                    new(new(new("root::main"), functionType)),
+                    new(new(new("root::helper"), functionType)),
+                    new(new(new("root::internal"), namespaceType)),
                 ],
                 "root::internal" =>
                 [
-                    new(new(new("root::internal::compute"), new(functionType))),
+                    new(new(new("root::internal::compute"), functionType)),
                 ],
                 "dependency" =>
                 [
-                    new(new(new("dependency::external_function"), new(functionType))),
+                    new(new(new("dependency::external_function"), functionType)),
                 ],
                 _ => []
             }))
-            .AddHierarchyLinks(new(containsType), new(functionType), new(operationType), sourceId => new(sourceId.Value switch
+            .AddHierarchyLinks(containsType, functionType, operationType, sourceId => new(sourceId.Value switch
             {
                 "root::main" =>
                 [
-                    new(new(new("root::main::assignment1"), new(assignmentOperationType))),
-                    new(new(new("root::main::call"), new(invocationOperationType))),
-                    new(new(new("root::main::assignment2"), new(assignmentOperationType))),
+                    new(new(new("root::main::assignment1"), assignmentOperationType)),
+                    new(new(new("root::main::call"), invocationOperationType)),
+                    new(new(new("root::main::assignment2"), assignmentOperationType)),
                 ],
                 "root::helper" =>
                 [
-                    new(new(new("root::helper::call1"), new(invocationOperationType))),
-                    new(new(new("root::helper::call2"), new(invocationOperationType))),
-                    new(new(new("root::helper::call3"), new(invocationOperationType))),
+                    new(new(new("root::helper::call1"), invocationOperationType)),
+                    new(new(new("root::helper::call2"), invocationOperationType)),
+                    new(new(new("root::helper::call3"), invocationOperationType)),
                 ],
                 "root::internal::compute" =>
                 [
-                    new(new(new("root::internal::compute::assignment1"), new(assignmentOperationType))),
-                    new(new(new("root::internal::compute::assignment2"), new(assignmentOperationType))),
+                    new(new(new("root::internal::compute::assignment1"), assignmentOperationType)),
+                    new(new(new("root::internal::compute::assignment2"), assignmentOperationType)),
                 ],
                 "dependency::external_function" =>
                 [
-                    new(new(new("dependency::external_function::assignment"), new(assignmentOperationType))),
+                    new(new(new("dependency::external_function::assignment"), assignmentOperationType)),
                 ],
                 _ => []
             }))
-            .AddLinks(new(isFollowedByType), new(operationType), new(operationType), sourceId => new(sourceId.Value switch
+            .AddLinks(isFollowedByType, operationType, operationType, sourceId => new(sourceId.Value switch
             {
-                "root::main::assignment1" => new(new(new("root::main::call"), new(invocationOperationType))),
-                "root::main::call" => new(new(new("root::main::assignment2"), new(assignmentOperationType))),
-                "root::helper::call1" => new(new(new("root::helper::call2"), new(invocationOperationType))),
-                "root::helper::call2" => new(new(new("root::helper::call3"), new(invocationOperationType))),
-                "root::internal::compute::assignment1" => new(new(new("root::internal::compute::assignment2"), new(assignmentOperationType))),
+                "root::main::assignment1" => new(new(new("root::main::call"), invocationOperationType)),
+                "root::main::call" => new(new(new("root::main::assignment2"), assignmentOperationType)),
+                "root::helper::call1" => new(new(new("root::helper::call2"), invocationOperationType)),
+                "root::helper::call2" => new(new(new("root::helper::call3"), invocationOperationType)),
+                "root::internal::compute::assignment1" => new(new(new("root::internal::compute::assignment2"), assignmentOperationType)),
                 _ => (ISliceBuilder.PartialLinkInfo?)null
             }))
-            .AddLinks(new(callsType), new(invocationOperationType), new(functionType), sourceId => new(sourceId.Value switch
+            .AddLinks(callsType, invocationOperationType, functionType, sourceId => new(sourceId.Value switch
             {
                 "root::main::call" => new(new(new("root::helper"))),
                 "root::helper::call1" => new(new(new("root::internal::compute"))),
@@ -203,9 +195,9 @@ public class SampleStructureBrowser : IController
 
     private string? TryGetLinkTypeLabel(LinkType linkType)
     {
-        if (linkType.Value.AttributeValues.TryGetValue("Kind", out var kinds) && kinds.Count() == 1)
+        if (linkType.Value.AttributeValues.TryGetValue("Kind", out var kinds) && kinds is [var kind])
         {
-            return kinds.Single();
+            return kind;
         }
         else
         {
