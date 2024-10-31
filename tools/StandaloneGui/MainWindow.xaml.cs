@@ -14,7 +14,9 @@ using System.Windows.Shapes;
 using Microsoft.CodeAnalysis.MSBuild;
 
 using Slicito.Abstractions;
+using Slicito.Abstractions.Queries;
 using Slicito.DotNet;
+using Slicito.Queries;
 using Slicito.Wpf;
 
 namespace StandaloneGui;
@@ -27,6 +29,7 @@ public partial class MainWindow : Window
     private readonly string _controllersPath;
     private readonly string _controllerType;
 
+    private ITypeSystem? _typeSystem;
     private DotNetFactProvider? _factProvider;
 
     public MainWindow()
@@ -65,7 +68,7 @@ public partial class MainWindow : Window
 
         var constructor = type.GetConstructors().Single();
 
-        var arguments = await LoadDependencies(constructor);
+        var arguments = await LoadDependenciesAsync(constructor);
 
         var controller = Activator.CreateInstance(type, arguments)
             ?? throw new ApplicationException($"Unable to create an instance of the type {type.Name}.");
@@ -73,7 +76,7 @@ public partial class MainWindow : Window
         return (IController) controller;
     }
 
-    private async Task<object[]> LoadDependencies(ConstructorInfo constructor)
+    private async Task<object[]> LoadDependenciesAsync(ConstructorInfo constructor)
     {
         var dependencies = new List<object>();
 
@@ -83,6 +86,11 @@ public partial class MainWindow : Window
             {
                 case var t when t == typeof(DotNetFactProvider):
                     dependencies.Add(await LoadFactProvider());
+                    break;
+
+                case var t when t == typeof(ITypeSystem):
+                    _typeSystem ??= new TypeSystem();
+                    dependencies.Add(_typeSystem);
                     break;
 
                 default:
