@@ -160,12 +160,19 @@ internal class LazySlice : ILazySlice
 
         public async ValueTask<IEnumerable<ElementInfo>> GetTargetElementsAsync(ElementId sourceId)
         {
+            var sourceType = _slice.GetElementType(sourceId);
+
             var result = Enumerable.Empty<ElementInfo>();
 
             foreach (var kvp in _linksLoaders)
             {
                 var (loaderTypes, loader) = (kvp.Key, kvp.Value);
                 var groupLinkType = loaderTypes.LinkType;
+
+                if (!loaderTypes.SourceType.Value.IsSupersetOfOrEquals(sourceType.Value))
+                {
+                    continue;
+                }
 
                 IEnumerable<ISliceBuilder.PartialLinkInfo>? linkInfos = null;
 
