@@ -66,6 +66,16 @@ internal class LazySlice : ILazySlice
         return result;
     }
 
+    public ElementType GetElementType(ElementId elementId)
+    {
+        if (!_elementTypes.TryGetValue(elementId, out var elementType))
+        {
+            throw new InvalidOperationException($"The type of the element '{elementId}' not found.");
+        }
+
+        return elementType;
+    }
+
     public Func<ElementId, ValueTask<string>> GetElementAttributeProviderAsyncCallback(string attributeName)
     {
         var typeLoaders = _elementAttributeLoaders
@@ -98,16 +108,6 @@ internal class LazySlice : ILazySlice
 
             return await loader(elementId);
         };
-    }
-
-    private ElementType GetElementType(ElementId elementId)
-    {
-        if (!_elementTypes.TryGetValue(elementId, out var elementType))
-        {
-            throw new InvalidOperationException($"The type of the element '{elementId}' not found.");
-        }
-
-        return elementType;
     }
 
     public ILazyLinkExplorer GetLinkExplorer(LinkType? linkType = null, ElementType? sourceType = null, ElementType? targetType = null)
