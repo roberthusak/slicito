@@ -84,12 +84,12 @@ public class SampleStructureBrowser : IController
             .BuildLazy();
     }
 
-    public Task<IModel> Init()
+    public Task<IModel> InitAsync()
     {
         return DisplayCurrentLevelAsync();
     }
 
-    public async Task<IModel?> ProcessCommand(Command command)
+    public async Task<IModel?> ProcessCommandAsync(Command command)
     {
         if (command.Name == _openActionName && command.Parameters.TryGetValue(_idActionParameterName, out var id))
         {

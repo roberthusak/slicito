@@ -4,7 +4,7 @@ namespace Slicito.Abstractions;
 
 public interface IController
 {
-    Task<IModel> Init();
+    Task<IModel> InitAsync();
 
-    Task<IModel?> ProcessCommand(Command command);
+    Task<IModel?> ProcessCommandAsync(Command command);
 }

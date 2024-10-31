@@ -18,7 +18,7 @@ public class SampleDotNetController : IController
         _factProvider = factProvider;
     }
 
-    public async Task<IModel> Init()
+    public async Task<IModel> InitAsync()
     {
         var facts = await GatherFacts();
         var projects = facts.Elements.Where(e => e.Kind == DotNetElementKind.Project);
@@ -26,7 +26,7 @@ public class SampleDotNetController : IController
         return CreateList(projects);
     }
 
-    public async Task<IModel?> ProcessCommand(Command command)
+    public async Task<IModel?> ProcessCommandAsync(Command command)
     {
         if (command.Name == _openActionName && command.Parameters.TryGetValue(_idActionParameterName, out var id))
         {

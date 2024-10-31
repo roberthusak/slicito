@@ -46,7 +46,7 @@ public partial class ToolPanel : UserControl
 
         _progressBar.IsIndeterminate = true;
 
-        var model = await _controller.Init();
+        var model = await _controller.InitAsync();
 
         ShowModel(model);
 
@@ -90,7 +90,7 @@ public partial class ToolPanel : UserControl
     {
         _progressBar.IsIndeterminate = true;
 
-        var model = await _controller.ProcessCommand(command);
+        var model = await _controller.ProcessCommandAsync(command);
 
         if (model is not null)
         {
