@@ -7,15 +7,15 @@ namespace Slicito.Queries;
 
 public class SliceBuilder : ISliceBuilder
 {
-    private readonly Dictionary<ElementType, ISliceBuilder.LoadRootElementsCallback> _rootElementsLoaders = [];
+    private readonly Dictionary<ElementType, ISliceBuilder.LoadRootElementsAsyncCallback> _rootElementsLoaders = [];
 
-    private readonly Dictionary<ElementTypeAttribute, ISliceBuilder.LoadElementAttributeCallback> _elementAttributeLoaders = [];
+    private readonly Dictionary<ElementTypeAttribute, ISliceBuilder.LoadElementAttributeAsyncCallback> _elementAttributeLoaders = [];
 
-    private readonly Dictionary<LinkLoaderTypes, ISliceBuilder.LoadLinksCallback> _linksLoaders = [];
+    private readonly Dictionary<LinkLoaderTypes, ISliceBuilder.LoadLinksAsyncCallback> _linksLoaders = [];
 
     private LinkType? _hierarchyLinkType;
 
-    public ISliceBuilder AddRootElements(ElementType elementType, ISliceBuilder.LoadRootElementsCallback loader)
+    public ISliceBuilder AddRootElements(ElementType elementType, ISliceBuilder.LoadRootElementsAsyncCallback loader)
     {
         if (_rootElementsLoaders.TryGetValue(elementType, out var existingLoader))
         {
@@ -36,7 +36,7 @@ public class SliceBuilder : ISliceBuilder
         return this;
     }
 
-    public ISliceBuilder AddElementAttribute(ElementType elementType, string attributeName, ISliceBuilder.LoadElementAttributeCallback loader)
+    public ISliceBuilder AddElementAttribute(ElementType elementType, string attributeName, ISliceBuilder.LoadElementAttributeAsyncCallback loader)
     {
         foreach (var (existingElementType, existingAttributeName) in _elementAttributeLoaders.Keys)
         {
@@ -57,7 +57,7 @@ public class SliceBuilder : ISliceBuilder
         LinkType linkType,
         ElementType sourceType,
         ElementType targetType,
-        ISliceBuilder.LoadLinksCallback loader)
+        ISliceBuilder.LoadLinksAsyncCallback loader)
     {
         if (_hierarchyLinkType is not null && linkType != _hierarchyLinkType)
         {
@@ -73,7 +73,7 @@ public class SliceBuilder : ISliceBuilder
         LinkType linkType,
         ElementType sourceType,
         ElementType targetType,
-        ISliceBuilder.LoadLinksCallback loader)
+        ISliceBuilder.LoadLinksAsyncCallback loader)
     {
         LinkLoaderTypes types = new(linkType, sourceType, targetType);
 
@@ -100,7 +100,7 @@ public class SliceBuilder : ISliceBuilder
         LinkType linkType,
         ElementType sourceType,
         ElementType targetType,
-        ISliceBuilder.LoadLinkCallback loader)
+        ISliceBuilder.LoadLinkAsyncCallback loader)
     {
         LinkLoaderTypes types = new(linkType, sourceType, targetType);
 

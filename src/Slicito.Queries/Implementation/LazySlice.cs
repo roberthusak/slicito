@@ -7,9 +7,9 @@ namespace Slicito.Queries.Implementation;
 
 internal class LazySlice : ILazySlice
 {
-    private readonly Dictionary<ElementType, ISliceBuilder.LoadRootElementsCallback> _rootElementsLoaders;
-    private readonly Dictionary<ElementTypeAttribute, ISliceBuilder.LoadElementAttributeCallback> _elementAttributeLoaders;
-    private readonly Dictionary<LinkLoaderTypes, ISliceBuilder.LoadLinksCallback> _linksLoaders;
+    private readonly Dictionary<ElementType, ISliceBuilder.LoadRootElementsAsyncCallback> _rootElementsLoaders;
+    private readonly Dictionary<ElementTypeAttribute, ISliceBuilder.LoadElementAttributeAsyncCallback> _elementAttributeLoaders;
+    private readonly Dictionary<LinkLoaderTypes, ISliceBuilder.LoadLinksAsyncCallback> _linksLoaders;
 
     private readonly ConcurrentDictionary<ElementId, ElementType> _elementTypes = new();
 
@@ -17,9 +17,9 @@ internal class LazySlice : ILazySlice
 
     public LazySlice(
         SliceSchema schema,
-        Dictionary<ElementType, ISliceBuilder.LoadRootElementsCallback> rootElementsLoaders,
-        Dictionary<ElementTypeAttribute, ISliceBuilder.LoadElementAttributeCallback> elementAttributeLoaders,
-        Dictionary<LinkLoaderTypes, ISliceBuilder.LoadLinksCallback> linksLoaders)
+        Dictionary<ElementType, ISliceBuilder.LoadRootElementsAsyncCallback> rootElementsLoaders,
+        Dictionary<ElementTypeAttribute, ISliceBuilder.LoadElementAttributeAsyncCallback> elementAttributeLoaders,
+        Dictionary<LinkLoaderTypes, ISliceBuilder.LoadLinksAsyncCallback> linksLoaders)
     {
         Schema = schema;
 
@@ -138,12 +138,12 @@ internal class LazySlice : ILazySlice
     private class LazyLinkExplorer : ILazyLinkExplorer
     {
         private readonly LazySlice _slice;
-        private readonly Dictionary<LinkLoaderTypes, ISliceBuilder.LoadLinksCallback> _linksLoaders;
+        private readonly Dictionary<LinkLoaderTypes, ISliceBuilder.LoadLinksAsyncCallback> _linksLoaders;
         private readonly LinkType? _linkTypeFilter;
 
         public LazyLinkExplorer(
             LazySlice slice,
-            Dictionary<LinkLoaderTypes, ISliceBuilder.LoadLinksCallback> linksLoaders,
+            Dictionary<LinkLoaderTypes, ISliceBuilder.LoadLinksAsyncCallback> linksLoaders,
             LinkType? linkTypeFilter)
         {
             _slice = slice;

@@ -6,35 +6,35 @@ public interface ISliceBuilder
 
     public record struct PartialLinkInfo(PartialElementInfo Target, LinkType? DetailedType = null);
 
-    public delegate ValueTask<IEnumerable<PartialElementInfo>> LoadRootElementsCallback();
+    public delegate ValueTask<IEnumerable<PartialElementInfo>> LoadRootElementsAsyncCallback();
 
-    public delegate ValueTask<string> LoadElementAttributeCallback(ElementId elementId);
+    public delegate ValueTask<string> LoadElementAttributeAsyncCallback(ElementId elementId);
 
-    public delegate ValueTask<IEnumerable<PartialLinkInfo>> LoadLinksCallback(ElementId sourceId);
+    public delegate ValueTask<IEnumerable<PartialLinkInfo>> LoadLinksAsyncCallback(ElementId sourceId);
 
-    public delegate ValueTask<PartialLinkInfo?> LoadLinkCallback(ElementId sourceId);
+    public delegate ValueTask<PartialLinkInfo?> LoadLinkAsyncCallback(ElementId sourceId);
 
-    ISliceBuilder AddRootElements(ElementType elementType, LoadRootElementsCallback loader);
+    ISliceBuilder AddRootElements(ElementType elementType, LoadRootElementsAsyncCallback loader);
 
-    ISliceBuilder AddElementAttribute(ElementType elementType, string attributeName, LoadElementAttributeCallback loader);
+    ISliceBuilder AddElementAttribute(ElementType elementType, string attributeName, LoadElementAttributeAsyncCallback loader);
 
     ISliceBuilder AddHierarchyLinks(
         LinkType linkType,
         ElementType sourceType,
         ElementType targetType,
-        LoadLinksCallback loader);
+        LoadLinksAsyncCallback loader);
 
     ISliceBuilder AddLinks(
         LinkType linkType,
         ElementType sourceType,
         ElementType targetType,
-        LoadLinksCallback loader);
+        LoadLinksAsyncCallback loader);
 
     ISliceBuilder AddLinks(
         LinkType linkType,
         ElementType sourceType,
         ElementType targetType,
-        LoadLinkCallback loader);
+        LoadLinkAsyncCallback loader);
 
     ILazySlice BuildLazy();
 }
