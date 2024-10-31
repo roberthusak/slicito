@@ -5,5 +5,9 @@ namespace Slicito.DotNet;
 
 public class DotNetTypes(ITypeSystem typeSystem)
 {
-    public ElementType Project { get; } = typeSystem.GetElementType([("Kind", "Project")]);
+    public LinkType Contains { get; } = typeSystem.GetLinkType([(DotNetAttributeNames.Kind, "Contains")]);
+
+    public ElementType Project { get; } = typeSystem.GetElementType([(DotNetAttributeNames.Kind, "Project")]);
+    public ElementType Namespace { get; } = typeSystem.GetElementType([(DotNetAttributeNames.Kind, "Namespace")]);
+    public ElementType Type { get; } = typeSystem.GetElementType([(DotNetAttributeNames.Kind, "Type")]);
 }
