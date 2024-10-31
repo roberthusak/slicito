@@ -8,8 +8,8 @@ namespace StandaloneGui;
 
 public class SampleDotNetController : IController
 {
-    private const string _openActionName = "open";
-    private const string _idActionParameterName = "id";
+    private const string _openActionName = "Open";
+    private const string _idActionParameterName = "Id";
 
     private readonly DotNetFactProvider _factProvider;
 
