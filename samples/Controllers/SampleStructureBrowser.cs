@@ -30,7 +30,7 @@ public class SampleStructureBrowser : IController
         var callsType = typeSystem.GetLinkType([("Kind", "Calls")]);
         var namespaceType = typeSystem.GetElementType([("Kind", "Namespace")]);
         var functionType = typeSystem.GetElementType([("Kind", "Function")]);
-        var namespaceOrFunctionType = (namespaceType | functionType)!.Value;
+        var namespaceOrFunctionType = namespaceType | functionType;
         var operationType = typeSystem.GetElementType([("Kind", "Operation")]);
         var assignmentOperationType = typeSystem.GetElementType([("Kind", "Operation"), ("OperationKind", "Assignment")]);
         var invocationOperationType = typeSystem.GetElementType([("Kind", "Operation"), ("OperationKind", "Invocation")]);

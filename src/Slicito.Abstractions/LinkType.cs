@@ -4,8 +4,13 @@ namespace Slicito.Abstractions;
 
 public record struct LinkType(IFactType Value)
 {
-    public static LinkType? operator |(LinkType left, LinkType right)
+    public static LinkType operator |(LinkType left, LinkType right)
     {
-        return left.Value.TryGetUnion(right.Value) is { } union ? new(union) : null;
+        return new(left.Value.GetUnionOrThrow(right.Value));
+    }
+
+    public static LinkType operator &(LinkType left, LinkType right)
+    {
+        return new(left.Value.GetIntersectionOrThrow(right.Value));
     }
 }

@@ -15,7 +15,7 @@ public class SliceTests
         var typeSystem = new TypeSystem();
         var kindAType = typeSystem.GetElementType([("Kind", "A")]);
         var kindBType = typeSystem.GetElementType([("Kind", "B")]);
-        var kindABType = (kindAType | kindBType)!;
+        var kindABType = kindAType | kindBType;
 
         // Act
 
@@ -49,8 +49,8 @@ public class SliceTests
         var kindAColorBlueType = typeSystem.GetElementType([("Kind", "A"), ("Color", "Blue")]);
         var kindAColorRedType = typeSystem.GetElementType([("Kind", "A"), ("Color", "Red")]);
         var kindAColorGreenType = typeSystem.GetElementType([("Kind", "A"), ("Color", "Green")]);
-        var kindAColorBlueRedType = (kindAColorBlueType | kindAColorRedType)!.Value;
-        var kindAColorRedGreenType = (kindAColorRedType | kindAColorGreenType)!.Value;
+        var kindAColorBlueRedType = kindAColorBlueType | kindAColorRedType;
+        var kindAColorRedGreenType = kindAColorRedType | kindAColorGreenType;
 
         // Act
 
@@ -206,7 +206,7 @@ public class SliceTests
         var anyType = typeSystem.GetUnrestrictedElementType();
         var kindAType = typeSystem.GetElementType([("Kind", "A")]);
         var kindBType = typeSystem.GetElementType([("Kind", "B")]);
-        var kindABType = (kindAType | kindBType)!.Value;
+        var kindABType = kindAType | kindBType;
         var kindAColorBlueType = typeSystem.GetElementType([("Kind", "A"), ("Color", "Blue")]);
         var kindContainsType = typeSystem.GetLinkType([("Kind", "Contains")]);
 
@@ -312,8 +312,8 @@ public class SliceTests
         var kindPointsToColorRedType = typeSystem.GetLinkType([("Kind", "PointsTo"), ("Color", "Red")]);
         var kindPointsToColorGreenType = typeSystem.GetLinkType([("Kind", "PointsTo"), ("Color", "Green")]);
         var kindPointsToColorBlackType = typeSystem.GetLinkType([("Kind", "PointsTo"), ("Color", "Black")]);
-        var kindPointsToColorBlueRedType = (kindPointsToColorBlueType | kindPointsToColorRedType)!.Value;
-        var kindPointsToColorRedGreenType = (kindPointsToColorRedType | kindPointsToColorGreenType)!.Value;
+        var kindPointsToColorBlueRedType = kindPointsToColorBlueType | kindPointsToColorRedType;
+        var kindPointsToColorRedGreenType = kindPointsToColorRedType | kindPointsToColorGreenType;
 
         // Act
 
@@ -469,7 +469,7 @@ public class SliceTests
         var kindAType = typeSystem.GetElementType([("Kind", "A")]);
         var kindAColorBlueType = typeSystem.GetElementType([("Kind", "A"), ("Color", "Blue")]);
         var kindBType = typeSystem.GetElementType([("Kind", "B")]);
-        var kindABType = (kindAType | kindBType)!.Value;
+        var kindABType = kindAType | kindBType;
 
         // Act
         var schema = new SliceBuilder()

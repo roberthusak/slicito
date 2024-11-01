@@ -32,7 +32,7 @@ internal class SliceCreator
         return _sliceManager.CreateBuilder()
             .AddRootElements(_types.Project, LoadProjects)
             .AddHierarchyLinks(_types.Contains, _types.Project, _types.Namespace, LoadProjectNamespacesAsync)
-            .AddHierarchyLinks(_types.Contains, _types.Namespace, (_types.Namespace | _types.Type)!.Value, LoadNamespaceNamespacesAndTypes)
+            .AddHierarchyLinks(_types.Contains, _types.Namespace, _types.Namespace | _types.Type, LoadNamespaceNamespacesAndTypes)
             .AddElementAttribute(_types.Project, DotNetAttributeNames.Name, LoadProjectName)
             .AddElementAttribute(_types.Namespace, DotNetAttributeNames.Name, LoadNamespaceName)
             .AddElementAttribute(_types.Type, DotNetAttributeNames.Name, LoadTypeName)

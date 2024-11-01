@@ -13,4 +13,12 @@ public static class FactTypeExtensions
 
     public static bool IsSubsetOfOrEquals(this IFactType self, IFactType other) =>
         other.IsSupersetOfOrEquals(self);
+
+    public static IFactType GetUnionOrThrow(this IFactType self, IFactType other) =>
+        self.TryGetUnion(other) ?? throw new InvalidOperationException(
+            $"Cannot create the union of fact types {self} and {other}.");
+
+    public static IFactType GetIntersectionOrThrow(this IFactType self, IFactType other) =>
+        self.TryGetIntersection(other) ?? throw new InvalidOperationException(
+            $"Cannot create the intersection of fact types {self} and {other}.");
 }
