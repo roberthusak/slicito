@@ -31,13 +31,18 @@ internal class SliceCreator
 
     private ILazySlice CreateSlice()
     {
+        var namespaceMemberTypes = _types.Namespace | _types.Type;
+        var typeMemberTypes = _types.Type | _types.Property | _types.Field | _types.Method;
+
+        var symbolTypes = _types.Namespace | _types.Type | _types.Property | _types.Field | _types.Method;
+
         return _sliceManager.CreateBuilder()
             .AddRootElements(_types.Project, LoadProjects)
             .AddHierarchyLinks(_types.Contains, _types.Project, _types.Namespace, LoadProjectNamespacesAsync)
-            .AddHierarchyLinks(_types.Contains, _types.Namespace, _types.Namespace | _types.Type, LoadNamespaceNamespacesAndTypes)
+            .AddHierarchyLinks(_types.Contains, _types.Namespace, namespaceMemberTypes, LoadNamespaceMembers)
+            .AddHierarchyLinks(_types.Contains, _types.Type, typeMemberTypes, LoadTypeMembers)
             .AddElementAttribute(_types.Project, DotNetAttributeNames.Name, LoadProjectName)
-            .AddElementAttribute(_types.Namespace, DotNetAttributeNames.Name, LoadNamespaceName)
-            .AddElementAttribute(_types.Type, DotNetAttributeNames.Name, LoadTypeName)
+            .AddElementAttribute(symbolTypes, DotNetAttributeNames.Name, LoadSymbolName)
             .BuildLazy();
     }
 
@@ -58,7 +63,7 @@ internal class SliceCreator
             .Select(namespaceSymbol => ToPartialLinkInfo(_elementCache.GetElement(namespaceSymbol)));
     }
 
-    private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadNamespaceNamespacesAndTypes(ElementId sourceId)
+    private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadNamespaceMembers(ElementId sourceId)
     {
         var @namespace = _elementCache.GetNamespace(sourceId);
 
@@ -66,13 +71,18 @@ internal class SliceCreator
             .Select(member => ToPartialLinkInfo(_elementCache.GetElement(member)));
     }
 
+    private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadTypeMembers(ElementId sourceId)
+    {
+        var type = _elementCache.GetType(sourceId);
+
+        return type.GetMembers()
+            .Select(member => ToPartialLinkInfo(_elementCache.GetElement(member)));
+    }
+
     private string LoadProjectName(ElementId elementId) => Path.GetFileName(elementId.Value);
 
-    private string LoadNamespaceName(ElementId elementId) =>
-        _elementCache.GetNamespace(elementId).Name;
-
-    private string LoadTypeName(ElementId elementId) =>
-        _elementCache.GetType(elementId).Name;
+    private string LoadSymbolName(ElementId elementId) =>
+        _elementCache.GetSymbol(elementId).Name;
 
     private static ISliceBuilder.PartialElementInfo ToPartialElementInfo(ElementInfo element) =>
         new(element.Id, element.Type);

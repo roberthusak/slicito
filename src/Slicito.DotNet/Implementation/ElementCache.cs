@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Concurrent;
 
 using Microsoft.CodeAnalysis;
@@ -25,6 +24,9 @@ internal class ElementCache
             Project project => GetElement(project),
             INamespaceSymbol @namespace => GetElement(@namespace),
             ITypeSymbol type => GetElement(type),
+            IPropertySymbol property => GetElement(property),
+            IFieldSymbol field => GetElement(field),
+            IMethodSymbol method => GetElement(method),
             _ => throw new InvalidOperationException(
                 $"Unexpected type {roslynObject.GetType()} of the Roslyn object {roslynObject}."),
         };
@@ -57,7 +59,36 @@ internal class ElementCache
         return new(id, _types.Type);
     }
 
+    public ElementInfo GetElement(IPropertySymbol property)
+    {
+        var id = ElementIdProvider.GetId(property);
+
+        SaveElementIdMapping(id, property);
+
+        return new(id, _types.Property);
+    }
+
+    public ElementInfo GetElement(IFieldSymbol field)
+    {
+        var id = ElementIdProvider.GetId(field);
+
+        SaveElementIdMapping(id, field);
+
+        return new(id, _types.Field);
+    }
+
+    public ElementInfo GetElement(IMethodSymbol method)
+    {
+        var id = ElementIdProvider.GetId(method);
+
+        SaveElementIdMapping(id, method);
+
+        return new(id, _types.Method);
+    }
+
     public Project GetProject(ElementId id) => (Project) _elementRoslynObjects[id];
+
+    public ISymbol GetSymbol(ElementId id) => (ISymbol) _elementRoslynObjects[id];
 
     public INamespaceSymbol GetNamespace(ElementId id) => (INamespaceSymbol) _elementRoslynObjects[id];
 

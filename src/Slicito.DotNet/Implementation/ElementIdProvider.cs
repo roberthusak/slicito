@@ -22,6 +22,12 @@ internal static class ElementIdProvider
 
     public static ElementId GetId(ITypeSymbol type) => GetSymbolId(type);
 
+    public static ElementId GetId(IPropertySymbol property) => GetSymbolId(property);
+
+    public static ElementId GetId(IFieldSymbol field) => GetSymbolId(field);
+
+    public static ElementId GetId(IMethodSymbol method) => GetSymbolId(method);
+
     private static ElementId GetSymbolId(ISymbol symbol) =>
         new($"{GetAssemblyName(symbol)}.{GetUniqueNameWithinProject(symbol)}");
 
