@@ -41,6 +41,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slicito.Queries", "src\Slic
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slicito.Queries.Tests", "tests\Slicito.Queries.Tests\Slicito.Queries.Tests.csproj", "{F77F2336-5EFF-4448-B777-EA224E1EBCB9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slicito.ProgramAnalysis", "src\Slicito.ProgramAnalysis\Slicito.ProgramAnalysis.csproj", "{2A1ADA4D-B54E-44C4-BB34-BB909E229C88}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -87,6 +89,10 @@ Global
 		{F77F2336-5EFF-4448-B777-EA224E1EBCB9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F77F2336-5EFF-4448-B777-EA224E1EBCB9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F77F2336-5EFF-4448-B777-EA224E1EBCB9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2A1ADA4D-B54E-44C4-BB34-BB909E229C88}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A1ADA4D-B54E-44C4-BB34-BB909E229C88}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A1ADA4D-B54E-44C4-BB34-BB909E229C88}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A1ADA4D-B54E-44C4-BB34-BB909E229C88}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -102,6 +108,7 @@ Global
 		{CCA637E7-2AAC-4188-AADA-1314386BC45B} = {2F138FD5-85D9-45DD-954A-E27FB1087800}
 		{58B6048C-F2AA-46A8-BEA1-2D585F1EA4BF} = {DEB14B61-E010-4B08-A880-E956B20A5BE6}
 		{F77F2336-5EFF-4448-B777-EA224E1EBCB9} = {CD7DB68A-219B-4824-BF80-F6C2BA302AEA}
+		{2A1ADA4D-B54E-44C4-BB34-BB909E229C88} = {DEB14B61-E010-4B08-A880-E956B20A5BE6}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {878A59AE-1008-403F-91D2-E4072C3AE3F3}
