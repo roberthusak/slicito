@@ -18,6 +18,7 @@ public class DependencyManager
     
     private DotNetTypes? _dotNetTypes;
     private DotNetExtractor? _dotNetExtractor;
+    private DotNetSolutionContext _dotNetSolutionContext;
     private ILazySlice? _lazySlice;
     private DotNetFactProvider? _factProvider;
 
@@ -45,7 +46,9 @@ public class DependencyManager
         return parameterType switch
         {
             var t when t == typeof(ITypeSystem) => _typeSystem,
+            var t when t == typeof(DotNetTypes) => GetDotNetTypes(),
             var t when t == typeof(DotNetExtractor) => GetDotNetExtractor(),
+            var t when t == typeof(DotNetSolutionContext) => await TryGetDotNetSolutionContextAsync(),
             var t when t == typeof(ILazySlice) => await TryLoadLazySliceAsync(),
             var t when t == typeof(IFlowGraph) => null,
             var t when t == typeof(DotNetFactProvider) => await LoadFactProviderAsync(),
@@ -65,14 +68,20 @@ public class DependencyManager
         return _dotNetExtractor;
     }
 
-    private async Task<ILazySlice?> TryLoadLazySliceAsync()
+    private async Task<DotNetSolutionContext?> TryGetDotNetSolutionContextAsync()
     {
-        if (_lazySlice == null && File.Exists(_solutionPath))
+        if (_dotNetSolutionContext == null && File.Exists(_solutionPath))
         {
             var solution = await MSBuildWorkspace.Create().OpenSolutionAsync(_solutionPath);
-            _lazySlice = GetDotNetExtractor().Extract(solution);
+            _dotNetSolutionContext = GetDotNetExtractor().Extract(solution);
         }
 
+        return _dotNetSolutionContext;
+    }
+
+    private async Task<ILazySlice?> TryLoadLazySliceAsync()
+    {
+        _lazySlice ??= (await TryGetDotNetSolutionContextAsync())?.LazySlice;
         return _lazySlice;
     }
 

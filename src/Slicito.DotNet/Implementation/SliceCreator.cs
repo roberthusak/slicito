@@ -13,20 +13,17 @@ internal class SliceCreator
 
     private readonly ElementCache _elementCache;
 
-    private SliceCreator(Solution solution, DotNetTypes types, ISliceManager sliceManager)
+    public ILazySlice LazySlice { get; }
+
+    public SliceCreator(Solution solution, DotNetTypes types, ISliceManager sliceManager)
     {
         _solution = solution;
         _types = types;
         _sliceManager = sliceManager;
 
         _elementCache = new(types);
-    }
 
-    public static ILazySlice CreateSlice(Solution solution, DotNetTypes types, ISliceManager sliceManager)
-    {
-        var creator = new SliceCreator(solution, types, sliceManager);
-
-        return creator.CreateSlice();
+        LazySlice = CreateSlice();
     }
 
     private ILazySlice CreateSlice()
