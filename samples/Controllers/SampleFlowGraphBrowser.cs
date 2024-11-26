@@ -16,7 +16,7 @@ public class SampleFlowGraphBrowser : IController
 
     private static IFlowGraph CreateSampleFlowGraph()
     {
-        var builder = new FlowGraph.FlowGraphBuilder();
+        var builder = new FlowGraph.Builder();
 
         // Create variables with 32-bit signed integer type
         var intType = new DataType.Integer(true, 32);

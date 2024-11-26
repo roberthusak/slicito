@@ -59,15 +59,15 @@ public sealed class FlowGraph : IFlowGraph
     public IEnumerable<BasicBlock> GetPredecessors(BasicBlock block) =>
         _predecessors.TryGetValue(block, out var predecessors) ? predecessors : Enumerable.Empty<BasicBlock>();
 
-    public FlowGraphBuilder ToBuilder() => new(this);
+    public Builder ToBuilder() => new(this);
 
-    public sealed class FlowGraphBuilder : IFlowGraphBuilder
+    public sealed class Builder : IFlowGraphBuilder
     {
         private readonly Dictionary<BasicBlock, (BasicBlock? True, BasicBlock? False, BasicBlock? Unconditional)> _successors;
         private readonly Dictionary<BasicBlock, HashSet<BasicBlock>> _predecessors;
         private readonly HashSet<BasicBlock> _blocks;
 
-        public FlowGraphBuilder()
+        public Builder()
         {
             _successors = new Dictionary<BasicBlock, (BasicBlock?, BasicBlock?, BasicBlock?)>();
             _predecessors = new Dictionary<BasicBlock, HashSet<BasicBlock>>();
@@ -79,7 +79,7 @@ public sealed class FlowGraph : IFlowGraph
             _blocks.Add(Exit);
         }
 
-        internal FlowGraphBuilder(FlowGraph graph)
+        internal Builder(FlowGraph graph)
         {
             _successors = graph._successors.ToDictionary(
                 kvp => kvp.Key,
