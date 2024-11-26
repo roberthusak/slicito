@@ -12,11 +12,9 @@ public class SampleDotNetController : IController
     private const string _idActionParameterName = "Id";
 
     private readonly DotNetFactProvider _factProvider;
-    private readonly DotNetExtractor _extractor;
-    public SampleDotNetController(DotNetFactProvider factProvider, DotNetExtractor extractor)
+    public SampleDotNetController(DotNetFactProvider factProvider)
     {
         _factProvider = factProvider;
-        _extractor = extractor;
     }
 
     public async Task<IModel> InitAsync()

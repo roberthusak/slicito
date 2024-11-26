@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis;
 using Slicito.Abstractions;
 using Slicito.Abstractions.Models;
 using Slicito.Abstractions.Queries;
+using Slicito.DotNet;
 using Slicito.Queries;
 
 namespace Controllers;
@@ -15,12 +16,14 @@ public class SampleStructureBrowser : IController
     private const string _idActionParameterName = "Id";
 
     private readonly ILazySlice _slice;
-
+    private readonly DotNetSolutionContext? _solutionContext;
+    
     private ElementId? _selectedElementId;
 
-    public SampleStructureBrowser(ITypeSystem typeSystem, ILazySlice? slice = null)
+    public SampleStructureBrowser(ITypeSystem typeSystem, ILazySlice? slice = null, DotNetSolutionContext? solutionContext = null)
     {
         _slice = slice ?? CreateSampleSlice(typeSystem);
+        _solutionContext = solutionContext;
     }
 
     private static ILazySlice CreateSampleSlice(ITypeSystem typeSystem)
@@ -124,6 +127,18 @@ public class SampleStructureBrowser : IController
 
     private async Task<IModel> DisplayCurrentLevelAsync()
     {
+        if (_selectedElementId is not null)
+        {
+            var flowGraph = _solutionContext?.TryGetFlowGraph(_selectedElementId.Value);
+            
+            if (flowGraph is not null)
+            {
+                var flowGraphBrowser = new SampleFlowGraphBrowser(flowGraph);
+
+                return await flowGraphBrowser.InitAsync();
+            }
+        }
+
         ElementInfo[] elements;
         if (_selectedElementId is ElementId selectedElementId)
         {

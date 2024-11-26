@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using Microsoft.CodeAnalysis;
 
 using Slicito.Abstractions;
+using Slicito.ProgramAnalysis.Notation;
 
 namespace Slicito.DotNet.Implementation;
 internal class SliceCreator
@@ -12,6 +13,7 @@ internal class SliceCreator
     private readonly ISliceManager _sliceManager;
 
     private readonly ElementCache _elementCache;
+    private readonly ConcurrentDictionary<IMethodSymbol, IFlowGraph?> _flowGraphCache = [];
 
     public ILazySlice LazySlice { get; }
 
@@ -24,6 +26,18 @@ internal class SliceCreator
         _elementCache = new(types);
 
         LazySlice = CreateSlice();
+    }
+
+    public IFlowGraph? TryCreateFlowGraph(ElementId elementId)
+    {
+        var element = _elementCache.TryGetSymbol(elementId);
+
+        if (element is not IMethodSymbol method)
+        {
+            return null;
+        }
+
+        return _flowGraphCache.GetOrAdd(method, _ => FlowGraphCreator.TryCreateFlowGraph(method, _solution));
     }
 
     private ILazySlice CreateSlice()

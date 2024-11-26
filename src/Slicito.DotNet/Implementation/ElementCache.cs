@@ -90,6 +90,8 @@ internal class ElementCache
 
     public ISymbol GetSymbol(ElementId id) => (ISymbol) _elementRoslynObjects[id];
 
+    public ISymbol? TryGetSymbol(ElementId id) => _elementRoslynObjects[id] as ISymbol;
+
     public INamespaceSymbol GetNamespace(ElementId id) => (INamespaceSymbol) _elementRoslynObjects[id];
 
     public ITypeSymbol GetType(ElementId id) => (ITypeSymbol) _elementRoslynObjects[id];
