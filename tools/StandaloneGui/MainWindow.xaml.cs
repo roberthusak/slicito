@@ -16,6 +16,7 @@ using Microsoft.CodeAnalysis.MSBuild;
 using Slicito.Abstractions;
 using Slicito.Abstractions.Queries;
 using Slicito.DotNet;
+using Slicito.ProgramAnalysis.Notation;
 using Slicito.Queries;
 using Slicito.Wpf;
 
@@ -80,7 +81,7 @@ public partial class MainWindow : Window
         return (IController) controller;
     }
 
-    private async Task<object[]> LoadDependenciesAsync(ConstructorInfo constructor)
+    private async Task<object?[]> LoadDependenciesAsync(ConstructorInfo constructor)
     {
         var dependencies = new List<object?>();
 
@@ -98,6 +99,10 @@ public partial class MainWindow : Window
 
                 case var t when t == typeof(DotNetFactProvider):
                     dependencies.Add(await LoadFactProviderAsync());
+                    break;
+
+                case var t when t == typeof(IFlowGraph):
+                    dependencies.Add(null);
                     break;
 
                 default:

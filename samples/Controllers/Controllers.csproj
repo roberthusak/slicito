@@ -10,6 +10,7 @@
     <ProjectReference Include="..\..\src\Slicito.Abstractions\Slicito.Abstractions.csproj" />
     <ProjectReference Include="..\..\src\Slicito.DotNet\Slicito.DotNet.csproj" />
     <ProjectReference Include="..\..\src\Slicito.Queries\Slicito.Queries.csproj" />
+    <ProjectReference Include="..\..\src\Slicito.ProgramAnalysis\Slicito.ProgramAnalysis.csproj" />
   </ItemGroup>
 
 </Project>
