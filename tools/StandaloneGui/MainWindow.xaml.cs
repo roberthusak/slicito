@@ -33,6 +33,7 @@ public partial class MainWindow : Window
     private readonly ITypeSystem _typeSystem = new TypeSystem();
     private readonly ISliceManager _sliceManager = new SliceManager();
     private DotNetTypes? _dotNetTypes;
+    private DotNetExtractor? _dotNetExtractor;
     private ILazySlice? _lazySlice;
 
     private DotNetFactProvider? _factProvider;
@@ -93,16 +94,20 @@ public partial class MainWindow : Window
                     dependencies.Add(_typeSystem);
                     break;
 
+                case var t when t == typeof(DotNetExtractor):
+                    dependencies.Add(GetDotNetExtractor());
+                    break;
+
                 case var t when t == typeof(ILazySlice):
                     dependencies.Add(await TryLoadLazySliceAsync());
                     break;
 
-                case var t when t == typeof(DotNetFactProvider):
-                    dependencies.Add(await LoadFactProviderAsync());
-                    break;
-
                 case var t when t == typeof(IFlowGraph):
                     dependencies.Add(null);
+                    break;
+
+                case var t when t == typeof(DotNetFactProvider):
+                    dependencies.Add(await LoadFactProviderAsync());
                     break;
 
                 default:
@@ -113,25 +118,30 @@ public partial class MainWindow : Window
         return [.. dependencies];
     }
 
+    private DotNetTypes GetDotNetTypes()
+    {
+        _dotNetTypes ??= new DotNetTypes(_typeSystem);
+
+        return _dotNetTypes;
+    }
+
+    private DotNetExtractor GetDotNetExtractor()
+    {
+        _dotNetExtractor ??= new DotNetExtractor(GetDotNetTypes(), _sliceManager);
+
+        return _dotNetExtractor;
+    }
+
     private async Task<ILazySlice?> TryLoadLazySliceAsync()
     {
         if (_lazySlice == null && File.Exists(_solutionPath))
         {
             var solution = await MSBuildWorkspace.Create().OpenSolutionAsync(_solutionPath);
 
-            var extractor = new DotNetExtractor(GetDotNetTypes(), _sliceManager);
-
-            _lazySlice = extractor.Extract(solution);
+            _lazySlice = GetDotNetExtractor().Extract(solution);
         }
 
         return _lazySlice;
-    }
-
-    private DotNetTypes GetDotNetTypes()
-    {
-        _dotNetTypes ??= new DotNetTypes(_typeSystem);
-
-        return _dotNetTypes;
     }
 
     private async Task<DotNetFactProvider> LoadFactProviderAsync()
