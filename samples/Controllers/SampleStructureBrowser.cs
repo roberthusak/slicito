@@ -133,9 +133,7 @@ public class SampleStructureBrowser : IController
             
             if (flowGraph is not null)
             {
-                var flowGraphBrowser = new SampleFlowGraphBrowser(flowGraph);
-
-                return await flowGraphBrowser.InitAsync();
+                return FlowGraphHelper.CreateGraphModel(flowGraph);
             }
         }
 

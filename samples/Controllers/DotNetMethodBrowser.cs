@@ -2,6 +2,7 @@ using Microsoft.CodeAnalysis;
 using Slicito.Abstractions;
 using Slicito.Abstractions.Models;
 using Slicito.DotNet;
+
 using System.Collections.Immutable;
 
 namespace Controllers;
@@ -15,7 +16,6 @@ public class DotNetMethodBrowser : IController
     private readonly DotNetTypes _dotNetTypes;
 
     private readonly ILazySlice _slice;
-    private ElementId? _selectedMethodId;
 
     public DotNetMethodBrowser(DotNetSolutionContext solutionContext, DotNetTypes dotNetTypes)
     {
@@ -27,7 +27,7 @@ public class DotNetMethodBrowser : IController
 
     public async Task<IModel> InitAsync()
     {
-        return await DisplayMethodsOrFlowGraphAsync();
+        return await DisplayMethodListAsync();
     }
 
     public async Task<IModel?> ProcessCommandAsync(Command command)
@@ -35,29 +35,21 @@ public class DotNetMethodBrowser : IController
         if (command.Name == _openActionName && 
             command.Parameters.TryGetValue(_idActionParameterName, out var id))
         {
-            _selectedMethodId = new ElementId(id);
-            return await DisplayMethodsOrFlowGraphAsync();
+            return await DisplayFlowGraphAsync(new ElementId(id));
         }
 
         return null;
     }
 
-    private async Task<IModel> DisplayMethodsOrFlowGraphAsync()
+    private Task<IModel> DisplayFlowGraphAsync(ElementId id)
     {
-        // If a method is selected, try to display its flow graph
-        if (_selectedMethodId is not null)
-        {
-            var flowGraph = _solutionContext.TryGetFlowGraph(_selectedMethodId.Value);
-            if (flowGraph is not null)
-            {
-                var flowGraphBrowser = new SampleFlowGraphBrowser(flowGraph);
-                return await flowGraphBrowser.InitAsync();
-            }
-        }
+        var flowGraph = _solutionContext.TryGetFlowGraph(id)
+            ?? throw new Exception($"Flow graph for method {id} not found");
 
-        // Otherwise, display the list of all methods
-        return await DisplayMethodListAsync();
-    }
+        var result = FlowGraphHelper.CreateGraphModel(flowGraph);
+
+        return Task.FromResult<IModel>(result);
+        }
 
     private async Task<IModel> DisplayMethodListAsync()
     {

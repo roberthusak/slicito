@@ -1,5 +1,3 @@
-using Microsoft.CodeAnalysis;
-
 using Slicito.Abstractions;
 using Slicito.Abstractions.Queries;
 using Slicito.DotNet;
