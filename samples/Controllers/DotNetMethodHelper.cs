@@ -14,39 +14,84 @@ public static class DotNetMethodHelper
     {
         var methods = new List<(ElementInfo Method, string DisplayName)>();
         var nameProvider = slice.GetElementAttributeProviderAsyncCallback(DotNetAttributeNames.Name);
+        var hierarchyExplorer = slice.GetLinkExplorer(slice.Schema.HierarchyLinkType!);
         
         // Get all projects (root elements)
         var projects = await slice.GetRootElementsAsync();
-        var hierarchyExplorer = slice.GetLinkExplorer(slice.Schema.HierarchyLinkType!);
         
         foreach (var project in projects)
         {
-            // Get namespaces in the project
-            var namespaces = await hierarchyExplorer.GetTargetElementsAsync(project.Id);
-            foreach (var ns in namespaces)
+            // Start processing from top-level namespaces
+            var topLevelNamespaces = await hierarchyExplorer.GetTargetElementsAsync(project.Id);
+            foreach (var ns in topLevelNamespaces)
             {
-                // Get types in the namespace
-                var types = await hierarchyExplorer.GetTargetElementsAsync(ns.Id);
-                foreach (var type in types)
-                {
-                    // Get methods in the type
-                    var members = await hierarchyExplorer.GetTargetElementsAsync(type.Id);
-                    var methodElements = members.Where(m =>
-                        m.Type.Value.IsSubsetOfOrEquals(dotNetTypes.Method.Value));
-
-                    foreach (var method in methodElements)
-                    {
-                        var methodName = await nameProvider(method.Id);
-                        var typeName = await nameProvider(type.Id);
-                        var namespaceName = await nameProvider(ns.Id);
-                        
-                        var displayName = $"{namespaceName}.{typeName}.{methodName}";
-                        methods.Add((method, displayName));
-                    }
-                }
+                await ProcessNamespaceAsync(ns, "", methods, hierarchyExplorer, nameProvider, dotNetTypes);
             }
         }
 
         return methods;
+    }
+
+    private static async Task ProcessNamespaceAsync(
+        ElementInfo namespaceElement,
+        string parentNamespace,
+        List<(ElementInfo Method, string DisplayName)> methods,
+        ILazyLinkExplorer hierarchyExplorer,
+        Func<ElementId, ValueTask<string>> nameProvider,
+        DotNetTypes dotNetTypes)
+    {
+        var namespaceName = await nameProvider(namespaceElement.Id);
+        var fullNamespace = string.IsNullOrEmpty(parentNamespace) 
+            ? namespaceName 
+            : $"{parentNamespace}.{namespaceName}";
+
+        var children = await hierarchyExplorer.GetTargetElementsAsync(namespaceElement.Id);
+        
+        foreach (var child in children)
+        {
+            // Check if child is a namespace or a type
+            if (child.Type.Value.IsSubsetOfOrEquals(dotNetTypes.Namespace.Value))
+            {
+                // Recursively process nested namespace
+                await ProcessNamespaceAsync(child, fullNamespace, methods, hierarchyExplorer, nameProvider, dotNetTypes);
+            }
+            else if (child.Type.Value.IsSubsetOfOrEquals(dotNetTypes.Type.Value))
+            {
+                // Process type and its nested types
+                await ProcessTypeAsync(child, fullNamespace, "", methods, hierarchyExplorer, nameProvider, dotNetTypes);
+            }
+        }
+    }
+
+    private static async Task ProcessTypeAsync(
+        ElementInfo typeElement,
+        string namespacePrefix,
+        string parentType,
+        List<(ElementInfo Method, string DisplayName)> methods,
+        ILazyLinkExplorer hierarchyExplorer,
+        Func<ElementId, ValueTask<string>> nameProvider,
+        DotNetTypes dotNetTypes)
+    {
+        var typeName = await nameProvider(typeElement.Id);
+        var fullTypeName = string.IsNullOrEmpty(parentType) 
+            ? typeName 
+            : $"{parentType}+{typeName}";
+
+        var members = await hierarchyExplorer.GetTargetElementsAsync(typeElement.Id);
+        
+        foreach (var member in members)
+        {
+            if (member.Type.Value.IsSubsetOfOrEquals(dotNetTypes.Method.Value))
+            {
+                var methodName = await nameProvider(member.Id);
+                var displayName = $"{namespacePrefix}.{fullTypeName}.{methodName}";
+                methods.Add((Method: member, DisplayName: displayName));
+            }
+            else if (member.Type.Value.IsSubsetOfOrEquals(dotNetTypes.Type.Value))
+            {
+                // Recursively process nested type
+                await ProcessTypeAsync(member, namespacePrefix, fullTypeName, methods, hierarchyExplorer, nameProvider, dotNetTypes);
+            }
+        }
     }
 } 
