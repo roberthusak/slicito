@@ -8,6 +8,11 @@ public abstract class Expression
     {
         private Constant() { }
 
+        public sealed class Boolean(bool value) : Constant
+        {
+            public bool Value { get; } = value;
+        }
+
         public sealed class SignedInteger(long value, DataType.Integer type) : Constant
         {
             public long Value { get; } = value;
@@ -18,6 +23,12 @@ public abstract class Expression
         {
             public ulong Value { get; } = value;
             public DataType.Integer Type { get; } = type;
+        }
+
+        public sealed class Float(double value, DataType.Float type) : Constant
+        {
+            public double Value { get; } = value;
+            public DataType.Float Type { get; } = type;
         }
     }
 
@@ -31,6 +42,5 @@ public abstract class Expression
         public BinaryOperatorKind Kind { get; } = kind;
         public Expression Left { get; } = left;
         public Expression Right { get; } = right;
-        public BinaryOperatorKind Kind { get; } = kind;
     }
 }

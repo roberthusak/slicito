@@ -95,12 +95,9 @@ public partial class DotNetContext
 
         private async Task ProcessProjectAsync(Project project)
         {
-            var compilation = await project.GetCompilationAsync();
-            if (compilation is null)
-            {
-                throw new InvalidOperationException(
+            var compilation = await project.GetCompilationAsync()
+                ?? throw new InvalidOperationException(
                     $"The project '{project.FilePath}' could not be loaded into a Roslyn Compilation.");
-            }
 
             var projectElement = new DotNetProject(project, compilation, project.FilePath!);
             _elements.Add(projectElement);
