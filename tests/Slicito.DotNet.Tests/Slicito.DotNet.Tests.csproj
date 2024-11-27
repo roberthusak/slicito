@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\samples\Controllers\Controllers.csproj" />
     <ProjectReference Include="..\..\src\Slicito.DotNet\Slicito.DotNet.csproj" />
   </ItemGroup>
 
