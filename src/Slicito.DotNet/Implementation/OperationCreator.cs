@@ -46,9 +46,16 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
         };
     }
 
-    public override Expression? VisitParameterReference(IParameterReferenceOperation operation, Empty argument)
+    public override Expression? VisitParameterReference(IParameterReferenceOperation operation, Empty _)
     {
         var variable = context.GetOrCreateVariable(operation.Parameter);
+
+        return new Expression.VariableReference(variable);
+    }
+
+    public override Expression? VisitLocalReference(ILocalReferenceOperation operation, Empty _)
+    {
+        var variable = context.GetOrCreateVariable(operation.Local);
 
         return new Expression.VariableReference(variable);
     }
