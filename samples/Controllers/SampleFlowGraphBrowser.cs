@@ -34,39 +34,39 @@ public class SampleFlowGraphBrowser : IController
 
         var condition1 = new BasicBlock.Inner(new Operation.ConditionalJump(
             new Expression.BinaryOperator(
+                BinaryOperatorKind.Equal,
                 new Expression.VariableReference(varB),
-                new Expression.Constant.SignedInteger(0, new DataType.Integer(false, 32)),
-                BinaryOperatorKind.Equal)));
+                new Expression.Constant.SignedInteger(0, new DataType.Integer(false, 32)))));
 
         var trueBranch1 = new BasicBlock.Inner(new Operation.Assignment(
             new Location.VariableReference(varB),
             new Expression.BinaryOperator(
+                BinaryOperatorKind.Add,
                 new Expression.VariableReference(varB),
-                new Expression.Constant.SignedInteger(2, new DataType.Integer(false, 32)),
-                BinaryOperatorKind.Add)));
+                new Expression.Constant.SignedInteger(2, new DataType.Integer(false, 32)))));
 
         var condition2 = new BasicBlock.Inner(new Operation.ConditionalJump(
             new Expression.BinaryOperator(
+                BinaryOperatorKind.GreaterThan,
                 new Expression.VariableReference(varA),
-                new Expression.Constant.SignedInteger(8, new DataType.Integer(false, 32)),
-                BinaryOperatorKind.GreaterThan)));
+                new Expression.Constant.SignedInteger(8, new DataType.Integer(false, 32)))));
 
         var trueBranch2 = new BasicBlock.Inner(new Operation.Assignment(
             new Location.VariableReference(varB),
             new Expression.BinaryOperator(
+                BinaryOperatorKind.Subtract,
                 new Expression.BinaryOperator(
+                    BinaryOperatorKind.Subtract,
                     new Expression.VariableReference(varB),
-                    new Expression.VariableReference(varA),
-                    BinaryOperatorKind.Subtract),
-                new Expression.Constant.SignedInteger(1, new DataType.Integer(false, 32)),
-                BinaryOperatorKind.Subtract)));
+                    new Expression.VariableReference(varA)),
+                new Expression.Constant.SignedInteger(1, new DataType.Integer(false, 32)))));
 
         var elseBranch = new BasicBlock.Inner(new Operation.Assignment(
             new Location.VariableReference(varB),
             new Expression.BinaryOperator(
+                BinaryOperatorKind.Multiply,
                 new Expression.VariableReference(varB),
-                new Expression.Constant.SignedInteger(2, new DataType.Integer(false, 32)),
-                BinaryOperatorKind.Multiply)));
+                new Expression.Constant.SignedInteger(2, new DataType.Integer(false, 32)))));
 
         var assign3 = new BasicBlock.Inner(new Operation.Assignment(
             new Location.VariableReference(varB),

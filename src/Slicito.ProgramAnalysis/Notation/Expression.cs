@@ -26,8 +26,9 @@ public abstract class Expression
         public Variable Variable { get; } = variable;
     }
 
-    public sealed class BinaryOperator(Expression left, Expression right, BinaryOperatorKind kind) : Expression
+    public sealed class BinaryOperator(BinaryOperatorKind kind, Expression left, Expression right) : Expression
     {
+        public BinaryOperatorKind Kind { get; } = kind;
         public Expression Left { get; } = left;
         public Expression Right { get; } = right;
         public BinaryOperatorKind Kind { get; } = kind;
