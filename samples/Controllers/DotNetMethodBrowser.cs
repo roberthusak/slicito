@@ -1,7 +1,8 @@
-using Microsoft.CodeAnalysis;
 using Slicito.Abstractions;
 using Slicito.Abstractions.Models;
 using Slicito.DotNet;
+using Slicito.ProgramAnalysis.DataFlow;
+using Slicito.ProgramAnalysis.DataFlow.Analyses;
 
 using System.Collections.Immutable;
 
@@ -10,7 +11,12 @@ namespace Controllers;
 public class DotNetMethodBrowser : IController
 {
     private const string _openActionName = "Open";
+    private const string _analyzeActionName = "Analyze";
+
     private const string _idActionParameterName = "Id";
+    private const string _analysisKindParameterName = "AnalysisKind";
+
+    private const string _reachingDefinitionsAnalysisKind = "ReachingDefinitions";
 
     private readonly DotNetSolutionContext _solutionContext;
     private readonly DotNetTypes _dotNetTypes;
@@ -30,26 +36,54 @@ public class DotNetMethodBrowser : IController
         return await DisplayMethodListAsync();
     }
 
-    public async Task<IModel?> ProcessCommandAsync(Command command)
+    public Task<IModel?> ProcessCommandAsync(Command command)
     {
+        IModel? result = null;
+
         if (command.Name == _openActionName && 
             command.Parameters.TryGetValue(_idActionParameterName, out var id))
         {
-            return await DisplayFlowGraphAsync(new ElementId(id));
+            result = DisplayFlowGraph(new ElementId(id));
+        }
+        else if (command.Name == _analyzeActionName && 
+            command.Parameters.TryGetValue(_idActionParameterName, out var id2) &&
+            command.Parameters.TryGetValue(_analysisKindParameterName, out var analysisKind) &&
+            analysisKind == _reachingDefinitionsAnalysisKind)
+        {
+            result = DisplayReachingDefinitionsAnalysis(new ElementId(id2));
         }
 
-        return null;
+        return Task.FromResult(result);
     }
 
-    private Task<IModel> DisplayFlowGraphAsync(ElementId id)
+    private Graph DisplayFlowGraph(ElementId id)
     {
         var flowGraph = _solutionContext.TryGetFlowGraph(id)
             ?? throw new Exception($"Flow graph for method {id} not found");
 
         var result = FlowGraphHelper.CreateGraphModel(flowGraph);
 
-        return Task.FromResult<IModel>(result);
-        }
+        return result;
+    }
+
+    private Graph DisplayReachingDefinitionsAnalysis(ElementId id)
+    {
+        var flowGraph = _solutionContext.TryGetFlowGraph(id)
+            ?? throw new Exception($"Flow graph for method {id} not found");
+
+        var reachingDefinitions = ReachingDefinitions.Create();
+        var result = AnalysisExecutor.Execute(flowGraph, reachingDefinitions);
+        var defUses = ReachingDefinitions.GetDefUses(result);
+
+        var additionalEdges = defUses.Select(defUse => new FlowGraphHelper.AdditionalEdge(
+            defUse.Definition.Block,
+            defUse.Use.Block,
+            "is used in"));
+
+        var graph = FlowGraphHelper.CreateGraphModel(flowGraph, additionalEdges);
+
+        return graph;
+    }
 
     private async Task<IModel> DisplayMethodListAsync()
     {
@@ -64,6 +98,11 @@ public class DotNetMethodBrowser : IController
                 method.Id.Value,
                 displayName,
                 CreateOpenCommand(method)));
+
+            nodes.Add(new Node(
+                $"{method.Id.Value}-{_reachingDefinitionsAnalysisKind}",
+                $"{displayName} - {_reachingDefinitionsAnalysisKind}",
+                CreateAnalyzeCommand(method, _reachingDefinitionsAnalysisKind)));
         }
 
         return new Graph([.. nodes], [.. edges]);
@@ -74,5 +113,14 @@ public class DotNetMethodBrowser : IController
         return new Command(
             _openActionName, 
             ImmutableDictionary<string, string>.Empty.Add(_idActionParameterName, element.Id.Value));
+    }
+
+    private static Command CreateAnalyzeCommand(ElementInfo element, string analysisKind)
+    {
+        return new Command(
+            _analyzeActionName,
+            ImmutableDictionary<string, string>.Empty
+                .Add(_idActionParameterName, element.Id.Value)
+                .Add(_analysisKindParameterName, analysisKind));
     }
 }
