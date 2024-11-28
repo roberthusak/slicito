@@ -57,7 +57,7 @@ public static class ReachingDefinitions
         {
             Operation.Assignment assignment => GetVariableReferences(assignment.Value),
             Operation.ConditionalJump jump => GetVariableReferences(jump.Condition),
-            _ => Enumerable.Empty<Expression.VariableReference>()
+            _ => []
         };
     }
 
@@ -74,8 +74,7 @@ public static class ReachingDefinitions
 
     private class GenKillAnalysis : IGenKillAnalysis<Operation>
     {
-        private ImmutableDictionary<Variable, ImmutableHashSet<Operation>> _variableDefinitions = 
-            ImmutableDictionary<Variable, ImmutableHashSet<Operation>>.Empty;
+        private Dictionary<Variable, ImmutableHashSet<Operation>>? _variableDefinitions;
 
         public AnalysisDirection Direction => AnalysisDirection.Forward;
 
@@ -83,7 +82,7 @@ public static class ReachingDefinitions
 
         public void Initialize(IFlowGraph graph)
         {
-            var builder = ImmutableDictionary.CreateBuilder<Variable, HashSet<Operation>>();
+            var variableDefinitionsBuilders = new Dictionary<Variable, HashSet<Operation>>();
 
             foreach (var block in graph.Blocks)
             {
@@ -97,23 +96,28 @@ public static class ReachingDefinitions
                     continue;
                 }
 
-                if (!builder.TryGetValue(varRef.Variable, out var defs))
+                if (!variableDefinitionsBuilders.TryGetValue(varRef.Variable, out var defs))
                 {
                     defs = [];
-                    builder.Add(varRef.Variable, defs);
+                    variableDefinitionsBuilders.Add(varRef.Variable, defs);
                 }
 
                 defs.Add(assignment);
             }
 
-            _variableDefinitions = builder
-                .ToImmutableDictionary(
+            _variableDefinitions = variableDefinitionsBuilders
+                .ToDictionary(
                     kvp => kvp.Key,
                     kvp => kvp.Value.ToImmutableHashSet());
         }
 
         public ImmutableHashSet<Operation> GetGen(BasicBlock block)
         {
+            if (_variableDefinitions is null)
+            {
+                throw new InvalidOperationException("Analysis not initialized");
+            }
+
             if (block is not BasicBlock.Inner inner || 
                 inner.Operation is not Operation.Assignment assignment)
             {
@@ -125,6 +129,11 @@ public static class ReachingDefinitions
 
         public ImmutableHashSet<Operation> GetKill(BasicBlock block)
         {
+            if (_variableDefinitions is null)
+            {
+                throw new InvalidOperationException("Analysis not initialized");
+            }
+
             if (block is not BasicBlock.Inner inner || 
                 inner.Operation is not Operation.Assignment assignment)
             {
