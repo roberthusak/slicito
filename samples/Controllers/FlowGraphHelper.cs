@@ -5,8 +5,10 @@ using Slicito.ProgramAnalysis.Notation;
 
 namespace Controllers;
 
-internal static class FlowGraphHelper
+public static class FlowGraphHelper
 {
+    public record AdditionalEdge(BasicBlock Source, BasicBlock Target, string? Label = null, Command? Command = null);
+
     public static IFlowGraph CreateSampleFlowGraph()
     {
         var builder = new FlowGraph.Builder();
@@ -91,7 +93,7 @@ internal static class FlowGraphHelper
         return builder.Build();
     }
 
-    public static Graph CreateGraphModel(IFlowGraph flowGraph)
+    public static Graph CreateGraphModel(IFlowGraph flowGraph, IEnumerable<AdditionalEdge>? additionalEdges = null)
     {
         var nodeIdMap = flowGraph.Blocks
             .Select((b, i) => new { b, i })
@@ -122,6 +124,15 @@ internal static class FlowGraphHelper
             {
                 edges.Add(new Edge(nodeIdMap[block], nodeIdMap[unconditionalSuccessor], null));
             }
+        }
+
+        foreach (var edge in additionalEdges ?? [])
+        {
+            edges.Add(new Edge(
+                nodeIdMap[edge.Source],
+                nodeIdMap[edge.Target],
+                edge.Label,
+                edge.Command));
         }
 
         return new Graph(nodes, edges.ToImmutableArray());
