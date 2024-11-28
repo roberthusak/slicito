@@ -18,7 +18,7 @@ public class DependencyManager
     
     private DotNetTypes? _dotNetTypes;
     private DotNetExtractor? _dotNetExtractor;
-    private DotNetSolutionContext _dotNetSolutionContext;
+    private DotNetSolutionContext? _dotNetSolutionContext;
     private ILazySlice? _lazySlice;
     private DotNetFactProvider? _factProvider;
 
