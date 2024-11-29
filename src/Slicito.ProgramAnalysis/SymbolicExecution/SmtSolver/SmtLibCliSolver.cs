@@ -127,7 +127,7 @@ public sealed class SmtLibCliSolver : ISolver
             {
                 var declaration = app.function switch
                 {
-                    Function.Nullary f => $"(declare-const {functionName} {SerializeSort(f.Sort)})",
+                    Function.Nullary f => $"(declare-const {functionName} {SerializeSort(f.ResultSort)})",
                     Function.Unary f => $"(declare-fun {functionName} ({SerializeSort(f.ArgumentSort)}) {SerializeSort(f.ResultSort)})",
                     Function.Binary f => $"(declare-fun {functionName} ({SerializeSort(f.ArgumentSort1)} {SerializeSort(f.ArgumentSort2)}) {SerializeSort(f.ResultSort)})",
                     Function.Ternary f => $"(declare-fun {functionName} ({SerializeSort(f.ArgumentSort1)} {SerializeSort(f.ArgumentSort2)} {SerializeSort(f.ArgumentSort3)}) {SerializeSort(f.ResultSort)})",
@@ -163,7 +163,7 @@ public sealed class SmtLibCliSolver : ISolver
     private static string SerializeTerm(Term term) => term switch
     {
         Term.Constant.Bool b => b.Value.ToString().ToLowerInvariant(),
-        Term.Constant.BitVec bv => $"(_ bv{bv.Value} {bv.Sort.Width})",
+        Term.Constant.BitVec bv => $"(_ bv{bv.Value} {bv.BitVecSort.Width})",
         Term.FunctionApplication app when app.function is Function.Nullary => app.function.Name,
         Term.FunctionApplication app => $"({app.function.Name} {string.Join(" ", app.Arguments.Select(SerializeTerm))})",
         _ => throw new ArgumentException($"Unsupported term: {term.GetType()}")

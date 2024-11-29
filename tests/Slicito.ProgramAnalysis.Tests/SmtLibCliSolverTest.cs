@@ -18,13 +18,7 @@ public class SmtLibCliSolverTest
 
         // Act
 
-        await solver.AssertAsync(
-            new Term.FunctionApplication(
-                Functions.Equals(Sorts.Bool),
-                [
-                    new Term.Constant.Bool(true),
-                    new Term.Constant.Bool(false)
-                ]));
+        await solver.AssertAsync(Terms.Equals(Terms.True, Terms.False));
 
         var result = await solver.CheckSatAsync();
 
@@ -42,14 +36,7 @@ public class SmtLibCliSolverTest
 
         var x = new Function.Nullary("x", Sorts.Bool);
         
-        await solver.AssertAsync(
-            new Term.FunctionApplication(
-                Functions.Equals(Sorts.Bool),
-                [
-                    new Term.FunctionApplication(x, []),
-                    new Term.Constant.Bool(true)
-                ])
-        );
+        await solver.AssertAsync(Terms.Equals(Terms.Constant(x), Terms.True));
 
         Term? xValue = null;
 
@@ -62,6 +49,6 @@ public class SmtLibCliSolverTest
 
         // Assert
         result.Should().Be(SolverResult.Sat);
-        xValue.Should().Be(new Term.Constant.Bool(true));
+        xValue.Should().Be(Terms.True);
     }
 }

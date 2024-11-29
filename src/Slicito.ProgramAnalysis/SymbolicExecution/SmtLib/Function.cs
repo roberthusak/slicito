@@ -8,7 +8,9 @@ public abstract record Function
 
     public abstract bool IsBuiltIn { get; init; }
 
-    public sealed record Nullary(string Name, Sort Sort, bool IsBuiltIn = false) : Function;
+    public abstract Sort ResultSort { get; init; }
+
+    public sealed record Nullary(string Name, Sort ResultSort, bool IsBuiltIn = false) : Function;
 
     public sealed record Unary(string Name, Sort ArgumentSort, Sort ResultSort, bool IsBuiltIn = false) : Function;
 
