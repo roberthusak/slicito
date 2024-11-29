@@ -26,22 +26,24 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{CD7DB68A
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Slicito.DotNet.Tests", "tests\Slicito.DotNet.Tests\Slicito.DotNet.Tests.csproj", "{18EB7034-80AD-4379-B702-9DB44793E085}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StandaloneGui", "tools\StandaloneGui\StandaloneGui.csproj", "{2291BE18-AC01-465F-9A63-58F849D13CC4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StandaloneGui", "tools\StandaloneGui\StandaloneGui.csproj", "{2291BE18-AC01-465F-9A63-58F849D13CC4}"
 	ProjectSection(ProjectDependencies) = postProject
 		{CCA637E7-2AAC-4188-AADA-1314386BC45B} = {CCA637E7-2AAC-4188-AADA-1314386BC45B}
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{5043DC3E-B865-42D7-8DFC-8D89155E9AFE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slicito.Wpf", "src\Slicito.Wpf\Slicito.Wpf.csproj", "{E4F0A9F3-EA1D-42B1-9260-583E42CBB972}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Slicito.Wpf", "src\Slicito.Wpf\Slicito.Wpf.csproj", "{E4F0A9F3-EA1D-42B1-9260-583E42CBB972}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Controllers", "samples\Controllers\Controllers.csproj", "{CCA637E7-2AAC-4188-AADA-1314386BC45B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Controllers", "samples\Controllers\Controllers.csproj", "{CCA637E7-2AAC-4188-AADA-1314386BC45B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slicito.Queries", "src\Slicito.Queries\Slicito.Queries.csproj", "{58B6048C-F2AA-46A8-BEA1-2D585F1EA4BF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Slicito.Queries", "src\Slicito.Queries\Slicito.Queries.csproj", "{58B6048C-F2AA-46A8-BEA1-2D585F1EA4BF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slicito.Queries.Tests", "tests\Slicito.Queries.Tests\Slicito.Queries.Tests.csproj", "{F77F2336-5EFF-4448-B777-EA224E1EBCB9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Slicito.Queries.Tests", "tests\Slicito.Queries.Tests\Slicito.Queries.Tests.csproj", "{F77F2336-5EFF-4448-B777-EA224E1EBCB9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slicito.ProgramAnalysis", "src\Slicito.ProgramAnalysis\Slicito.ProgramAnalysis.csproj", "{2A1ADA4D-B54E-44C4-BB34-BB909E229C88}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Slicito.ProgramAnalysis", "src\Slicito.ProgramAnalysis\Slicito.ProgramAnalysis.csproj", "{2A1ADA4D-B54E-44C4-BB34-BB909E229C88}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slicito.ProgramAnalysis.Tests", "tests\Slicito.ProgramAnalysis.Tests\Slicito.ProgramAnalysis.Tests.csproj", "{7E6FBEB5-3B01-4BA0-B4DF-1FCE29968F45}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -93,6 +95,10 @@ Global
 		{2A1ADA4D-B54E-44C4-BB34-BB909E229C88}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2A1ADA4D-B54E-44C4-BB34-BB909E229C88}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2A1ADA4D-B54E-44C4-BB34-BB909E229C88}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7E6FBEB5-3B01-4BA0-B4DF-1FCE29968F45}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7E6FBEB5-3B01-4BA0-B4DF-1FCE29968F45}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7E6FBEB5-3B01-4BA0-B4DF-1FCE29968F45}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7E6FBEB5-3B01-4BA0-B4DF-1FCE29968F45}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -109,6 +115,7 @@ Global
 		{58B6048C-F2AA-46A8-BEA1-2D585F1EA4BF} = {DEB14B61-E010-4B08-A880-E956B20A5BE6}
 		{F77F2336-5EFF-4448-B777-EA224E1EBCB9} = {CD7DB68A-219B-4824-BF80-F6C2BA302AEA}
 		{2A1ADA4D-B54E-44C4-BB34-BB909E229C88} = {DEB14B61-E010-4B08-A880-E956B20A5BE6}
+		{7E6FBEB5-3B01-4BA0-B4DF-1FCE29968F45} = {CD7DB68A-219B-4824-BF80-F6C2BA302AEA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {878A59AE-1008-403F-91D2-E4072C3AE3F3}
