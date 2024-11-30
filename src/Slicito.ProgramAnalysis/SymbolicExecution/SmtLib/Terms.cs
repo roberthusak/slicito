@@ -18,7 +18,7 @@ public static class Terms
 
     public static Term.FunctionApplication Xor(Term left, Term right) => new(Functions.Xor, [left, right]);
 
-    public static Term.FunctionApplication Equals(Term left, Term right) => new(Functions.Equals(left.Sort), [left, right]);
+    public static Term.FunctionApplication Equal(Term left, Term right) => new(Functions.Equals(left.Sort), [left, right]);
 
     public static Term.FunctionApplication Distinct(Term left, Term right) => new(Functions.Distinct(left.Sort), [left, right]);
 
@@ -26,6 +26,8 @@ public static class Terms
 
     public static class BitVec
     {
+        public static Term.Constant.BitVec Literal(long value, Sort.BitVec bitVecSort) => new(value, bitVecSort);
+
         public static Term.FunctionApplication Negate(Term value) => new(Functions.BitVec.Negate(GetWidth(value.Sort)), [value]);
 
         public static Term.FunctionApplication Add(Term left, Term right) => new(Functions.BitVec.Add(GetWidth(left.Sort)), [left, right]);
