@@ -179,7 +179,30 @@ public sealed class SmtLibCliSolver : ISolver
             return new Term.Constant.Bool(boolValue);
         }
         
-        throw new NotImplementedException("Only boolean value parsing is implemented");
+        if (value.StartsWith("(_ bv"))
+        {
+            var parts = value.Trim('(', ')').Split(' ');
+            if (parts.Length == 3 && long.TryParse(parts[1].Substring(2), out var bitVecValue) && int.TryParse(parts[2], out var width))
+            {
+                return new Term.Constant.BitVec(bitVecValue, new Sort.BitVec(width));
+            }
+        }
+        else if (value.StartsWith("#b"))
+        {
+            var binaryStr = value.Substring(2);
+            var width = binaryStr.Length;
+            var bitVecValue = Convert.ToInt64(binaryStr, 2);
+            return new Term.Constant.BitVec(bitVecValue, new Sort.BitVec(width));
+        }
+        else if (value.StartsWith("#x"))
+        {
+            var hexStr = value.Substring(2);
+            var width = hexStr.Length * 4;
+            var bitVecValue = Convert.ToInt64(hexStr, 16);
+            return new Term.Constant.BitVec(bitVecValue, new Sort.BitVec(width));
+        }
+
+        throw new InvalidOperationException($"Failed to parse SMT-LIB value: {value}");
     }
 
     private static async Task SendCommandAsync(StreamWriter input, string command)
