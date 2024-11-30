@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+
 using Slicito.ProgramAnalysis.Notation;
 
 namespace Controllers;
@@ -8,12 +10,15 @@ public static class BlockLabelProvider
     {
         return block switch
         {
-            BasicBlock.Entry => "Entry",
+            BasicBlock.Entry entry => $"Entry({FormatParameters(entry.Parameters)})",
             BasicBlock.Exit => "Exit",
             BasicBlock.Inner inner => GetInnerBlockLabel(inner),
             _ => throw new ArgumentException($"Unsupported block type {block.GetType().Name}.")
         };
     }
+
+    private static string FormatParameters(ImmutableArray<Variable> parameters) =>
+        string.Join(", ", parameters.Select(p => p.Name));
 
     private static string GetInnerBlockLabel(BasicBlock.Inner block)
     {

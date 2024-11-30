@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Diagnostics;
 
 using Microsoft.CodeAnalysis;
@@ -16,11 +17,12 @@ internal class FlowGraphCreator
 
     private readonly Dictionary<RoslynBasicBlock, (SlicitoBasicBlock First, SlicitoBasicBlock Last)> _roslynToSlicitoBasicBlocksMap = [];
     private readonly Dictionary<ISymbol, Variable> _variableMap = [];
-    private readonly FlowGraph.Builder _builder = new();
+    private readonly FlowGraph.Builder _builder;
 
-    private FlowGraphCreator(ControlFlowGraph roslynCfg)
+    private FlowGraphCreator(ControlFlowGraph roslynCfg, ImmutableArray<IParameterSymbol> parameterSymbols)
     {
         _roslynCfg = roslynCfg;
+        _builder = new(parameterSymbols.Select(GetOrCreateVariable).ToImmutableArray());
     }
 
     public static IFlowGraph? TryCreateFlowGraph(IMethodSymbol method, Solution solution)
@@ -31,7 +33,7 @@ internal class FlowGraphCreator
             return null;
         }
 
-        var creator = new FlowGraphCreator(roslynCfg);
+        var creator = new FlowGraphCreator(roslynCfg, method.Parameters);
         return creator.CreateFlowGraph();
     }
 

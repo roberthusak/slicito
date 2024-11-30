@@ -11,22 +11,14 @@ public static class FlowGraphHelper
 
     public static IFlowGraph CreateSampleFlowGraph()
     {
-        var builder = new FlowGraph.Builder();
-
         // Create variables with 32-bit signed integer type
         var intType = new DataType.Integer(true, 32);
         var varA = new Variable("a", intType);
         var varB = new Variable("b", intType);
 
+        var builder = new FlowGraph.Builder([varA, varB]);
+
         // Create blocks for each statement/condition
-        var assign1 = new BasicBlock.Inner(new Operation.Assignment(
-            new Location.VariableReference(varA),
-            new Expression.VariableReference(varA)));
-
-        var assign2 = new BasicBlock.Inner(new Operation.Assignment(
-            new Location.VariableReference(varB),
-            new Expression.VariableReference(varB)));
-
         var condition1 = new BasicBlock.Inner(new Operation.ConditionalJump(
             new Expression.BinaryOperator(
                 BinaryOperatorKind.Equal,
@@ -68,8 +60,6 @@ public static class FlowGraphHelper
             new Expression.VariableReference(varB)));
 
         // Add blocks to the builder
-        builder.AddBlock(assign1);
-        builder.AddBlock(assign2);
         builder.AddBlock(condition1);
         builder.AddBlock(trueBranch1);
         builder.AddBlock(condition2);
@@ -78,9 +68,7 @@ public static class FlowGraphHelper
         builder.AddBlock(assign3);
 
         // Connect blocks with edges
-        builder.AddUnconditionalEdge(builder.Entry, assign1);
-        builder.AddUnconditionalEdge(assign1, assign2);
-        builder.AddUnconditionalEdge(assign2, condition1);
+        builder.AddUnconditionalEdge(builder.Entry, condition1);
         builder.AddTrueEdge(condition1, trueBranch1);
         builder.AddFalseEdge(condition1, condition2);
         builder.AddUnconditionalEdge(trueBranch1, assign3);

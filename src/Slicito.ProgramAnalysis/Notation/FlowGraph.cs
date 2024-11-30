@@ -67,12 +67,12 @@ public sealed class FlowGraph : IFlowGraph
         private readonly Dictionary<BasicBlock, HashSet<BasicBlock>> _predecessors;
         private readonly HashSet<BasicBlock> _blocks;
 
-        public Builder()
+        public Builder(ImmutableArray<Variable> parameters)
         {
             _successors = new Dictionary<BasicBlock, (BasicBlock?, BasicBlock?, BasicBlock?)>();
             _predecessors = new Dictionary<BasicBlock, HashSet<BasicBlock>>();
             _blocks = new HashSet<BasicBlock>();
-            Entry = new BasicBlock.Entry();
+            Entry = new BasicBlock.Entry(parameters);
             Exit = new BasicBlock.Exit();
             
             _blocks.Add(Entry);
