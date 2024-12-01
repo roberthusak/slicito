@@ -8,10 +8,11 @@ public sealed class SmtLibCliSolver : ISolver
     private readonly Process _process;
     private readonly StreamWriter _input;
     private readonly StreamReader _output;
+    private readonly Action<string>? _linePrinter;
     private readonly HashSet<string> _declaredFunctions = new();
     private bool _isDisposed;
 
-    internal static async ValueTask<SmtLibCliSolver> CreateAsync(string pathToSolver, string[]? arguments)
+    internal static async ValueTask<SmtLibCliSolver> CreateAsync(string pathToSolver, string[]? arguments, Action<string>? linePrinter)
     {
         var startInfo = new ProcessStartInfo(pathToSolver)
         {
@@ -34,20 +35,21 @@ public sealed class SmtLibCliSolver : ISolver
 
         // Configure solver options
 
-        await SendCommandAsync(input, "(set-option :print-success true)");
-        await ExpectSuccessAsync(output);
+        await SendCommandAsync(input, "(set-option :print-success true)", linePrinter);
+        await ExpectSuccessAsync(output, linePrinter);
 
-        await SendCommandAsync(input, "(set-logic ALL)"); // Using ALL to support all features
-        await ExpectSuccessAsync(output);
+        await SendCommandAsync(input, "(set-logic ALL)", linePrinter); // Using ALL to support all features
+        await ExpectSuccessAsync(output, linePrinter);
 
-        return new SmtLibCliSolver(process, input, output);
+        return new SmtLibCliSolver(process, input, output, linePrinter);
     }
 
-    private SmtLibCliSolver(Process process, StreamWriter input, StreamReader output)
+    private SmtLibCliSolver(Process process, StreamWriter input, StreamReader output, Action<string>? linePrinter)
     {
         _process = process;
         _input = input;
         _output = output;
+        _linePrinter = linePrinter;
     }
 
     public async ValueTask AssertAsync(Term term)
@@ -67,6 +69,8 @@ public sealed class SmtLibCliSolver : ISolver
         await SendCommandAsync("(check-sat)");
 
         var result = await _output.ReadLineAsync();
+        
+        _linePrinter?.Invoke(result);
         
         switch (result?.Trim())
         {
@@ -94,6 +98,9 @@ public sealed class SmtLibCliSolver : ISolver
         await SendCommandAsync($"(get-value ({SerializeTerm(term)}))");
 
         var response = await _output.ReadLineAsync();
+
+        _linePrinter?.Invoke(response);
+
         return ParseValue(response ?? throw new InvalidOperationException("No response from solver"));
     }
 
@@ -106,7 +113,12 @@ public sealed class SmtLibCliSolver : ISolver
         
         try
         {
-            _input.WriteLine("(exit)");
+            const string exitCommand = "(exit)";
+
+            _input.WriteLine(exitCommand);
+
+            _linePrinter?.Invoke(exitCommand);
+
             _input.Dispose();
             _output.Dispose();
             _process.Dispose();
@@ -205,24 +217,29 @@ public sealed class SmtLibCliSolver : ISolver
         throw new InvalidOperationException($"Failed to parse SMT-LIB value: {value}");
     }
 
-    private static async Task SendCommandAsync(StreamWriter input, string command)
+    private static async Task SendCommandAsync(StreamWriter input, string command, Action<string>? linePrinter)
     {
         await input.WriteLineAsync(command);
         await input.FlushAsync();
+
+        linePrinter?.Invoke(command);
     }
 
-    private async Task SendCommandAsync(string command) => await SendCommandAsync(_input, command);
+    private async Task SendCommandAsync(string command) => await SendCommandAsync(_input, command, _linePrinter);
 
-    private static async Task ExpectSuccessAsync(StreamReader output)
+    private static async Task ExpectSuccessAsync(StreamReader output, Action<string>? linePrinter)
     {
         var response = await output.ReadLineAsync();
+
+        linePrinter?.Invoke(response);
+
         if (response != "success")
         {
             throw new InvalidOperationException($"Expected 'success', got: {response}");
         }
     }
     
-    private async Task ExpectSuccessAsync() => await ExpectSuccessAsync(_output);
+    private async Task ExpectSuccessAsync() => await ExpectSuccessAsync(_output, _linePrinter);
 
     private sealed class SmtLibModel : IModel
     {

@@ -2,19 +2,20 @@ using FluentAssertions;
 
 using Slicito.ProgramAnalysis.SymbolicExecution.SmtLib;
 using Slicito.ProgramAnalysis.SymbolicExecution.SmtSolver;
+using Slicito.ProgramAnalysis.Tests.Helpers;
 
 namespace Slicito.ProgramAnalysis.Tests;
 
 [TestClass]
 public class SmtLibCliSolverTest
 {
-    private ValueTask<ISolver> CreateSolver() => new SmtLibCliSolverFactory("z3", ["-in"]).CreateSolverAsync();
+    public TestContext? TestContext { get; set; }
 
     [TestMethod]
     public async Task Unsatisfiable_Condition_Yields_Unsatisfiable_Result()
     {
         // Arrange
-        var solver = await CreateSolver();
+        var solver = await SolverHelper.CreateSolverFactory(TestContext!).CreateSolverAsync();
 
         // Act
 
@@ -30,7 +31,7 @@ public class SmtLibCliSolverTest
     public async Task Satisfiable_Condition_Yields_Satisfiable_Result_And_Correct_Model()
     {
         // Arrange
-        var solver = await CreateSolver();
+        var solver = await SolverHelper.CreateSolverFactory(TestContext!).CreateSolverAsync();
 
         // Act
 
@@ -56,7 +57,7 @@ public class SmtLibCliSolverTest
     public async Task DeMorgans_Law_On_BitVec64_Is_Valid()
     {
         // Arrange
-        var solver = await CreateSolver();
+        var solver = await SolverHelper.CreateSolverFactory(TestContext!).CreateSolverAsync();
 
         // Act
 
@@ -82,7 +83,7 @@ public class SmtLibCliSolverTest
     public async Task Unsigned_BitVec64_Add_Yields_Correct_Model()
     {
         // Arrange
-        var solver = await CreateSolver();
+        var solver = await SolverHelper.CreateSolverFactory(TestContext!).CreateSolverAsync();
 
         // Act
 
