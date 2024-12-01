@@ -69,7 +69,7 @@ public sealed class SmtLibCliSolver : ISolver
         await SendCommandAsync("(check-sat)");
 
         var result = await _output.ReadLineAsync();
-        
+
         _linePrinter?.Invoke(result);
         
         switch (result?.Trim())
@@ -194,7 +194,7 @@ public sealed class SmtLibCliSolver : ISolver
         if (value.StartsWith("(_ bv"))
         {
             var parts = value.Trim('(', ')').Split(' ');
-            if (parts.Length == 3 && long.TryParse(parts[1].Substring(2), out var bitVecValue) && int.TryParse(parts[2], out var width))
+            if (parts.Length == 3 && ulong.TryParse(parts[1].Substring(2), out var bitVecValue) && int.TryParse(parts[2], out var width))
             {
                 return new Term.Constant.BitVec(bitVecValue, new Sort.BitVec(width));
             }
@@ -203,14 +203,14 @@ public sealed class SmtLibCliSolver : ISolver
         {
             var binaryStr = value.Substring(2);
             var width = binaryStr.Length;
-            var bitVecValue = Convert.ToInt64(binaryStr, 2);
+            var bitVecValue = Convert.ToUInt64(binaryStr, 2);
             return new Term.Constant.BitVec(bitVecValue, new Sort.BitVec(width));
         }
         else if (value.StartsWith("#x"))
         {
             var hexStr = value.Substring(2);
             var width = hexStr.Length * 4;
-            var bitVecValue = Convert.ToInt64(hexStr, 16);
+            var bitVecValue = Convert.ToUInt64(hexStr, 16);
             return new Term.Constant.BitVec(bitVecValue, new Sort.BitVec(width));
         }
 

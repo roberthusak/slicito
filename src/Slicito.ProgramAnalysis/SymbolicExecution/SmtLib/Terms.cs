@@ -26,7 +26,7 @@ public static class Terms
 
     public static class BitVec
     {
-        public static Term.Constant.BitVec Literal(long value, Sort.BitVec bitVecSort) => new(value, bitVecSort);
+        public static Term.Constant.BitVec Literal(ulong value, Sort.BitVec bitVecSort) => new(value, bitVecSort);
 
         public static Term.FunctionApplication Negate(Term value) => new(Functions.BitVec.Negate(GetWidth(value.Sort)), [value]);
 
