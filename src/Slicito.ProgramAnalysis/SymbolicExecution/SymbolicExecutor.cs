@@ -262,7 +262,7 @@ public class SymbolicExecutor(ISolverFactory solverFactory)
             await solver.AssertAsync(CreateBlockReachingBoolean(state.CurrentBlock));
             
             ExecutionModel? executionModel = null;
-            var satResult = await solver.CheckSatAsync(model =>
+            var satResult = await solver.CheckSatisfiabilityAsync(model =>
             {
                 // If satisfiable, construct execution model from parameter values
                 var parameterValues = new List<Expression.Constant>();
@@ -282,9 +282,9 @@ public class SymbolicExecutor(ISolverFactory solverFactory)
 
             return satResult switch
             {
-                SolverResult.Sat => new ExecutionResult.Reachable(executionModel ?? 
+                SolverResult.Satisfiable => new ExecutionResult.Reachable(executionModel ?? 
                     throw new InvalidOperationException("Model should be available for SAT result")),
-                SolverResult.Unsat => new ExecutionResult.Unreachable(),
+                SolverResult.Unsatisfiable => new ExecutionResult.Unreachable(),
                 SolverResult.Unknown => new ExecutionResult.Unknown()
             };
         }

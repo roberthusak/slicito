@@ -21,10 +21,10 @@ public class SmtLibCliSolverTest
 
         await solver.AssertAsync(Terms.Equal(Terms.True, Terms.False));
 
-        var result = await solver.CheckSatAsync();
+        var result = await solver.CheckSatisfiabilityAsync();
 
         // Assert
-        result.Should().Be(SolverResult.Unsat);
+        result.Should().Be(SolverResult.Unsatisfiable);
     }
 
     [TestMethod]
@@ -41,7 +41,7 @@ public class SmtLibCliSolverTest
 
         Term? xValue = null;
 
-        var result = await solver.CheckSatAsync(model =>
+        var result = await solver.CheckSatisfiabilityAsync(model =>
         {
             xValue = model.Evaluate(Terms.Constant(x));
             
@@ -49,7 +49,7 @@ public class SmtLibCliSolverTest
         });
 
         // Assert
-        result.Should().Be(SolverResult.Sat);
+        result.Should().Be(SolverResult.Satisfiable);
         xValue.Should().Be(Terms.True);
     }
 
@@ -73,10 +73,10 @@ public class SmtLibCliSolverTest
                     Terms.BitVec.BitwiseNot(
                         Terms.BitVec.BitwiseOr(Terms.Constant(x), Terms.Constant(y))))));
 
-        var result = await solver.CheckSatAsync();
+        var result = await solver.CheckSatisfiabilityAsync();
 
         // Assert
-        result.Should().Be(SolverResult.Unsat);
+        result.Should().Be(SolverResult.Unsatisfiable);
     }
 
     [TestMethod]
@@ -97,7 +97,7 @@ public class SmtLibCliSolverTest
                 Terms.Constant(x)));
 
         Term? xValue = null;
-        var result = await solver.CheckSatAsync(model =>
+        var result = await solver.CheckSatisfiabilityAsync(model =>
         {
             xValue = model.Evaluate(Terms.Constant(x));
             
@@ -105,7 +105,7 @@ public class SmtLibCliSolverTest
         });
 
         // Assert
-        result.Should().Be(SolverResult.Sat);
+        result.Should().Be(SolverResult.Satisfiable);
         xValue.Should().Be(Terms.BitVec.Literal(42, Sorts.BitVec64));
     }
 }

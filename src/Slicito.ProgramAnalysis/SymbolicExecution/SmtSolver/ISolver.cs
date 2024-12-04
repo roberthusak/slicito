@@ -6,5 +6,5 @@ public interface ISolver : IDisposable
 {
     ValueTask AssertAsync(Term term);
 
-    ValueTask<SolverResult> CheckSatAsync(Func<IModel, ValueTask>? onSat = null);
+    ValueTask<SolverResult> CheckSatisfiabilityAsync(Func<IModel, ValueTask>? onSat = null);
 }

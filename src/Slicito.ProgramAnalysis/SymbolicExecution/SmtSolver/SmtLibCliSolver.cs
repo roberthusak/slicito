@@ -62,7 +62,7 @@ public sealed class SmtLibCliSolver : ISolver
         await ExpectSuccessAsync();
     }
 
-    public async ValueTask<SolverResult> CheckSatAsync(Func<IModel, ValueTask>? onSat = null)
+    public async ValueTask<SolverResult> CheckSatisfiabilityAsync(Func<IModel, ValueTask>? onSat = null)
     {
         ThrowIfDisposed();
         
@@ -80,10 +80,10 @@ public sealed class SmtLibCliSolver : ISolver
                     using var model = new SmtLibModel(this);
                     await onSat(model);
                 }
-                return SolverResult.Sat;
+                return SolverResult.Satisfiable;
                 
             case "unsat":
-                return SolverResult.Unsat;
+                return SolverResult.Unsatisfiable;
 
             case "unknown":
                 return SolverResult.Unknown;
