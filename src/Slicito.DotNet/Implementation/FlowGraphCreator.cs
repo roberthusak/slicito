@@ -19,14 +19,16 @@ internal class FlowGraphCreator
     private readonly Dictionary<ISymbol, Variable> _variableMap = [];
     private readonly List<Variable> _temporaryVariables = [];
     private readonly FlowGraph.Builder _builder;
+    private readonly OperationMapping.Builder _operationMappingBuilder;
 
-    private FlowGraphCreator(ControlFlowGraph roslynCfg, ImmutableArray<IParameterSymbol> parameterSymbols)
+    private FlowGraphCreator(IMethodSymbol methodSymbol, ControlFlowGraph roslynCfg, ImmutableArray<IParameterSymbol> parameterSymbols)
     {
         _roslynCfg = roslynCfg;
         _builder = new(parameterSymbols.Select(GetOrCreateVariable).ToImmutableArray());
+        _operationMappingBuilder = new(ElementIdProvider.GetOperationIdPrefix(methodSymbol));
     }
 
-    public static IFlowGraph? TryCreate(IMethodSymbol method, Solution solution)
+    public static (IFlowGraph FlowGraph, OperationMapping OperationMapping)? TryCreate(IMethodSymbol method, Solution solution)
     {
         var roslynCfg = TryCreateRoslynControlFlowGraph(method, solution);
         if (roslynCfg is null)
@@ -34,8 +36,11 @@ internal class FlowGraphCreator
             return null;
         }
 
-        var creator = new FlowGraphCreator(roslynCfg, method.Parameters);
-        return creator.CreateFlowGraph();
+        var creator = new FlowGraphCreator(method, roslynCfg, method.Parameters);
+        var flowGraph = creator.CreateFlowGraph();
+        var operationMapping = creator._operationMappingBuilder.Build();
+
+        return (flowGraph, operationMapping);
     }
 
     private static ControlFlowGraph? TryCreateRoslynControlFlowGraph(IMethodSymbol method, Solution solution)
@@ -108,6 +113,11 @@ internal class FlowGraphCreator
             creator.Visit(roslynOperation, default);
         }
 
+        foreach (var (operation, syntax) in context.InnerOperations)
+        {
+            _operationMappingBuilder.AddOperation(operation, syntax);
+        }
+
         Operation? additionalOperation = null;
         if (roslynBlock.ConditionalSuccessor is not null)
         {
@@ -118,19 +128,21 @@ internal class FlowGraphCreator
                 ?? throw new InvalidOperationException("Unexpectedly produced empty condition operation.");
 
             additionalOperation = new Operation.ConditionalJump(condition);
+
+            _operationMappingBuilder.AddOperation(additionalOperation, conditionOperation.Syntax);
         }
 
         SlicitoBasicBlock.Inner? firstBlock = null;
         SlicitoBasicBlock.Inner? lastBlock = null;
         if (context.InnerOperations.Count > 0)
         {
-            firstBlock = new SlicitoBasicBlock.Inner(context.InnerOperations[0]);
+            firstBlock = new SlicitoBasicBlock.Inner(context.InnerOperations[0].Operation);
             _builder.AddBlock(firstBlock);
 
             lastBlock = firstBlock;
             for (var i = 1; i < context.InnerOperations.Count; i++)
             {
-                var currentBlock = new SlicitoBasicBlock.Inner(context.InnerOperations[i]);
+                var currentBlock = new SlicitoBasicBlock.Inner(context.InnerOperations[i].Operation);
                 _builder.AddBlock(currentBlock);
                 _builder.AddUnconditionalEdge(lastBlock, currentBlock);
                 lastBlock = currentBlock;
@@ -206,7 +218,7 @@ internal class FlowGraphCreator
     {
         var variable = new Variable($"!tmp_{_temporaryVariables.Count}", type);
         _temporaryVariables.Add(variable);
-        
+
         return variable;
     }
 
@@ -224,14 +236,14 @@ internal class FlowGraphCreator
 
     public class BlockTranslationContext(FlowGraphCreator creator)
     {
-        private List<Operation>? _innerOperations;
+        private List<(Operation, SyntaxNode)>? _innerOperations;
 
-        public IReadOnlyList<Operation> InnerOperations => _innerOperations ?? [];
+        public IReadOnlyList<(Operation Operation, SyntaxNode Syntax)> InnerOperations => _innerOperations ?? [];
 
-        public void AddInnerOperation(Operation operation)
+        public void AddInnerOperation(Operation operation, SyntaxNode syntax)
         {
             _innerOperations ??= [];
-            _innerOperations.Add(operation);
+            _innerOperations.Add((operation, syntax));
         }
 
         internal Variable GetOrCreateVariable(ILocalSymbol local) => creator.GetOrCreateVariable(local);

@@ -16,14 +16,12 @@ public class SampleStructureBrowser : IController
     private const string _idActionParameterName = "Id";
 
     private readonly ILazySlice _slice;
-    private readonly DotNetSolutionContext? _solutionContext;
     
     private ElementId? _selectedElementId;
 
     public SampleStructureBrowser(ITypeSystem typeSystem, ILazySlice? slice = null, DotNetSolutionContext? solutionContext = null)
     {
         _slice = slice ?? CreateSampleSlice(typeSystem);
-        _solutionContext = solutionContext;
     }
 
     private static ILazySlice CreateSampleSlice(ITypeSystem typeSystem)
@@ -127,16 +125,6 @@ public class SampleStructureBrowser : IController
 
     private async Task<IModel> DisplayCurrentLevelAsync()
     {
-        if (_selectedElementId is not null)
-        {
-            var flowGraph = _solutionContext?.TryGetFlowGraph(_selectedElementId.Value);
-            
-            if (flowGraph is not null)
-            {
-                return FlowGraphHelper.CreateGraphModel(flowGraph);
-            }
-        }
-
         ElementInfo[] elements;
         if (_selectedElementId is ElementId selectedElementId)
         {

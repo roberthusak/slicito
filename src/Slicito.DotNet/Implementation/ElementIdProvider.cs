@@ -27,10 +27,21 @@ internal static class ElementIdProvider
     public static ElementId GetId(IFieldSymbol field) => GetSymbolId(field);
 
     public static ElementId GetId(IMethodSymbol method) => GetSymbolId(method);
+    
+    public static string GetOperationIdPrefix(IMethodSymbol method) => $"{GetId(method).Value}.op!";
+
+    public static ElementId GetMethodIdFromOperationId(ElementId operationId)
+    {
+        var index = operationId.Value.LastIndexOf(".op!", StringComparison.Ordinal);
+        if (index == -1)
+        {
+            throw new ArgumentException("The operation ID is not valid.", nameof(operationId));
+        }
+        return new(operationId.Value.Substring(0, index));
+    }
 
     private static ElementId GetSymbolId(ISymbol symbol) =>
         new($"{GetAssemblyName(symbol)}.{GetUniqueNameWithinProject(symbol)}");
-
 
     private static string GetAssemblyName(ISymbol symbol)
     {

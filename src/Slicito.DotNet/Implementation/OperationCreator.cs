@@ -75,7 +75,8 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
         context.AddInnerOperation(
             new Operation.Assignment(
                 new SlicitoLocation.VariableReference(variable),
-                value));
+                value),
+            operation.Syntax);
 
         return new Expression.VariableReference(variable);
     }
@@ -104,7 +105,8 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
             new Operation.Call(
                 signature,
                 arguments,
-                returnLocations));
+                returnLocations),
+            operation.Syntax);
 
         // If the return type is void, this operation should be a separate statement, so returning null is safe
         return returnLocations.IsEmpty || returnLocations[0] is not SlicitoLocation.VariableReference returnVariableReference
