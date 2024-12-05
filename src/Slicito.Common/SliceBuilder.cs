@@ -1,9 +1,9 @@
 using System.Collections.Immutable;
 
 using Slicito.Abstractions;
-using Slicito.Queries.Implementation;
+using Slicito.Common.Implementation;
 
-namespace Slicito.Queries;
+namespace Slicito.Common;
 
 public class SliceBuilder : ISliceBuilder
 {

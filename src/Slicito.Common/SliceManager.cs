@@ -1,6 +1,6 @@
 using Slicito.Abstractions;
 
-namespace Slicito.Queries;
+namespace Slicito.Common;
 
 public class SliceManager : ISliceManager
 {

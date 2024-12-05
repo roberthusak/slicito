@@ -3,7 +3,7 @@ using FluentAssertions;
 using Slicito.Abstractions;
 using Slicito.Abstractions.Queries;
 
-namespace Slicito.Queries.Tests;
+namespace Slicito.Common.Tests;
 
 [TestClass]
 public class SliceTests
@@ -345,7 +345,7 @@ public class SliceTests
                 return sourceId.Value switch
                 {
                     "B" => new(new ISliceBuilder.PartialLinkInfo(new(new("C")))),
-                    _ => new((ISliceBuilder.PartialLinkInfo?)null)
+                    _ => new((ISliceBuilder.PartialLinkInfo?) null)
                 };
             })
             .AddLinks(kindPointsToColorRedType, anyElementType, anyElementType, sourceId =>
@@ -366,7 +366,7 @@ public class SliceTests
                 };
             })
             .BuildLazy();
-            
+
         var allLinksExplorer = slice.GetLinkExplorer(anyLinkType);
         var pointsToLinksExplorer = slice.GetLinkExplorer(kindPointsToType);
         var pointsToColorBlueLinksExplorer = slice.GetLinkExplorer(kindPointsToColorBlueType);
@@ -521,7 +521,7 @@ public class SliceTests
         schema.ElementAttributes[kindBType].Should().BeEquivalentTo(["attr1", "attr2"]);
         schema.ElementAttributes[kindAType].Should().BeEquivalentTo(["attr2"]);
 
-        schema.RootElementTypes.Should().BeEquivalentTo<ElementType>(
+        schema.RootElementTypes.Should().BeEquivalentTo(
         [
             anyType, kindAType
         ]);

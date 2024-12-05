@@ -5,8 +5,8 @@ using Microsoft.CodeAnalysis;
 using Slicito.Abstractions;
 using Slicito.Abstractions.Models;
 using Slicito.Abstractions.Queries;
+using Slicito.Common;
 using Slicito.DotNet;
-using Slicito.Queries;
 
 namespace Controllers;
 

@@ -3,9 +3,9 @@ using System.Collections.Immutable;
 using System.Web;
 
 using Slicito.Abstractions.Queries;
-using Slicito.Queries.Implementation;
+using Slicito.Common.Implementation;
 
-namespace Slicito.Queries;
+namespace Slicito.Common;
 
 public class TypeSystem : ITypeSystem
 {
@@ -15,7 +15,7 @@ public class TypeSystem : ITypeSystem
     {
         var immutableAttributeValues = attributeValues.ToImmutableSortedDictionary(
             kv => kv.Key,
-            kv => (IReadOnlyList<string>)kv.Value.ToImmutableSortedSet());
+            kv => (IReadOnlyList<string>) kv.Value.ToImmutableSortedSet());
         var uniqueSerialization = GetUniqueSerialization(immutableAttributeValues);
 
         return _factTypes.GetOrAdd(

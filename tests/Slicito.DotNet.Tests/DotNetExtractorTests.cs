@@ -6,9 +6,9 @@ using Microsoft.CodeAnalysis.MSBuild;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using Slicito.Abstractions;
+using Slicito.Common;
 using Slicito.ProgramAnalysis;
 using Slicito.ProgramAnalysis.Notation;
-using Slicito.Queries;
 
 namespace Slicito.DotNet.Tests;
 

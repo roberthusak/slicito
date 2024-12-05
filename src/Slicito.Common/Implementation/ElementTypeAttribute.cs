@@ -1,5 +1,5 @@
 using Slicito.Abstractions;
 
-namespace Slicito.Queries.Implementation;
+namespace Slicito.Common.Implementation;
 
 internal record struct ElementTypeAttribute(ElementType ElementType, string AttributeName);

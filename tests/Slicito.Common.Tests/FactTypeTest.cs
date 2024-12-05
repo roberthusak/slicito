@@ -2,7 +2,7 @@ using FluentAssertions;
 
 using Slicito.Abstractions.Queries;
 
-namespace Slicito.Queries.Tests;
+namespace Slicito.Common.Tests;
 
 [TestClass]
 public class FactTypeTest

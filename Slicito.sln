@@ -37,13 +37,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Slicito.Wpf", "src\Slicito.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Controllers", "samples\Controllers\Controllers.csproj", "{CCA637E7-2AAC-4188-AADA-1314386BC45B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Slicito.Queries", "src\Slicito.Queries\Slicito.Queries.csproj", "{58B6048C-F2AA-46A8-BEA1-2D585F1EA4BF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Slicito.Common", "src\Slicito.Common\Slicito.Common.csproj", "{58B6048C-F2AA-46A8-BEA1-2D585F1EA4BF}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Slicito.Queries.Tests", "tests\Slicito.Queries.Tests\Slicito.Queries.Tests.csproj", "{F77F2336-5EFF-4448-B777-EA224E1EBCB9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Slicito.Common.Tests", "tests\Slicito.Common.Tests\Slicito.Common.Tests.csproj", "{F77F2336-5EFF-4448-B777-EA224E1EBCB9}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Slicito.ProgramAnalysis", "src\Slicito.ProgramAnalysis\Slicito.ProgramAnalysis.csproj", "{2A1ADA4D-B54E-44C4-BB34-BB909E229C88}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slicito.ProgramAnalysis.Tests", "tests\Slicito.ProgramAnalysis.Tests\Slicito.ProgramAnalysis.Tests.csproj", "{7E6FBEB5-3B01-4BA0-B4DF-1FCE29968F45}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Slicito.ProgramAnalysis.Tests", "tests\Slicito.ProgramAnalysis.Tests\Slicito.ProgramAnalysis.Tests.csproj", "{7E6FBEB5-3B01-4BA0-B4DF-1FCE29968F45}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

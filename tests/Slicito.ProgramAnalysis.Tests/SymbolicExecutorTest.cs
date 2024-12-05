@@ -4,11 +4,11 @@ using FluentAssertions;
 
 using Microsoft.CodeAnalysis.MSBuild;
 
+using Slicito.Common;
 using Slicito.DotNet;
 using Slicito.ProgramAnalysis.Notation;
 using Slicito.ProgramAnalysis.SymbolicExecution;
 using Slicito.ProgramAnalysis.Tests.Helpers;
-using Slicito.Queries;
 
 namespace Slicito.ProgramAnalysis.Tests;
 

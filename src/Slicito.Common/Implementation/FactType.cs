@@ -2,8 +2,9 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 
 using Slicito.Abstractions.Queries;
+using Slicito.Common;
 
-namespace Slicito.Queries.Implementation;
+namespace Slicito.Common.Implementation;
 
 internal class FactType : IFactType
 {

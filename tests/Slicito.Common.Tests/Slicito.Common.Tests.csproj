@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Slicito.Queries\Slicito.Queries.csproj" />
+    <ProjectReference Include="..\..\src\Slicito.Common\Slicito.Common.csproj" />
   </ItemGroup>
 
   <ItemGroup>
