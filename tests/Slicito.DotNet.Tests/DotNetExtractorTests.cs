@@ -3,11 +3,10 @@ using Controllers;
 using FluentAssertions;
 
 using Microsoft.CodeAnalysis.MSBuild;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using Slicito.Abstractions;
 using Slicito.Common;
-using Slicito.ProgramAnalysis;
+using Slicito.ProgramAnalysis.Interprocedural;
 using Slicito.ProgramAnalysis.Notation;
 
 namespace Slicito.DotNet.Tests;
@@ -17,26 +16,26 @@ public class DotNetExtractorTests
 {
     private static DotNetSolutionContext? _solutionContext;
     private static IEnumerable<(ElementInfo Method, string DisplayName)>? _methods;
-    
+    private static DotNetTypes? _dotNetTypes;
     [ClassInitialize]
     public static async Task Initialize(TestContext _)
     {
         const string solutionPath = @"..\..\..\..\inputs\AnalysisSamples\AnalysisSamples.sln";
         var solution = await MSBuildWorkspace.Create().OpenSolutionAsync(solutionPath);
         
-        var types = new DotNetTypes(new TypeSystem());
+        _dotNetTypes = new DotNetTypes(new TypeSystem());
         var sliceManager = new SliceManager();
         
-        _solutionContext = new DotNetSolutionContext(solution, types, sliceManager);
+        _solutionContext = new DotNetSolutionContext(solution, _dotNetTypes, sliceManager);
         
         _methods = await DotNetMethodHelper.GetAllMethodsWithDisplayNamesAsync(
             _solutionContext.LazySlice, 
-            types);
+            _dotNetTypes);
     }
 
     [TestMethod]
     [DynamicData(nameof(GetMethodTestData), DynamicDataSourceType.Method)]
-    public void CanCreateFlowGraph_ForMethod(ElementInfo method, string displayName)
+    public void Can_Create_Flow_Graph_For_Method(ElementInfo method, string displayName)
     {
         // Arrange
         _solutionContext.Should().NotBeNull("Solution context should be initialized");
@@ -46,6 +45,23 @@ public class DotNetExtractorTests
 
         // Assert
         flowGraph.Should().NotBeNull($"Failed to create flow graph for method {displayName}");
+    }
+
+    [TestMethod]
+    [DynamicData(nameof(GetMethodTestData), DynamicDataSourceType.Method)]
+    public async Task Can_Create_Call_Graph_For_Method(ElementInfo method, string displayName)
+    {
+        // Arrange
+        _solutionContext.Should().NotBeNull("Solution context should be initialized");
+
+        // Act
+        var callGraph = await new CallGraph.Builder(_solutionContext!.LazySlice, _dotNetTypes!)
+            .AddCallerRoot(method.Id)
+            .BuildAsync();
+
+        // Assert
+        callGraph.RootProcedures.Should().ContainSingle(p => p.ProcedureElement.Id == method.Id);
+        callGraph.AllProcedures.Should().Contain(p => p.ProcedureElement.Id == method.Id);
     }
 
     private static IEnumerable<object[]> GetMethodTestData()

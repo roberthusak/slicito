@@ -1,8 +1,10 @@
 using Slicito.Abstractions;
 using Slicito.Abstractions.Models;
+using Slicito.Common.Controllers;
 using Slicito.DotNet;
 using Slicito.ProgramAnalysis.DataFlow;
 using Slicito.ProgramAnalysis.DataFlow.Analyses;
+using Slicito.ProgramAnalysis.Interprocedural;
 
 using System.Collections.Immutable;
 
@@ -17,6 +19,7 @@ public class DotNetMethodBrowser : IController
     private const string _analysisKindParameterName = "AnalysisKind";
 
     private const string _reachingDefinitionsAnalysisKind = "ReachingDefinitions";
+    private const string _callGraphAnalysisKind = "CallGraph";
 
     private readonly DotNetSolutionContext _solutionContext;
     private readonly DotNetTypes _dotNetTypes;
@@ -36,7 +39,7 @@ public class DotNetMethodBrowser : IController
         return await DisplayMethodListAsync();
     }
 
-    public Task<IModel?> ProcessCommandAsync(Command command)
+    public async Task<IModel?> ProcessCommandAsync(Command command)
     {
         IModel? result = null;
 
@@ -45,15 +48,21 @@ public class DotNetMethodBrowser : IController
         {
             result = DisplayFlowGraph(new ElementId(id));
         }
-        else if (command.Name == _analyzeActionName && 
+        else if (command.Name == _analyzeActionName &&
             command.Parameters.TryGetValue(_idActionParameterName, out var id2) &&
-            command.Parameters.TryGetValue(_analysisKindParameterName, out var analysisKind) &&
-            analysisKind == _reachingDefinitionsAnalysisKind)
+            command.Parameters.TryGetValue(_analysisKindParameterName, out var analysisKind))
         {
-            result = DisplayReachingDefinitionsAnalysis(new ElementId(id2));
+            if (analysisKind == _reachingDefinitionsAnalysisKind)
+            {
+                result = DisplayReachingDefinitionsAnalysis(new ElementId(id2));
+            }
+            else if (analysisKind == _callGraphAnalysisKind)
+            {
+                result = await DisplayCallGraphAnalysisAsync(new ElementId(id2));
+            }
         }
 
-        return Task.FromResult(result);
+        return result;
     }
 
     private Graph DisplayFlowGraph(ElementId id)
@@ -85,6 +94,16 @@ public class DotNetMethodBrowser : IController
         return graph;
     }
 
+    private async Task<IModel> DisplayCallGraphAnalysisAsync(ElementId id)
+    {
+        var callGraph = await new CallGraph.Builder(_slice, _dotNetTypes)
+            .AddCallerRoot(id)
+            .BuildAsync();
+
+        var explorer = new CallGraphExplorer(callGraph, _slice, _dotNetTypes);
+        return await explorer.InitAsync();
+    }
+
     private async Task<IModel> DisplayMethodListAsync()
     {
         var items = new List<TreeItem>();
@@ -102,6 +121,11 @@ public class DotNetMethodBrowser : IController
                 $"{displayName} - {_reachingDefinitionsAnalysisKind}",
                 [],
                 CreateAnalyzeCommand(method, _reachingDefinitionsAnalysisKind)));
+
+            items.Add(new TreeItem(
+                $"{displayName} - {_callGraphAnalysisKind}",
+                [],
+                CreateAnalyzeCommand(method, _callGraphAnalysisKind)));
         }
 
         return new Tree([.. items]);

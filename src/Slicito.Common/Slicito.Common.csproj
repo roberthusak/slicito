@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Slicito.Abstractions\Slicito.Abstractions.csproj" />
+    <ProjectReference Include="..\Slicito.ProgramAnalysis\Slicito.ProgramAnalysis.csproj" />
   </ItemGroup>
 
 </Project>
