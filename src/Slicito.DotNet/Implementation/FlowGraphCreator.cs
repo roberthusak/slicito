@@ -17,6 +17,7 @@ internal class FlowGraphCreator
 
     private readonly Dictionary<RoslynBasicBlock, (SlicitoBasicBlock First, SlicitoBasicBlock Last)> _roslynToSlicitoBasicBlocksMap = [];
     private readonly Dictionary<ISymbol, Variable> _variableMap = [];
+    private readonly List<Variable> _temporaryVariables = [];
     private readonly FlowGraph.Builder _builder;
 
     private FlowGraphCreator(ControlFlowGraph roslynCfg, ImmutableArray<IParameterSymbol> parameterSymbols)
@@ -201,6 +202,14 @@ internal class FlowGraphCreator
 
     private Variable GetOrCreateVariable(IParameterSymbol parameter) => GetOrCreateVariable(parameter, parameter.Type);
 
+    private Variable CreateTemporaryVariable(DataType type)
+    {
+        var variable = new Variable($"!tmp_{_temporaryVariables.Count}", type);
+        _temporaryVariables.Add(variable);
+        
+        return variable;
+    }
+
     private Variable GetOrCreateVariable(ISymbol variableSymbol, ITypeSymbol typeSymbol)
     {
         if (_variableMap.TryGetValue(variableSymbol, out var variable))
@@ -228,5 +237,7 @@ internal class FlowGraphCreator
         internal Variable GetOrCreateVariable(ILocalSymbol local) => creator.GetOrCreateVariable(local);
 
         internal Variable GetOrCreateVariable(IParameterSymbol parameter) => creator.GetOrCreateVariable(parameter);
+
+        internal Variable CreateTemporaryVariable(DataType type) => creator.CreateTemporaryVariable(type);
     }
 }

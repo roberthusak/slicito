@@ -53,4 +53,27 @@ public static class Samples
 
         return b;
     }
+
+    public static int Caller(int a)
+    {
+        int res = 0;
+        int i = 1;
+
+        while (i <= a)
+        {
+            res = res + Callee(i);
+            i = i + 1;
+        }
+
+        VoidCallee(res);
+
+        return Callee(res);
+    }
+
+    public static int Callee(int b)
+    {
+        return b * b;
+    }
+
+    public static void VoidCallee(int _) { }
 }

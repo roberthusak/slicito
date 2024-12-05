@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
@@ -22,7 +23,7 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
 
     public override Expression? VisitExpressionStatement(IExpressionStatementOperation operation, Empty _)
     {
-        return VisitEnsureNonNull(operation.Operation);
+        return operation.Operation.Accept(this, default);
     }
 
     public override Expression? VisitLiteral(ILiteralOperation operation, Empty _)
@@ -85,6 +86,30 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
         var right = VisitEnsureNonNull(operation.RightOperand);
 
         return new Expression.BinaryOperator(TranslateBinaryOperatorKind(operation.OperatorKind), left, right);
+    }
+
+    public override Expression? VisitInvocation(IInvocationOperation operation, Empty _)
+    {
+        var signature = ProcedureSignatureCreator.Create(operation.TargetMethod);
+
+        var arguments = operation.Arguments
+            .Select(a => VisitEnsureNonNull(a.Value))
+            .ToImmutableArray();
+
+        var returnLocations = signature.ReturnTypes
+            .Select(t => (SlicitoLocation?) new SlicitoLocation.VariableReference(context.CreateTemporaryVariable(t)))
+            .ToImmutableArray();
+
+        context.AddInnerOperation(
+            new Operation.Call(
+                signature,
+                arguments,
+                returnLocations));
+
+        // If the return type is void, this operation should be a separate statement, so returning null is safe
+        return returnLocations.IsEmpty || returnLocations[0] is not SlicitoLocation.VariableReference returnVariableReference
+            ? null
+            : new Expression.VariableReference(returnVariableReference.Variable);
     }
 
     private static SlicitoBinaryOperatorKind TranslateBinaryOperatorKind(RoslynBinaryOperatorKind operatorKind)

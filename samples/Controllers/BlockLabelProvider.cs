@@ -30,25 +30,34 @@ public static class BlockLabelProvider
         return block.Operation switch
         {
             Operation.Assignment assignment => FormatAssignment(assignment),
-            Operation.ConditionalJump condition => FormatCondition(condition),
+            Operation.ConditionalJump condition => FormatExpression(condition.Condition),
+            Operation.Call call => FormatCall(call),
             _ => throw new ArgumentException($"Unsupported operation type {block.Operation.GetType().Name}.")
         };
     }
 
     private static string FormatAssignment(Operation.Assignment assignment)
     {
-        var location = assignment.Location switch
-        {
-            Location.VariableReference varRef => varRef.Variable.Name,
-            _ => throw new ArgumentException($"Unsupported location type {assignment.Location.GetType().Name}.")
-        };
+        var location = FormatLocation(assignment.Location);
 
         return $"{location} = {FormatExpression(assignment.Value)}";
     }
 
-    private static string FormatCondition(Operation.ConditionalJump condition)
+    private static string FormatCall(Operation.Call call)
     {
-        return FormatExpression(condition.Condition);
+        var returnLocations = string.Join(", ", call.ReturnLocations.Select(loc => loc is null ? "_" : FormatLocation(loc)));
+        var arguments = string.Join(", ", call.Arguments.Select(FormatExpression));
+
+        return $"({returnLocations}) = {call.Signature.Name}({arguments})";
+    }
+
+    private static string FormatLocation(Location location)
+    {
+        return location switch
+        {
+            Location.VariableReference varRef => varRef.Variable.Name,
+            _ => throw new ArgumentException($"Unsupported location type {location.GetType().Name}.")
+        };
     }
 
     private static string FormatExpression(Expression expr)

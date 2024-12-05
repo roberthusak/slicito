@@ -17,8 +17,10 @@ internal static class ProcedureSignatureCreator
             .Select(p => TypeCreator.Create(p.Type))
             .ToImmutableArray();
 
-        var returnType = TypeCreator.Create(method.ReturnType);
+        var returnType = method.ReturnType.SpecialType == SpecialType.System_Void
+            ? ImmutableArray<DataType>.Empty
+            : [TypeCreator.Create(method.ReturnType)];
 
-        return new(id.Value, parameterTypes, [returnType]);
+        return new(id.Value, parameterTypes, returnType);
     }
 }
