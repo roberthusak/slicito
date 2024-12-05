@@ -114,18 +114,12 @@ public class DotNetMethodBrowser : IController
         {
             items.Add(new TreeItem(
                 displayName,
-                [],
-                CreateOpenCommand(method)));
-
-            items.Add(new TreeItem(
-                $"{displayName} - {_reachingDefinitionsAnalysisKind}",
-                [],
-                CreateAnalyzeCommand(method, _reachingDefinitionsAnalysisKind)));
-
-            items.Add(new TreeItem(
-                $"{displayName} - {_callGraphAnalysisKind}",
-                [],
-                CreateAnalyzeCommand(method, _callGraphAnalysisKind)));
+                [
+                    new TreeItem("Control Flow Graph", [], CreateOpenCommand(method)),
+                    new TreeItem("Reaching Definitions", [], CreateAnalyzeCommand(method, _reachingDefinitionsAnalysisKind)),
+                    new TreeItem("Call Graph", [], CreateAnalyzeCommand(method, _callGraphAnalysisKind))
+                ],
+                null));
         }
 
         return new Tree([.. items]);
