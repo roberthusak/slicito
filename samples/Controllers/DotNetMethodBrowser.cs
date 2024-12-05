@@ -76,7 +76,7 @@ public class DotNetMethodBrowser : IController
         var defUses = ReachingDefinitions.GetDefUses(result);
 
         var additionalEdges = defUses.Select(defUse => new FlowGraphHelper.AdditionalEdge(
-            defUse.Definition.Block,
+            defUse.Definition,
             defUse.Use.Block,
             "is used in"));
 
