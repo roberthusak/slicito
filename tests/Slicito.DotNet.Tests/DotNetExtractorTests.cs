@@ -54,4 +54,31 @@ public class DotNetExtractorTests
         
         return _methods!.Select(m => new object[] { m.Method, m.DisplayName });
     }
+
+    [TestMethod]
+    public void Procedure_Signature_Of_BasicSymbolicExecutionSample_Is_Correct()
+    {
+        // Arrange
+        
+        _solutionContext.Should().NotBeNull("Solution context should be initialized");
+        _methods.Should().NotBeNull("Methods should be initialized");
+
+        var methodId = _methods!.First(m => m.DisplayName == "AnalysisSamples.Samples.BasicSymbolicExecutionSample").Method.Id;
+
+        // Act
+        var signature = _solutionContext!.GetProcedureSignature(methodId);
+
+        // Assert
+
+        signature.Name.Should().Be("AnalysisSamples.AnalysisSamples.Samples.BasicSymbolicExecutionSample(int, int)");
+
+        signature.ParameterTypes.Should().BeEquivalentTo([
+            new DataType.Integer(Signed: true, 32),
+            new DataType.Integer(Signed: true, 32)
+        ]);
+
+        signature.ReturnTypes.Should().BeEquivalentTo([
+            new DataType.Integer(Signed: true, 32)
+        ]);
+    }
 }

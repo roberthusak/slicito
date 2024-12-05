@@ -96,6 +96,8 @@ internal class ElementCache
 
     public ITypeSymbol GetType(ElementId id) => (ITypeSymbol) _elementRoslynObjects[id];
 
+    public IMethodSymbol GetMethod(ElementId id) => (IMethodSymbol) _elementRoslynObjects[id];
+
     private void SaveElementIdMapping(ElementId id, object roslynObject)
     {
         _elementRoslynObjects.AddOrUpdate(id, roslynObject, (_, existing) =>

@@ -14,6 +14,7 @@ internal class SliceCreator
 
     private readonly ElementCache _elementCache;
     private readonly ConcurrentDictionary<IMethodSymbol, IFlowGraph?> _flowGraphCache = [];
+    private readonly ConcurrentDictionary<IMethodSymbol, ProcedureSignature> _procedureSignatureCache = [];
 
     public ILazySlice LazySlice { get; }
 
@@ -37,7 +38,14 @@ internal class SliceCreator
             return null;
         }
 
-        return _flowGraphCache.GetOrAdd(method, _ => FlowGraphCreator.TryCreateFlowGraph(method, _solution));
+        return _flowGraphCache.GetOrAdd(method, _ => FlowGraphCreator.TryCreate(method, _solution));
+    }
+
+    public ProcedureSignature GetProcedureSignature(ElementId elementId)
+    {
+        var method = _elementCache.GetMethod(elementId);
+
+        return _procedureSignatureCache.GetOrAdd(method, _ => ProcedureSignatureCreator.Create(method));
     }
 
     private ILazySlice CreateSlice()

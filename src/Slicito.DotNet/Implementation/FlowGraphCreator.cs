@@ -25,7 +25,7 @@ internal class FlowGraphCreator
         _builder = new(parameterSymbols.Select(GetOrCreateVariable).ToImmutableArray());
     }
 
-    public static IFlowGraph? TryCreateFlowGraph(IMethodSymbol method, Solution solution)
+    public static IFlowGraph? TryCreate(IMethodSymbol method, Solution solution)
     {
         var roslynCfg = TryCreateRoslynControlFlowGraph(method, solution);
         if (roslynCfg is null)

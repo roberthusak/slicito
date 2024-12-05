@@ -13,4 +13,6 @@ public class DotNetSolutionContext(Solution solution, DotNetTypes types, ISliceM
     public ILazySlice LazySlice => _sliceCreator.LazySlice;
 
     public IFlowGraph? TryGetFlowGraph(ElementId elementId) => _sliceCreator.TryCreateFlowGraph(elementId);
+
+    public ProcedureSignature GetProcedureSignature(ElementId elementId) => _sliceCreator.GetProcedureSignature(elementId);
 }
