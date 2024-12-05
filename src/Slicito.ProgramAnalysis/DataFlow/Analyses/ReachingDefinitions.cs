@@ -29,12 +29,7 @@ public static class ReachingDefinitions
                 var reachingDefBlocks = result.InputMap[block];
 
                 var relevantDefs = reachingDefBlocks
-                    .Where(defBlock =>
-                        (defBlock is BasicBlock.Inner inner && inner.Operation is Operation.Assignment assignment
-                        && assignment.Location is Location.VariableReference locRef
-                        && locRef.Variable.Equals(varRef.Variable))
-                        || (defBlock is BasicBlock.Entry entry
-                        && entry.Parameters.Contains(varRef.Variable)));
+                    .Where(defBlock => ContainsVariableDefinition(defBlock, varRef.Variable));
 
                 foreach (var def in relevantDefs)
                 {
@@ -47,12 +42,38 @@ public static class ReachingDefinitions
         }
     }
 
+    private static bool ContainsVariableDefinition(BasicBlock defBlock, Variable variable)
+    {
+        switch (defBlock)
+        {
+            case BasicBlock.Inner inner when inner.Operation is Operation.Assignment assignment:
+                if (assignment.Location is Location.VariableReference locRef)
+                {
+                    return locRef.Variable.Equals(variable);
+                }
+                return false;
+
+            case BasicBlock.Inner inner when inner.Operation is Operation.Call call:
+                return call.ReturnLocations
+                    .Select(loc => (loc as Location.VariableReference)?.Variable)
+                    .Contains(variable);
+
+            case BasicBlock.Entry entry:
+                return entry.Parameters.Contains(variable);
+
+            default:
+                return false;
+        }
+    }
+
     private static IEnumerable<Expression.VariableReference> GetVariableReferences(Operation operation)
     {
         return operation switch
         {
             Operation.Assignment assignment => GetVariableReferences(assignment.Value),
             Operation.ConditionalJump jump => GetVariableReferences(jump.Condition),
+            Operation.Call call => call.Arguments
+                .SelectMany(GetVariableReferences),
             _ => []
         };
     }
@@ -82,15 +103,31 @@ public static class ReachingDefinitions
 
             foreach (var block in graph.Blocks)
             {
-                if (block is BasicBlock.Inner inner && inner.Operation is Operation.Assignment assignment)
+                if (block is BasicBlock.Inner inner)
                 {
-                    if (assignment.Location is not Location.VariableReference varRef)
+                    if (inner.Operation is Operation.Assignment assignment)
                     {
-                        continue;
-                    }
+                        if (assignment.Location is not Location.VariableReference varRef)
+                        {
+                            continue;
+                        }
 
-                    var defs = GetOrCreateDefinitions(variableDefinitionsBuilders, varRef.Variable);
-                    defs.Add(block);
+                        var defs = GetOrCreateDefinitions(variableDefinitionsBuilders, varRef.Variable);
+                        defs.Add(block);
+                    }
+                    else if (inner.Operation is Operation.Call call)
+                    {
+                        if (call.ReturnLocations.Length > 1)
+                        {
+                            throw new NotSupportedException("Call nodes with multiple return locations not supported");
+                        }
+
+                        if (call.ReturnLocations.Length == 1 && call.ReturnLocations[0] is Location.VariableReference varRef)
+                        {
+                            var defs = GetOrCreateDefinitions(variableDefinitionsBuilders, varRef.Variable);
+                            defs.Add(block);
+                        }
+                    }
                 }
                 else if (block is BasicBlock.Entry entry)
                 {
@@ -127,7 +164,9 @@ public static class ReachingDefinitions
             }
 
             if (block is BasicBlock.Entry
-                || (block is BasicBlock.Inner inner && inner.Operation is Operation.Assignment))
+                || (block is BasicBlock.Inner inner
+                    && (inner.Operation is Operation.Assignment
+                        || inner.Operation is Operation.Call)))
             {
                 return [block];
             }
@@ -142,21 +181,18 @@ public static class ReachingDefinitions
                 throw new InvalidOperationException("Analysis not initialized");
             }
 
-            // The state before the entry block is empty, no need to kill anything
-            if (block is not BasicBlock.Inner inner || 
-                inner.Operation is not Operation.Assignment assignment)
+            var killBlocks = ImmutableHashSet.CreateBuilder<BasicBlock>();
+
+            foreach (var kvp in _variableDefinitions)
             {
-                return [];
+                var defs = kvp.Value;
+                if (defs.Contains(block))
+                {
+                    killBlocks.UnionWith(defs.Where(def => def != block));
+                }
             }
 
-            if (assignment.Location is not Location.VariableReference varRef)
-            {
-                return [];
-            }
-
-            return _variableDefinitions.TryGetValue(varRef.Variable, out var defs)
-                ? defs.Remove(block)
-                : [];
+            return killBlocks.ToImmutableHashSet();
         }
     }
 }
