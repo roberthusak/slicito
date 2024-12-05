@@ -87,25 +87,24 @@ public class DotNetMethodBrowser : IController
 
     private async Task<IModel> DisplayMethodListAsync()
     {
-        var nodes = new List<Node>();
-        var edges = new List<Edge>();
+        var items = new List<TreeItem>();
 
         var methods = await DotNetMethodHelper.GetAllMethodsWithDisplayNamesAsync(_slice, _dotNetTypes);
         
         foreach ((var method, var displayName) in methods)
         {
-            nodes.Add(new Node(
-                method.Id.Value,
+            items.Add(new TreeItem(
                 displayName,
+                [],
                 CreateOpenCommand(method)));
 
-            nodes.Add(new Node(
-                $"{method.Id.Value}-{_reachingDefinitionsAnalysisKind}",
+            items.Add(new TreeItem(
                 $"{displayName} - {_reachingDefinitionsAnalysisKind}",
+                [],
                 CreateAnalyzeCommand(method, _reachingDefinitionsAnalysisKind)));
         }
 
-        return new Graph([.. nodes], [.. edges]);
+        return new Tree([.. items]);
     }
 
     private static Command CreateOpenCommand(ElementInfo element)
