@@ -113,11 +113,6 @@ internal class FlowGraphCreator
             creator.Visit(roslynOperation, default);
         }
 
-        foreach (var (operation, syntax) in context.InnerOperations)
-        {
-            _operationMappingBuilder.AddOperation(operation, syntax);
-        }
-
         Operation? additionalOperation = null;
         if (roslynBlock.ConditionalSuccessor is not null)
         {
@@ -130,6 +125,11 @@ internal class FlowGraphCreator
             additionalOperation = new Operation.ConditionalJump(condition);
 
             _operationMappingBuilder.AddOperation(additionalOperation, conditionOperation.Syntax);
+        }
+
+        foreach (var (operation, syntax) in context.InnerOperations)
+        {
+            _operationMappingBuilder.AddOperation(operation, syntax);
         }
 
         SlicitoBasicBlock.Inner? firstBlock = null;
