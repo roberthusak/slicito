@@ -3,9 +3,9 @@ using System.Windows.Controls;
 
 namespace Slicito.VisualStudio;
 
-public partial class MyToolWindowControl : UserControl
+public partial class MainWindowControl : UserControl
 {
-    public MyToolWindowControl()
+    public MainWindowControl()
     {
         InitializeComponent();
     }

@@ -6,15 +6,15 @@ using System.Windows;
 
 namespace Slicito.VisualStudio;
 
-public class MyToolWindow : BaseToolWindow<MyToolWindow>
+public class MainWindow : BaseToolWindow<MainWindow>
 {
-    public override string GetTitle(int toolWindowId) => "My Tool Window";
+    public override string GetTitle(int toolWindowId) => "Slicito";
 
     public override Type PaneType => typeof(Pane);
 
     public override Task<FrameworkElement> CreateAsync(int toolWindowId, CancellationToken cancellationToken)
     {
-        return Task.FromResult<FrameworkElement>(new MyToolWindowControl());
+        return Task.FromResult<FrameworkElement>(new MainWindowControl());
     }
 
     [Guid("681e5668-1e63-46cf-881d-1ca8d6fc2e51")]
