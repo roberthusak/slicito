@@ -110,7 +110,7 @@ public partial class ToolPanel : UserControl
     private void ShowModel(IModel model)
     {
         _treeView.Visibility = Visibility.Hidden;
-        _graphViewerPanel.Visibility = Visibility.Hidden;
+        _graphViewerPresenter.Visibility = Visibility.Hidden;
 
         switch (model)
         {
@@ -121,7 +121,7 @@ public partial class ToolPanel : UserControl
 
             case SlicitoGraph graph:
                 _graphViewer.Graph = SlicitoToMsaglGraphConverter.Convert(graph);
-                _graphViewerPanel.Visibility = Visibility.Visible;
+                _graphViewerPresenter.Visibility = Visibility.Visible;
                 break;
         }
     }

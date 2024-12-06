@@ -24,6 +24,10 @@
                 </HierarchicalDataTemplate>
             </TreeView.ItemTemplate>
         </TreeView>
-        <DockPanel x:Name="_graphViewerPanel" Grid.Row="1" Grid.Column="0" Visibility="Hidden" />
+        <ScrollContentPresenter x:Name="_graphViewerPresenter" Grid.Row="1" Grid.Column="0" Visibility="Hidden">
+            <ContentPresenter.Content>
+                <DockPanel x:Name="_graphViewerPanel" />
+            </ContentPresenter.Content>
+        </ScrollContentPresenter>
     </Grid>
 </UserControl>
