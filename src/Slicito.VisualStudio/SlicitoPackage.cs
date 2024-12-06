@@ -10,6 +10,7 @@ namespace Slicito.VisualStudio;
 [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
 [InstalledProductRegistration(Vsix.Name, Vsix.Description, Vsix.Version)]
 [ProvideToolWindow(typeof(MainWindow.Pane), Style = VsDockStyle.Tabbed, Window = WindowGuids.SolutionExplorer)]
+[ProvideToolWindow(typeof(ControllerWindow.Pane), Style = VsDockStyle.Tabbed, Window = WindowGuids.OutputWindow, MultiInstances = true)]
 [ProvideMenuResource("Menus.ctmenu", 1)]
 [Guid(PackageGuids.SlicitoString)]
 public sealed class SlicitoPackage : ToolkitPackage

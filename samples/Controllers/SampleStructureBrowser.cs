@@ -6,7 +6,6 @@ using Slicito.Abstractions;
 using Slicito.Abstractions.Models;
 using Slicito.Abstractions.Queries;
 using Slicito.Common;
-using Slicito.DotNet;
 
 namespace Controllers;
 
@@ -19,7 +18,7 @@ public class SampleStructureBrowser : IController
     
     private ElementId? _selectedElementId;
 
-    public SampleStructureBrowser(ITypeSystem typeSystem, ILazySlice? slice = null, DotNetSolutionContext? solutionContext = null)
+    public SampleStructureBrowser(ITypeSystem typeSystem, ILazySlice? slice = null)
     {
         _slice = slice ?? CreateSampleSlice(typeSystem);
     }
@@ -194,11 +193,11 @@ public class SampleStructureBrowser : IController
         return new Graph([.. nodes], [.. edges]);
     }
 
-    private string? TryGetLinkTypeLabel(LinkType linkType)
+    private static string? TryGetLinkTypeLabel(LinkType linkType)
     {
-        if (linkType.Value.AttributeValues.TryGetValue("Kind", out var kinds) && kinds is [var kind])
+        if (linkType.Value.AttributeValues.TryGetValue("Kind", out var kinds) && kinds.Count == 1)
         {
-            return kind;
+            return kinds[0];
         }
         else
         {

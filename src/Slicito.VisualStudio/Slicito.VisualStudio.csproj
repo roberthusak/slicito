@@ -53,6 +53,10 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>source.extension.vsixmanifest</DependentUpon>
     </Compile>
+    <Compile Include="ToolWindows\ControllerWindow.cs" />
+    <Compile Include="ToolWindows\ControllerWindowControl.xaml.cs">
+      <DependentUpon>ControllerWindowControl.xaml</DependentUpon>
+    </Compile>
     <Compile Include="VSCommandTable.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -79,6 +83,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ToolWindows\MainWindow.cs" />
+    <Page Include="ToolWindows\ControllerWindowControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="ToolWindows\MainWindowControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -100,6 +108,28 @@
     <PackageReference Include="Community.VisualStudio.VSCT" PrivateAssets="all" />
     <PackageReference Include="Community.VisualStudio.Toolkit.17" ExcludeAssets="Runtime" />
     <PackageReference Include="Microsoft.VSSDK.BuildTools" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\samples\Controllers\Controllers.csproj">
+      <Project>{cca637e7-2aac-4188-aada-1314386bc45b}</Project>
+      <Name>Controllers</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Slicito.Abstractions\Slicito.Abstractions.csproj">
+      <Project>{722d866d-ae3a-42cb-a64d-f18c3f441cbf}</Project>
+      <Name>Slicito.Abstractions</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Slicito.Common\Slicito.Common.csproj">
+      <Project>{58b6048c-f2aa-46a8-bea1-2d585f1ea4bf}</Project>
+      <Name>Slicito.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Slicito.DotNet\Slicito.DotNet.csproj">
+      <Project>{210426dd-20a8-4230-ba51-af7584d8707f}</Project>
+      <Name>Slicito.DotNet</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Slicito.Wpf\Slicito.Wpf.csproj">
+      <Project>{e4f0a9f3-ea1d-42b1-9260-583e42cbb972}</Project>
+      <Name>Slicito.Wpf</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets" Condition="'$(VSToolsPath)' != ''" />
