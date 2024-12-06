@@ -30,6 +30,8 @@ public partial class ToolPanel : UserControl
     private readonly IController _controller;
     private readonly GraphViewer _graphViewer;
 
+    private bool _isLoaded = false;
+
     public ToolPanel(IController controller)
     {
         InitializeComponent();
@@ -42,15 +44,20 @@ public partial class ToolPanel : UserControl
 
     private async void UserControl_LoadedAsync(object sender, RoutedEventArgs e)
     {
-        _graphViewer.BindToPanel(_graphViewerPanel);
+        if (!_isLoaded)
+        {
+            _graphViewer.BindToPanel(_graphViewerPanel);
 
-        _progressBar.IsIndeterminate = true;
+            _progressBar.IsIndeterminate = true;
 
-        var model = await _controller.InitAsync();
+            var model = await _controller.InitAsync();
 
-        ShowModel(model);
+            ShowModel(model);
 
-        _progressBar.IsIndeterminate = false;
+            _progressBar.IsIndeterminate = false;
+
+            _isLoaded = true;
+        }
     }
 
     private async void TreeView_MouseDoubleClickAsync(object sender, MouseButtonEventArgs e)
