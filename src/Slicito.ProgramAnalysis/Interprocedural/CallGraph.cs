@@ -3,7 +3,7 @@ using Slicito.Abstractions;
 
 namespace Slicito.ProgramAnalysis.Interprocedural;
 
-public class CallGraph
+public sealed class CallGraph
 {
     private readonly Dictionary<ElementId, Procedure> _proceduresById;
     private readonly Dictionary<ElementId, ElementId> _callTargets; // Maps call site ID to target procedure ID

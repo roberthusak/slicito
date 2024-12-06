@@ -11,7 +11,7 @@ using VersionMap = System.Collections.Immutable.ImmutableDictionary<Slicito.Prog
 
 namespace Slicito.ProgramAnalysis.SymbolicExecution;
 
-public class SymbolicExecutor(ISolverFactory solverFactory)
+public sealed class SymbolicExecutor(ISolverFactory solverFactory)
 {
     public async ValueTask<ExecutionResult> ExecuteAsync(
         IFlowGraph flowGraph,

@@ -2,7 +2,7 @@ using Slicito.ProgramAnalysis.SymbolicExecution.SmtLib;
 
 namespace Slicito.ProgramAnalysis.SymbolicExecution.Implementation;
 
-internal class ImmutableConditionStack
+internal sealed class ImmutableConditionStack
 {
     private readonly ImmutableConditionStack? _tail;
 

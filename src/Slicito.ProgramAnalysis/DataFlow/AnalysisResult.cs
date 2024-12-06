@@ -2,7 +2,7 @@ using Slicito.ProgramAnalysis.Notation;
 
 namespace Slicito.ProgramAnalysis.DataFlow;
 
-public class AnalysisResult<TDomain>(
+public sealed class AnalysisResult<TDomain>(
     IReadOnlyDictionary<BasicBlock, TDomain> inputMap,
     IReadOnlyDictionary<BasicBlock, TDomain> outputMap)
 {

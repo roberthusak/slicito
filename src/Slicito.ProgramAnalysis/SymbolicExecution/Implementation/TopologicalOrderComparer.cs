@@ -2,7 +2,7 @@ using Slicito.ProgramAnalysis.Notation;
 
 namespace Slicito.ProgramAnalysis.SymbolicExecution.Implementation;
 
-internal class TopologicalOrderComparer(Dictionary<BasicBlock, int> topologicalOrder) : IComparer<ExecutionState>
+internal sealed class TopologicalOrderComparer(Dictionary<BasicBlock, int> topologicalOrder) : IComparer<ExecutionState>
 {
     public int Compare(ExecutionState x, ExecutionState y)
     {
