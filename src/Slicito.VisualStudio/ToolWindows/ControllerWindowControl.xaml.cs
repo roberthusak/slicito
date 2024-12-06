@@ -1,16 +1,16 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Controls;
+
+using Slicito.Abstractions;
+using Slicito.Wpf;
 
 namespace Slicito.VisualStudio;
 public partial class ControllerWindowControl : UserControl
 {
-    public ControllerWindowControl()
+    public ControllerWindowControl(IController controller)
     {
         InitializeComponent();
-    }
 
-    private void button1_Click(object sender, RoutedEventArgs e)
-    {
-        VS.MessageBox.Show("ControllerWindowControl", "Button clicked");
+        _contentControl.Content = new ToolPanel(controller);
     }
 }

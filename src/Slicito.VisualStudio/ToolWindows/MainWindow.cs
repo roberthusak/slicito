@@ -14,7 +14,7 @@ public class MainWindow : BaseToolWindow<MainWindow>
 
     public override Task<FrameworkElement> CreateAsync(int toolWindowId, CancellationToken cancellationToken)
     {
-        var package = Package ?? throw new InvalidOperationException("The package is not available from the main window.");
+        var package = Package as SlicitoPackage ?? throw new InvalidOperationException("Slicito package is not available from the main window.");
 
         return Task.FromResult<FrameworkElement>(new MainWindowControl(package));
     }

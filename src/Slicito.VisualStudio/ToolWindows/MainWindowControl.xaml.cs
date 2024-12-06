@@ -2,15 +2,19 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 
+using Controllers;
+
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Threading;
+
+using Slicito.Common;
 namespace Slicito.VisualStudio;
 
 public partial class MainWindowControl : UserControl
 {
-    private readonly ToolkitPackage _package;
+    private readonly SlicitoPackage _package;
 
-    public MainWindowControl(ToolkitPackage package)
+    public MainWindowControl(SlicitoPackage package)
     {
         InitializeComponent();
         _package = package;
@@ -20,25 +24,17 @@ public partial class MainWindowControl : UserControl
 
     private async Task OnButtonClickAsync()
     {
-        for (var i = 0; i < 3; i++)
+        var id = _package.ControllerRegistry.Register(new SampleStructureBrowser(new TypeSystem()));
+
+        var window = await _package.FindToolWindowAsync(typeof(ControllerWindow.Pane), id, true, _package.DisposalToken);
+        if (window is null || window.Frame is null)
         {
-            var window = await _package.FindToolWindowAsync(typeof(ControllerWindow.Pane), i, false, _package.DisposalToken);
-
-            if (window == null)
-            {
-                // Create the window with the first free ID.
-                window = await _package.FindToolWindowAsync(typeof(ControllerWindow.Pane), i, true, _package.DisposalToken);
-                if (window is null || window.Frame is null)
-                {
-                    throw new InvalidOperationException("Cannot create a tool window.");
-                }
-
-                await _package.JoinableTaskFactory.SwitchToMainThreadAsync(_package.DisposalToken);
-
-                var windowFrame = (IVsWindowFrame) window.Frame;
-                Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
-                break;
-            }
+            throw new InvalidOperationException("Cannot create a tool window.");
         }
+
+        await _package.JoinableTaskFactory.SwitchToMainThreadAsync(_package.DisposalToken);
+
+        var windowFrame = (IVsWindowFrame) window.Frame;
+        Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
     }
 }

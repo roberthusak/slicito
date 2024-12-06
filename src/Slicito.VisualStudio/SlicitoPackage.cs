@@ -15,6 +15,8 @@ namespace Slicito.VisualStudio;
 [Guid(PackageGuids.SlicitoString)]
 public sealed class SlicitoPackage : ToolkitPackage
 {
+    internal ControllerRegistry ControllerRegistry { get; } = new();
+
     protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
     {
         await this.RegisterCommandsAsync();
