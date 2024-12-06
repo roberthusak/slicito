@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 
 using Microsoft.VisualStudio.Imaging;
 
@@ -20,9 +21,15 @@ public class ControllerWindow : BaseToolWindow<ControllerWindow>
     public override Task<FrameworkElement> CreateAsync(int toolWindowId, CancellationToken cancellationToken)
     {
         var package = Package as SlicitoPackage ?? throw new InvalidOperationException("Slicito package is not available from the main window.");
-        _controller = package.ControllerRegistry.Get(toolWindowId);
 
-        return Task.FromResult<FrameworkElement>(new ToolPanel(_controller));
+        if (package.ControllerRegistry.TryGet(toolWindowId, out _controller))
+        {
+            return Task.FromResult<FrameworkElement>(new ToolPanel(_controller));
+        }
+        else
+        {
+            return Task.FromResult<FrameworkElement>(new TextBlock() { Text = "Outdated, please close." });
+        }
     }
 
     [Guid("996d5047-928e-4eab-af50-dd7343f6531a")]

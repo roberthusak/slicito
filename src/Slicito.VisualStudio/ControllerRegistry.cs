@@ -18,5 +18,5 @@ public class ControllerRegistry
         return id;
     }
 
-    public IController Get(int id) => _controllers[id];
+    public bool TryGet(int id, out IController controller) => _controllers.TryGetValue(id, out controller);
 }
