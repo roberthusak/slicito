@@ -11,7 +11,10 @@ public abstract class BasicBlock
         public ImmutableArray<Variable> Parameters { get; } = parameters;
     }
 
-    public sealed class Exit : BasicBlock;
+    public sealed class Exit(ImmutableArray<Expression> returnValues) : BasicBlock
+    {
+        public ImmutableArray<Expression> ReturnValues { get; } = returnValues;
+    }
 
     public sealed class Inner(Operation? operation) : BasicBlock
     {

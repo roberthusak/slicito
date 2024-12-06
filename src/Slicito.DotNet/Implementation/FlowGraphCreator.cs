@@ -7,7 +7,9 @@ using Microsoft.CodeAnalysis.FlowAnalysis;
 using Slicito.ProgramAnalysis.Notation;
 
 using RoslynBasicBlock = Microsoft.CodeAnalysis.FlowAnalysis.BasicBlock;
+
 using SlicitoBasicBlock = Slicito.ProgramAnalysis.Notation.BasicBlock;
+using SlicitoLocation = Slicito.ProgramAnalysis.Notation.Location;
 
 namespace Slicito.DotNet.Implementation;
 
@@ -20,12 +22,30 @@ internal class FlowGraphCreator
     private readonly List<Variable> _temporaryVariables = [];
     private readonly FlowGraph.Builder _builder;
     private readonly OperationMapping.Builder _operationMappingBuilder;
+    private readonly Variable? _returnVariable;
 
-    private FlowGraphCreator(IMethodSymbol methodSymbol, ControlFlowGraph roslynCfg, ImmutableArray<IParameterSymbol> parameterSymbols)
+    private FlowGraphCreator(IMethodSymbol methodSymbol, ControlFlowGraph roslynCfg)
     {
         _roslynCfg = roslynCfg;
-        _builder = new(parameterSymbols.Select(GetOrCreateVariable).ToImmutableArray());
         _operationMappingBuilder = new(ElementIdProvider.GetOperationIdPrefix(methodSymbol));
+
+        var parameters = methodSymbol.Parameters
+            .Select(GetOrCreateVariable)
+            .ToImmutableArray();
+
+        ImmutableArray<Expression> returnValues;
+        if (methodSymbol.ReturnType.SpecialType == SpecialType.System_Void)
+        {
+            returnValues = [];
+        }
+        else
+        {
+            _returnVariable = CreateTemporaryVariable(TypeCreator.Create(methodSymbol.ReturnType));
+
+            returnValues = [new Expression.VariableReference(_returnVariable)];
+        }
+
+        _builder = new(parameters, returnValues);
     }
 
     public static (IFlowGraph FlowGraph, OperationMapping OperationMapping)? TryCreate(IMethodSymbol method, Solution solution)
@@ -36,7 +56,7 @@ internal class FlowGraphCreator
             return null;
         }
 
-        var creator = new FlowGraphCreator(method, roslynCfg, method.Parameters);
+        var creator = new FlowGraphCreator(method, roslynCfg);
         var flowGraph = creator.CreateFlowGraph();
         var operationMapping = creator._operationMappingBuilder.Build();
 
@@ -125,6 +145,24 @@ internal class FlowGraphCreator
             additionalOperation = new Operation.ConditionalJump(condition);
 
             _operationMappingBuilder.AddOperation(additionalOperation, conditionOperation.Syntax);
+        }
+        else if (roslynBlock.FallThroughSuccessor?.Semantics == ControlFlowBranchSemantics.Return)
+        {
+            var returnValue = creator.Visit(roslynBlock.BranchValue, default);
+
+            if (_returnVariable is not null)
+            {
+                if (returnValue is null)
+                {
+                    throw new InvalidOperationException("Unexpectedly produced empty return value.");
+                }
+
+                additionalOperation = new Operation.Assignment(
+                    new SlicitoLocation.VariableReference(_returnVariable),
+                    returnValue);
+
+                _operationMappingBuilder.AddOperation(additionalOperation, roslynBlock.BranchValue!.Syntax);
+            }
         }
 
         foreach (var (operation, syntax) in context.InnerOperations)
@@ -246,10 +284,10 @@ internal class FlowGraphCreator
             _innerOperations.Add((operation, syntax));
         }
 
-        internal Variable GetOrCreateVariable(ILocalSymbol local) => creator.GetOrCreateVariable(local);
+        public Variable GetOrCreateVariable(ILocalSymbol local) => creator.GetOrCreateVariable(local);
 
-        internal Variable GetOrCreateVariable(IParameterSymbol parameter) => creator.GetOrCreateVariable(parameter);
+        public Variable GetOrCreateVariable(IParameterSymbol parameter) => creator.GetOrCreateVariable(parameter);
 
-        internal Variable CreateTemporaryVariable(DataType type) => creator.CreateTemporaryVariable(type);
+        public Variable CreateTemporaryVariable(DataType type) => creator.CreateTemporaryVariable(type);
     }
 }

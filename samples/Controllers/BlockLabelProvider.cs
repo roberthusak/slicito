@@ -11,7 +11,7 @@ public static class BlockLabelProvider
         return block switch
         {
             BasicBlock.Entry entry => $"Entry({FormatParameters(entry.Parameters)})",
-            BasicBlock.Exit => "Exit",
+            BasicBlock.Exit exit => $"Exit({FormatReturnValues(exit.ReturnValues)})",
             BasicBlock.Inner inner => GetInnerBlockLabel(inner),
             _ => throw new ArgumentException($"Unsupported block type {block.GetType().Name}.")
         };
@@ -19,6 +19,9 @@ public static class BlockLabelProvider
 
     private static string FormatParameters(ImmutableArray<Variable> parameters) =>
         string.Join(", ", parameters.Select(p => p.Name));
+
+    private static string FormatReturnValues(ImmutableArray<Expression> returnValues) =>
+        string.Join(", ", returnValues.Select(FormatExpression));
 
     private static string GetInnerBlockLabel(BasicBlock.Inner block)
     {

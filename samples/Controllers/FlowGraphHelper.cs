@@ -16,7 +16,7 @@ public static class FlowGraphHelper
         var varA = new Variable("a", intType);
         var varB = new Variable("b", intType);
 
-        var builder = new FlowGraph.Builder([varA, varB]);
+        var builder = new FlowGraph.Builder([varA, varB], [new Expression.VariableReference(varB)]);
 
         // Create blocks for each statement/condition
         var condition1 = new BasicBlock.Inner(new Operation.ConditionalJump(
