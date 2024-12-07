@@ -108,6 +108,7 @@
   <ItemGroup>
     <PackageReference Include="Community.VisualStudio.VSCT" PrivateAssets="all" />
     <PackageReference Include="Community.VisualStudio.Toolkit.17" ExcludeAssets="Runtime" />
+    <PackageReference Include="Microsoft.VisualStudio.LanguageServices" />
     <PackageReference Include="Microsoft.VSSDK.BuildTools" />
   </ItemGroup>
   <ItemGroup>
@@ -126,6 +127,10 @@
     <ProjectReference Include="..\Slicito.DotNet\Slicito.DotNet.csproj">
       <Project>{210426dd-20a8-4230-ba51-af7584d8707f}</Project>
       <Name>Slicito.DotNet</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Slicito.ProgramAnalysis\Slicito.ProgramAnalysis.csproj">
+      <Project>{2a1ada4d-b54e-44c4-bb34-bb909e229c88}</Project>
+      <Name>Slicito.ProgramAnalysis</Name>
     </ProjectReference>
     <ProjectReference Include="..\Slicito.Wpf\Slicito.Wpf.csproj">
       <Project>{e4f0a9f3-ea1d-42b1-9260-583e42cbb972}</Project>

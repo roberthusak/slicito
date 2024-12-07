@@ -1,6 +1,7 @@
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <RoslynVersion>4.9.2</RoslynVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="AutomaticGraphLayout.WpfGraphControl" Version="1.1.12" />
@@ -15,10 +16,11 @@
     <PackageVersion Include="Microsoft.AspNetCore.Html.Abstractions" Version="2.2.0" />
     <PackageVersion Include="Microsoft.AspNetCore.WebUtilities" Version="2.2.0" />
     <PackageVersion Include="Microsoft.Build.Locator" Version="1.7.8" />
-    <PackageVersion Include="Microsoft.CodeAnalysis" Version="4.9.2" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="4.9.2" />
+    <PackageVersion Include="Microsoft.CodeAnalysis" Version="$(RoslynVersion)" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="$(RoslynVersion)" />
     <PackageVersion Include="Microsoft.DotNet.Interactive" Version="1.0.0-beta.22606.2" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageVersion Include="Microsoft.VisualStudio.LanguageServices" Version="$(RoslynVersion)" />
     <PackageVersion Include="Microsoft.VSSDK.BuildTools" Version="17.9.3168" />
     <PackageVersion Include="MSTest.TestAdapter" Version="3.1.1" />
     <PackageVersion Include="MSTest.TestFramework" Version="3.1.1" />

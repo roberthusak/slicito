@@ -53,7 +53,7 @@ public partial class MainWindowControl : UserControl
         Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
     }
 
-    private void OnOpenScript(object sender, RoutedEventArgs e) => throw new NotImplementedException();
+    private void OnOpenScript(object sender, RoutedEventArgs e) => _package.OpenScript();
 
-    private void OnRunScript(object sender, RoutedEventArgs e) => throw new NotImplementedException();
+    private void OnRunScript(object sender, RoutedEventArgs e) => _package.JoinableTaskFactory.RunAsync(_package.RunScriptAsync);
 }
