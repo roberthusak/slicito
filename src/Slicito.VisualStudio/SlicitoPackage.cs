@@ -9,7 +9,9 @@ global using Task = System.Threading.Tasks.Task;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.LanguageServices;
+using Microsoft.VisualStudio.Shell.Interop;
 
+using Slicito.Abstractions;
 using Slicito.VisualStudio.Implementation;
 
 using System.IO;
@@ -97,8 +99,12 @@ public sealed class SlicitoPackage : ToolkitPackage
             return;
         }
 
-        // TODO
-        throw new NotImplementedException();
+        var result = await ScriptRunner.RunScriptAsync(path);
+
+        if (result is IController controller)
+        {
+            await CreateToolWindowAsync(controller);
+        }
     }
 
     private bool TryGetScriptPath(out string path)
@@ -113,5 +119,21 @@ public sealed class SlicitoPackage : ToolkitPackage
 
         path = Path.Combine(solutionDir, "slicito.csx");
         return true;
+    }
+
+    internal async Task CreateToolWindowAsync(IController controller)
+    {
+        var id = ControllerRegistry.Register(controller);
+
+        var window = await FindToolWindowAsync(typeof(ControllerWindow.Pane), id, true, DisposalToken);
+        if (window is null || window.Frame is null)
+        {
+            throw new InvalidOperationException("Cannot create a tool window.");
+        }
+
+        await JoinableTaskFactory.SwitchToMainThreadAsync(DisposalToken);
+
+        var windowFrame = (IVsWindowFrame) window.Frame;
+        Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
     }
 }

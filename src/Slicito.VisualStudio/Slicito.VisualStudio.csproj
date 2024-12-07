@@ -45,9 +45,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Implementation\ScriptRunner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Commands\SlicitoMainWindowCommand.cs" />
-    <Compile Include="ControllerRegistry.cs" />
+    <Compile Include="Implementation\ControllerRegistry.cs" />
     <Compile Include="SlicitoPackage.cs" />
     <Compile Include="source.extension.cs">
       <AutoGen>True</AutoGen>
@@ -108,8 +109,10 @@
   <ItemGroup>
     <PackageReference Include="Community.VisualStudio.VSCT" PrivateAssets="all" />
     <PackageReference Include="Community.VisualStudio.Toolkit.17" ExcludeAssets="Runtime" />
+    <PackageReference Include="Dotnet.Script.Core" />
     <PackageReference Include="Microsoft.VisualStudio.LanguageServices" />
     <PackageReference Include="Microsoft.VSSDK.BuildTools" />
+    <PackageReference Include="StrongNamer" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\samples\Controllers\Controllers.csproj">

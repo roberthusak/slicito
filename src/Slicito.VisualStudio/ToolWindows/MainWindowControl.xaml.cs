@@ -39,18 +39,9 @@ public partial class MainWindowControl : UserControl
         }
 
         var (name, factory) = _controllerFactories[_controllersComboBox.SelectedIndex];
-        var id = _package.ControllerRegistry.Register(factory());
+        var controller = factory();
 
-        var window = await _package.FindToolWindowAsync(typeof(ControllerWindow.Pane), id, true, _package.DisposalToken);
-        if (window is null || window.Frame is null)
-        {
-            throw new InvalidOperationException("Cannot create a tool window.");
-        }
-
-        await _package.JoinableTaskFactory.SwitchToMainThreadAsync(_package.DisposalToken);
-
-        var windowFrame = (IVsWindowFrame) window.Frame;
-        Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
+        await _package.CreateToolWindowAsync(controller);
     }
 
     private void OnOpenScript(object sender, RoutedEventArgs e) => _package.OpenScript();
