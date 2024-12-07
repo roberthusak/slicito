@@ -3,9 +3,9 @@ using System.Threading;
 
 using Slicito.Abstractions;
 
-namespace Slicito.VisualStudio;
+namespace Slicito.VisualStudio.Implementation;
 
-public class ControllerRegistry
+internal class ControllerRegistry
 {
     private readonly ConcurrentDictionary<int, IController> _controllers = new();
 

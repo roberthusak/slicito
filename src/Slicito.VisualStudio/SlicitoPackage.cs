@@ -1,11 +1,16 @@
 global using Community.VisualStudio.Toolkit;
+
 global using Microsoft.VisualStudio.Shell;
+
 global using System;
+
 global using Task = System.Threading.Tasks.Task;
 
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.LanguageServices;
+
+using Slicito.VisualStudio.Implementation;
 
 using System.IO;
 using System.Runtime.InteropServices;
