@@ -13,16 +13,28 @@
              d:DesignHeight="300"
              d:DesignWidth="300"
              Name="MyToolWindow">
-    <Grid>
-        <StackPanel Orientation="Vertical">
-            <Label x:Name="lblHeadline"
-                   Margin="10"
-                   HorizontalAlignment="Center">Tool Window Factory</Label>
-            <Button Content="Create!"
-                    Click="OnButtonClick"
-                    Width="120"
-                    Height="80"
-                    Name="button1" />
+    <Grid Margin="5">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Row 0 -->
+        <Label Grid.Row="0" Grid.Column="0" Margin="0,0,6,0">New window:</Label>
+        <DockPanel Grid.Row="0" Grid.Column="1">
+            <Button DockPanel.Dock="Right" Content="Create" Click="OnCreateWindow" Margin="0,0,6,0" />
+            <ComboBox x:Name="_controllersComboBox" Margin="0,0,6,0" DisplayMemberPath="Item1" />
+        </DockPanel>
+
+        <!-- Row 1 -->
+        <Label Grid.Row="1" Grid.Column="0" Margin="0,15,6,0">Script:</Label>
+        <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="0,15,0,0">
+            <Button Content="Open" Click="OnOpenScript" Margin="0,0,10,0" Padding="5" Width="80" />
+            <Button Content="Run" Click="OnRunScript" Padding="5" Width="80" />
         </StackPanel>
     </Grid>
 </UserControl>
