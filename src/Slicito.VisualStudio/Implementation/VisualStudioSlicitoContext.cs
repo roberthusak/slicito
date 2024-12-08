@@ -36,7 +36,7 @@ internal class VisualStudioSlicitoContext : ProgramAnalysisContextBase
 
     public override ILazySlice WholeSlice => GetCurrentDotNetSolutionContext().LazySlice;
 
-    public override ICallGraphProvider CallGraphProvider => GetCurrentDotNetSolutionContext();
+    public override IFlowGraphProvider FlowGraphProvider => GetCurrentDotNetSolutionContext();
 
     private DotNetSolutionContext GetCurrentDotNetSolutionContext()
     {

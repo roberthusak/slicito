@@ -7,7 +7,7 @@ using Slicito.ProgramAnalysis.Notation;
 
 namespace Slicito.DotNet;
 
-public class DotNetSolutionContext(Solution solution, DotNetTypes types, ISliceManager sliceManager) : ICallGraphProvider
+public class DotNetSolutionContext(Solution solution, DotNetTypes types, ISliceManager sliceManager) : IFlowGraphProvider
 {
     private readonly SliceCreator _sliceCreator = new(solution, types, sliceManager);
 

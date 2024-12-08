@@ -6,5 +6,5 @@ public interface IProgramAnalysisContext : ISlicitoContext
 {
     IProgramTypes ProgramTypes { get; }
 
-    ICallGraphProvider CallGraphProvider { get; }
+    IFlowGraphProvider FlowGraphProvider { get; }
 }

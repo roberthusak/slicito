@@ -3,7 +3,7 @@ using Slicito.ProgramAnalysis.Notation;
 
 namespace Slicito.ProgramAnalysis;
 
-public interface ICallGraphProvider
+public interface IFlowGraphProvider
 {
     IFlowGraph? TryGetFlowGraph(ElementId elementId);
 

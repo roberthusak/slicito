@@ -25,7 +25,7 @@ public abstract class ProgramAnalysisContextBase : IProgramAnalysisContext
 
     public IProgramTypes ProgramTypes => GetService<IProgramTypes>();
 
-    public abstract ICallGraphProvider CallGraphProvider { get; }
+    public abstract IFlowGraphProvider FlowGraphProvider { get; }
 
     public TInterface GetService<TInterface>()
     {
