@@ -14,16 +14,20 @@ public sealed class CallGraph
     public ImmutableArray<Procedure> RootProcedures { get; }
     public ImmutableArray<Procedure> AllProcedures { get; }
 
+    public ILazySlice OriginalSlice { get; }
+
     private CallGraph(
         ImmutableArray<Procedure> rootProcedures,
         ImmutableArray<Procedure> allProcedures,
         Dictionary<ElementId, Procedure> proceduresById,
-        Dictionary<ElementId, ElementId> callTargets)
+        Dictionary<ElementId, ElementId> callTargets,
+        ILazySlice originalSlice)
     {
         RootProcedures = rootProcedures;
         AllProcedures = allProcedures;
         _proceduresById = proceduresById;
         _callTargets = callTargets;
+        OriginalSlice = originalSlice;
     }
 
     public Procedure GetTarget(CallSite callSite)
@@ -99,7 +103,8 @@ public sealed class CallGraph
                 rootProcedures,
                 proceduresById.Values.ToImmutableArray(),
                 proceduresById,
-                callTargets);
+                callTargets,
+                slice);
         }
     }
 }

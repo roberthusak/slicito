@@ -6,7 +6,7 @@ using Slicito.ProgramAnalysis.Interprocedural;
 
 namespace Slicito.Common.Controllers;
 
-public class CallGraphExplorer(CallGraph callGraph, ILazySlice slice, IProgramTypes types) : IController
+public class CallGraphExplorer(CallGraph callGraph, IProgramTypes types) : IController
 {
     public async Task<IModel> InitAsync() => await CreateGraphAsync();
 
@@ -15,7 +15,7 @@ public class CallGraphExplorer(CallGraph callGraph, ILazySlice slice, IProgramTy
     private async Task<Graph> CreateGraphAsync()
     {
         var nameProvider = types.HasName(types.Procedure)
-            ? slice.GetElementAttributeProviderAsyncCallback(CommonAttributeNames.Name)
+            ? callGraph.OriginalSlice.GetElementAttributeProviderAsyncCallback(CommonAttributeNames.Name)
             : null;
 
         var nodes = new List<Node>();

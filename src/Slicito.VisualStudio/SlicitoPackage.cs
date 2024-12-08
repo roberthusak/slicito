@@ -79,8 +79,6 @@ public sealed class SlicitoPackage : ToolkitPackage
         using var stream = File.Create(path);
         using var writer = new StreamWriter(stream);
 
-        writer.WriteLine("// For better IntelliSense:");
-
         var assemblies = new[]
         {
             typeof(Slicito.Abstractions.IController).Assembly,
@@ -94,6 +92,10 @@ public sealed class SlicitoPackage : ToolkitPackage
             writer.WriteLine($"#r \"{assembly.Location}\"");
         }
 
+        writer.WriteLine();
+        writer.WriteLine("using Slicito.Common;");
+        writer.WriteLine("using Slicito.DotNet;");
+        writer.WriteLine("using Slicito.ProgramAnalysis;");
         writer.WriteLine();
         writer.WriteLine("using static Slicito.Common.Extensibility.ScriptContext;");
         writer.WriteLine();

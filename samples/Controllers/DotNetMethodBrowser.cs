@@ -100,7 +100,7 @@ public class DotNetMethodBrowser : IController
             .AddCallerRoot(id)
             .BuildAsync();
 
-        var explorer = new CallGraphExplorer(callGraph, _slice, _dotNetTypes);
+        var explorer = new CallGraphExplorer(callGraph, _dotNetTypes);
         return await explorer.InitAsync();
     }
 
