@@ -46,6 +46,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Implementation\ScriptRunner.cs" />
+    <Compile Include="Implementation\VisualStudioSlicitoContext.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Commands\SlicitoMainWindowCommand.cs" />
     <Compile Include="Implementation\ControllerRegistry.cs" />

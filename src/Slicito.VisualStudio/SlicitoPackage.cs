@@ -12,6 +12,7 @@ using Microsoft.VisualStudio.LanguageServices;
 using Microsoft.VisualStudio.Shell.Interop;
 
 using Slicito.Abstractions;
+using Slicito.Common.Extensibility;
 using Slicito.VisualStudio.Implementation;
 
 using System.IO;
@@ -30,6 +31,8 @@ public sealed class SlicitoPackage : ToolkitPackage
 {
     internal VisualStudioWorkspace Workspace { get; private set; }
 
+    internal VisualStudioSlicitoContext SlicitoContext { get; private set; }
+
     internal ControllerRegistry ControllerRegistry { get; } = new();
 
     protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
@@ -40,7 +43,11 @@ public sealed class SlicitoPackage : ToolkitPackage
 
         var componentModel = await this.GetServiceAsync<SComponentModel, IComponentModel>();
 
-        this.Workspace = componentModel.GetService<VisualStudioWorkspace>();
+        Workspace = componentModel.GetService<VisualStudioWorkspace>();
+
+        SlicitoContext = VisualStudioSlicitoContext.Create(Workspace);
+
+        ScriptContext.SlicitoContext ??= SlicitoContext;
     }
 
     internal void OpenScript()
@@ -88,7 +95,7 @@ public sealed class SlicitoPackage : ToolkitPackage
         }
 
         writer.WriteLine();
-        writer.WriteLine("using Slicito.Abstractions;");
+        writer.WriteLine("using static Slicito.Common.Extensibility.ScriptContext;");
         writer.WriteLine();
     }
 
