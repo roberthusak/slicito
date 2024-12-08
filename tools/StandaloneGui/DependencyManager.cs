@@ -20,7 +20,6 @@ public class DependencyManager
     private DotNetExtractor? _dotNetExtractor;
     private DotNetSolutionContext? _dotNetSolutionContext;
     private ILazySlice? _lazySlice;
-    private DotNetFactProvider? _factProvider;
 
     public DependencyManager(string solutionPath)
     {
@@ -51,7 +50,6 @@ public class DependencyManager
             var t when t == typeof(DotNetSolutionContext) => await TryGetDotNetSolutionContextAsync(),
             var t when t == typeof(ILazySlice) => await TryLoadLazySliceAsync(),
             var t when t == typeof(IFlowGraph) => null,
-            var t when t == typeof(DotNetFactProvider) => await LoadFactProviderAsync(),
             _ => throw new ApplicationException($"Unsupported parameter type {parameterType.Name}.")
         };
     }
@@ -83,16 +81,5 @@ public class DependencyManager
     {
         _lazySlice ??= (await TryGetDotNetSolutionContextAsync())?.LazySlice;
         return _lazySlice;
-    }
-
-    private async Task<DotNetFactProvider> LoadFactProviderAsync()
-    {
-        if (_factProvider == null)
-        {
-            var solution = await MSBuildWorkspace.Create().OpenSolutionAsync(_solutionPath);
-            _factProvider = new DotNetFactProvider(solution);
-        }
-
-        return _factProvider;
     }
 } 
