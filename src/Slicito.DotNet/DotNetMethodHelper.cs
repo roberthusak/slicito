@@ -1,8 +1,7 @@
 using Slicito.Abstractions;
 using Slicito.Abstractions.Queries;
-using Slicito.DotNet;
 
-namespace Controllers;
+namespace Slicito.DotNet;
 
 public static class DotNetMethodHelper
 {
@@ -13,10 +12,10 @@ public static class DotNetMethodHelper
         var methods = new List<(ElementInfo Method, string DisplayName)>();
         var nameProvider = slice.GetElementAttributeProviderAsyncCallback(DotNetAttributeNames.Name);
         var hierarchyExplorer = slice.GetLinkExplorer(slice.Schema.HierarchyLinkType!);
-        
+
         // Get all projects (root elements)
         var projects = await slice.GetRootElementsAsync();
-        
+
         foreach (var project in projects)
         {
             // Start processing from top-level namespaces
@@ -39,12 +38,12 @@ public static class DotNetMethodHelper
         DotNetTypes dotNetTypes)
     {
         var namespaceName = await nameProvider(namespaceElement.Id);
-        var fullNamespace = string.IsNullOrEmpty(parentNamespace) 
-            ? namespaceName 
+        var fullNamespace = string.IsNullOrEmpty(parentNamespace)
+            ? namespaceName
             : $"{parentNamespace}.{namespaceName}";
 
         var children = await hierarchyExplorer.GetTargetElementsAsync(namespaceElement.Id);
-        
+
         foreach (var child in children)
         {
             // Check if child is a namespace or a type
@@ -71,12 +70,12 @@ public static class DotNetMethodHelper
         DotNetTypes dotNetTypes)
     {
         var typeName = await nameProvider(typeElement.Id);
-        var fullTypeName = string.IsNullOrEmpty(parentType) 
-            ? typeName 
+        var fullTypeName = string.IsNullOrEmpty(parentType)
+            ? typeName
             : $"{parentType}+{typeName}";
 
         var members = await hierarchyExplorer.GetTargetElementsAsync(typeElement.Id);
-        
+
         foreach (var member in members)
         {
             if (member.Type.Value.IsSubsetOfOrEquals(dotNetTypes.Method.Value))
@@ -92,4 +91,4 @@ public static class DotNetMethodHelper
             }
         }
     }
-} 
+}
