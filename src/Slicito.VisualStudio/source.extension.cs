@@ -11,7 +11,7 @@ namespace Slicito.VisualStudio
         public const string Name = "Slicito";
         public const string Description = @"Slicito enables you to analyze your C# code and create interactive visualizations from it.";
         public const string Language = "en-US";
-        public const string Version = "0.2";
+        public const string Version = "0.2.0";
         public const string Author = "Robert Husak";
         public const string Tags = "";
     }
