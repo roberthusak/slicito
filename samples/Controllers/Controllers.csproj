@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net48</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Slicito.Abstractions\Slicito.Abstractions.csproj" />
+    <ProjectReference Include="..\..\src\Slicito.DotNet\Slicito.DotNet.csproj" />
+    <ProjectReference Include="..\..\src\Slicito.Common\Slicito.Common.csproj" />
+    <ProjectReference Include="..\..\src\Slicito.ProgramAnalysis\Slicito.ProgramAnalysis.csproj" />
+  </ItemGroup>
+
+</Project>

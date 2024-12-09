@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" />
+  </ItemGroup>
+    
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Slicito.DotNet\Slicito.DotNet.csproj" />
+    <ProjectReference Include="..\..\src\Slicito.ProgramAnalysis\Slicito.ProgramAnalysis.csproj" />
+    <ProjectReference Include="..\..\src\Slicito.Common\Slicito.Common.csproj" />
+    <ProjectReference Include="..\..\src\Slicito.Wpf\Slicito.Wpf.csproj" />
+  </ItemGroup>
+
+</Project>

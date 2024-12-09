@@ -5,8 +5,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Slicito.Common\Slicito.Common.csproj" />
-    <ProjectReference Include="..\Slicito.DotNet\Slicito.DotNet.csproj" />
+    <PackageReference Include="System.Collections.Immutable" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" />
   </ItemGroup>
 
 </Project>

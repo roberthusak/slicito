@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0-windows;net48</TargetFrameworks>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutomaticGraphLayout.WpfGraphControl" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Slicito.Abstractions\Slicito.Abstractions.csproj" />
+  </ItemGroup>
+
+</Project>
