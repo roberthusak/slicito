@@ -1,4 +1,6 @@
 
+using System.Collections.Immutable;
+
 using Slicito.Abstractions;
 using Slicito.Abstractions.Models;
 using Slicito.ProgramAnalysis;
@@ -8,9 +10,29 @@ namespace Slicito.Common.Controllers;
 
 public class CallGraphExplorer(CallGraph callGraph, IProgramTypes types) : IController
 {
+    private const string _expandActionName = "Expand";
+
+    private const string _idActionParameterName = "Id";
+
+    private readonly HashSet<CallGraph.Procedure> _visibleProcedures = new(callGraph.RootProcedures);
+
     public async Task<IModel> InitAsync() => await CreateGraphAsync();
 
-    public async Task<IModel?> ProcessCommandAsync(Command command) => await CreateGraphAsync();
+    public async Task<IModel?> ProcessCommandAsync(Command command)
+    {
+        if (command.Name == _expandActionName &&
+            command.Parameters.TryGetValue(_idActionParameterName, out var id))
+        {
+            var elementId = new ElementId(id);
+            var caller = callGraph.AllProcedures.Single(p => p.ProcedureElement.Id == elementId);
+
+            _visibleProcedures.UnionWith(caller.CallSites.Select(callGraph.GetTarget));
+
+            return await CreateGraphAsync();
+        }
+
+        return null;
+    }
 
     private async Task<Graph> CreateGraphAsync()
     {
@@ -21,24 +43,46 @@ public class CallGraphExplorer(CallGraph callGraph, IProgramTypes types) : ICont
         var nodes = new List<Node>();
         var edges = new List<Edge>();
 
-        foreach (var procedure in callGraph.AllProcedures)
+        foreach (var caller in _visibleProcedures)
         {
             var name = nameProvider is null
-                ? null
-                : await nameProvider(procedure.ProcedureElement.Id);
+                ? ""
+                : await nameProvider(caller.ProcedureElement.Id);
 
-            var node = new Node(procedure.ProcedureElement.Id.Value, name);
-            nodes.Add(node);
+            var callerId = caller.ProcedureElement.Id.Value;
 
-            foreach (var callSite in procedure.CallSites)
+            bool expanded = true;
+
+            foreach (var callSite in caller.CallSites)
             {
                 var callee = callGraph.GetTarget(callSite);
 
-                var edge = new Edge(procedure.ProcedureElement.Id.Value, callee.ProcedureElement.Id.Value);
+                if (!_visibleProcedures.Contains(callee))
+                {
+                    expanded = false;
+                    continue;
+                }
+
+                var edge = new Edge(caller.ProcedureElement.Id.Value, callee.ProcedureElement.Id.Value);
                 edges.Add(edge);
             }
+
+            if (!expanded)
+            {
+                name += " (+)";
+            }
+
+            var node = new Node(callerId, name, CreateExpandCommand(caller.ProcedureElement));
+            nodes.Add(node);
         }
 
         return new Graph([.. nodes], [.. edges]);
+    }
+
+    private static Command CreateExpandCommand(ElementInfo element)
+    {
+        return new(
+            _expandActionName,
+            ImmutableDictionary<string, string>.Empty.Add(_idActionParameterName, element.Id.Value));
     }
 }
