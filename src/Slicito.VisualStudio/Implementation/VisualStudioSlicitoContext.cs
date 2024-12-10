@@ -1,6 +1,7 @@
 using Microsoft.VisualStudio.LanguageServices;
 
 using Slicito.Abstractions;
+using Slicito.Abstractions.Interaction;
 using Slicito.Abstractions.Queries;
 using Slicito.Common;
 using Slicito.Common.Extensibility;
@@ -18,10 +19,13 @@ internal class VisualStudioSlicitoContext : ProgramAnalysisContextBase
         ITypeSystem typeSystem,
         ISliceManager sliceManager,
         DotNetTypes dotNetTypes,
+        ICodeNavigator codeNavigator,
         VisualStudioWorkspace workspace) : base(typeSystem, sliceManager, dotNetTypes)
     {
         _workspace = workspace;
         _lastDotNetSolutionContext = new DotNetSolutionContext(workspace.CurrentSolution, dotNetTypes, sliceManager);
+
+        SetService(codeNavigator);
     }
 
     public static VisualStudioSlicitoContext Create(VisualStudioWorkspace workspace)
@@ -31,7 +35,9 @@ internal class VisualStudioSlicitoContext : ProgramAnalysisContextBase
 
         var dotNetTypes = new DotNetTypes(typeSystem);
 
-        return new VisualStudioSlicitoContext(typeSystem, sliceManager, dotNetTypes, workspace);
+        var codeNavigator = new VisualStudioCodeNavigator();
+
+        return new VisualStudioSlicitoContext(typeSystem, sliceManager, dotNetTypes, codeNavigator, workspace);
     }
 
     public override ILazySlice WholeSlice => GetCurrentDotNetSolutionContext().LazySlice;

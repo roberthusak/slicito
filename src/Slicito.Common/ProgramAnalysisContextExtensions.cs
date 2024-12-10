@@ -1,4 +1,4 @@
-using Slicito.Abstractions;
+using Slicito.Abstractions.Interaction;
 using Slicito.Common.Controllers;
 using Slicito.ProgramAnalysis;
 using Slicito.ProgramAnalysis.Interprocedural;
@@ -9,6 +9,6 @@ public static class ProgramAnalysisContextExtensions
 {
     public static CallGraphExplorer CreateCallGraphExplorer(this IProgramAnalysisContext context, CallGraph callGraph)
     {
-        return new CallGraphExplorer(callGraph, context.ProgramTypes);
+        return new CallGraphExplorer(callGraph, context.ProgramTypes, context.GetService<ICodeNavigator>());
     }
 }

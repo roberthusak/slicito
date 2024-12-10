@@ -2,13 +2,14 @@
 using System.Collections.Immutable;
 
 using Slicito.Abstractions;
+using Slicito.Abstractions.Interaction;
 using Slicito.Abstractions.Models;
 using Slicito.ProgramAnalysis;
 using Slicito.ProgramAnalysis.Interprocedural;
 
 namespace Slicito.Common.Controllers;
 
-public class CallGraphExplorer(CallGraph callGraph, IProgramTypes types) : IController
+public class CallGraphExplorer(CallGraph callGraph, IProgramTypes types, ICodeNavigator? codeNavigator = null) : IController
 {
     private const string _expandActionName = "Expand";
 
@@ -28,10 +29,31 @@ public class CallGraphExplorer(CallGraph callGraph, IProgramTypes types) : ICont
 
             _visibleProcedures.UnionWith(caller.CallSites.Select(callGraph.GetTarget));
 
+            await TryNavigateToAsync(caller.ProcedureElement);
+
             return await CreateGraphAsync();
         }
 
         return null;
+    }
+
+    private async Task TryNavigateToAsync(ElementInfo procedureElement)
+    {
+        if (codeNavigator is null || !types.HasCodeLocation(types.Procedure))
+        {
+            return;
+        }
+
+        var codeLocationProvider = callGraph.OriginalSlice.GetElementAttributeProviderAsyncCallback(CommonAttributeNames.CodeLocation);
+        var codeLocationString = await codeLocationProvider(procedureElement.Id);
+        var codeLocation = CodeLocation.Parse(codeLocationString);
+
+        if (codeLocation is null)
+        {
+            return;
+        }
+
+        await codeNavigator.NavigateToAsync(codeLocation);
     }
 
     private async Task<Graph> CreateGraphAsync()
