@@ -1,4 +1,5 @@
 using Slicito.Abstractions;
+using Slicito.Abstractions.Interaction;
 using Slicito.Abstractions.Models;
 using Slicito.Common.Controllers;
 using Slicito.DotNet;
@@ -23,13 +24,14 @@ public class DotNetMethodBrowser : IController
 
     private readonly DotNetSolutionContext _solutionContext;
     private readonly DotNetTypes _dotNetTypes;
-
+    private readonly ICodeNavigator? _codeNavigator;
     private readonly ILazySlice _slice;
 
-    public DotNetMethodBrowser(DotNetSolutionContext solutionContext, DotNetTypes dotNetTypes)
+    public DotNetMethodBrowser(DotNetSolutionContext solutionContext, DotNetTypes dotNetTypes, ICodeNavigator? codeNavigator = null)
     {
         _solutionContext = solutionContext;
         _dotNetTypes = dotNetTypes;
+        _codeNavigator = codeNavigator;
 
         _slice = solutionContext.LazySlice;
     }
@@ -100,7 +102,7 @@ public class DotNetMethodBrowser : IController
             .AddCallerRoot(id)
             .BuildAsync();
 
-        var explorer = new CallGraphExplorer(callGraph, _dotNetTypes);
+        var explorer = new CallGraphExplorer(callGraph, _dotNetTypes, _codeNavigator);
         return await explorer.InitAsync();
     }
 

@@ -1,5 +1,6 @@
 using Microsoft.CodeAnalysis.MSBuild;
 using Slicito.Abstractions;
+using Slicito.Abstractions.Interaction;
 using Slicito.Abstractions.Queries;
 using Slicito.Common;
 using Slicito.DotNet;
@@ -50,6 +51,7 @@ public class DependencyManager
             var t when t == typeof(DotNetSolutionContext) => await TryGetDotNetSolutionContextAsync(),
             var t when t == typeof(ILazySlice) => await TryLoadLazySliceAsync(),
             var t when t == typeof(IFlowGraph) => null,
+            var t when t == typeof(ICodeNavigator) => null,
             _ => throw new ApplicationException($"Unsupported parameter type {parameterType.Name}.")
         };
     }

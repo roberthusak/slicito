@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using Microsoft.CodeAnalysis;
 
 using Slicito.Abstractions;
+using Slicito.Abstractions.Interaction;
 using Slicito.ProgramAnalysis.Notation;
 
 namespace Slicito.DotNet.Implementation;
@@ -67,6 +68,7 @@ internal class SliceCreator
             .AddElementAttribute(_types.Project, DotNetAttributeNames.Name, LoadProjectName)
             .AddElementAttribute(symbolTypes, DotNetAttributeNames.Name, LoadSymbolName)
             .AddElementAttribute(_types.Operation, DotNetAttributeNames.Name, LoadOperationName)
+            .AddElementAttribute(symbolTypes, CommonAttributeNames.CodeLocation, LoadCodeLocation)
             .BuildLazy();
     }
 
@@ -162,6 +164,23 @@ internal class SliceCreator
         var syntax = _flowGraphCache[method]!.Value.OperationMapping.GetSyntax(elementId);
 
         return syntax.ToString();
+    }
+
+    private string LoadCodeLocation(ElementId elementId)
+    {
+        var symbol = _elementCache.GetSymbol(elementId);
+
+        var syntax = symbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
+
+        var span = syntax?.GetLocation().GetLineSpan();
+        if (span is null)
+        {
+            return "";
+        }
+
+        var codeLocation = new CodeLocation(span.Value.Path, span.Value.StartLinePosition.Line + 1, span.Value.StartLinePosition.Character);
+
+        return codeLocation.Format();
     }
 
     private static ISliceBuilder.PartialElementInfo ToPartialElementInfo(ElementInfo element) =>

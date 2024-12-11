@@ -12,4 +12,6 @@ public interface IProgramTypes
     ElementType Call { get; }
 
     bool HasName(ElementType elementType);
+
+    bool HasCodeLocation(ElementType elementType);
 }
