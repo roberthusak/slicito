@@ -102,7 +102,7 @@ public class DotNetMethodBrowser : IController
             .AddCallerRoot(id)
             .BuildAsync();
 
-        var explorer = new CallGraphExplorer(callGraph, _dotNetTypes, _codeNavigator);
+        var explorer = new CallGraphExplorer(callGraph, _dotNetTypes, _solutionContext, _codeNavigator);
         return await explorer.InitAsync();
     }
 

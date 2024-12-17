@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using Slicito.Abstractions;
 using Slicito.Abstractions.Interaction;
 using Slicito.Abstractions.Models;
+using Slicito.Common.Controllers.Implementation;
 using Slicito.ProgramAnalysis;
 using Slicito.ProgramAnalysis.Interprocedural;
 
@@ -11,6 +12,17 @@ namespace Slicito.Common.Controllers;
 
 public class CallGraphExplorer : IController
 {
+    public class Options
+    {
+        internal HashSet<string> EmphasizedParameterNames { get; } = [];
+
+        public Options EmphasizeParameterDataFlow(string parameterName)
+        {
+            EmphasizedParameterNames.Add(parameterName);
+            return this;
+        }
+    }
+
     private const string _expandActionName = "Expand";
 
     private const string _idActionParameterName = "Id";
@@ -21,13 +33,42 @@ public class CallGraphExplorer : IController
 
     private readonly HashSet<CallGraph.Procedure> _visibleProcedures;
 
-    public CallGraphExplorer(CallGraph callGraph, IProgramTypes types, ICodeNavigator? codeNavigator = null)
+    public CallGraphExplorer(
+        CallGraph callGraph,
+        IProgramTypes types,
+        IFlowGraphProvider flowGraphProvider,
+        ICodeNavigator? codeNavigator = null,
+        Action<Options>? configureOptions = null)
     {
         _callGraph = callGraph;
         _types = types;
         _codeNavigator = codeNavigator;
 
-        _visibleProcedures = [.. callGraph.RootProcedures];
+        var options = new Options();
+        configureOptions?.Invoke(options);
+
+        _visibleProcedures = CreateInitialVisibleProcedures(callGraph, flowGraphProvider, options);
+    }
+
+    private static HashSet<CallGraph.Procedure> CreateInitialVisibleProcedures(CallGraph callGraph, IFlowGraphProvider flowGraphProvider, Options options)
+    {
+        var visibleProcedures = new HashSet<CallGraph.Procedure>(callGraph.RootProcedures);
+
+        var initialParameters = callGraph.RootProcedures
+            .SelectMany(procedure =>
+                (flowGraphProvider.TryGetFlowGraph(procedure.ProcedureElement)?.Entry.Parameters ?? [])
+                .Where(parameter => options.EmphasizedParameterNames.Contains(parameter.Name))
+                .Select(parameter =>
+                    new InterproceduralDataFlowAnalyzer.ProcedureParameter(procedure, parameter)))
+            .ToArray();
+
+        if (initialParameters.Length > 0)
+        {
+            var reachableParameters = InterproceduralDataFlowAnalyzer.FindReachableProcedureParameters(callGraph, flowGraphProvider, initialParameters);
+            visibleProcedures.UnionWith(reachableParameters.Select(p => p.Procedure));
+        }
+
+        return visibleProcedures;
     }
 
     public async Task<IModel> InitAsync() => await CreateGraphAsync();
