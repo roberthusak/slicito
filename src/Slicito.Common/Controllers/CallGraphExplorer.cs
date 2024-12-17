@@ -9,13 +9,26 @@ using Slicito.ProgramAnalysis.Interprocedural;
 
 namespace Slicito.Common.Controllers;
 
-public class CallGraphExplorer(CallGraph callGraph, IProgramTypes types, ICodeNavigator? codeNavigator = null) : IController
+public class CallGraphExplorer : IController
 {
     private const string _expandActionName = "Expand";
 
     private const string _idActionParameterName = "Id";
 
-    private readonly HashSet<CallGraph.Procedure> _visibleProcedures = new(callGraph.RootProcedures);
+    private readonly CallGraph _callGraph;
+    private readonly IProgramTypes _types;
+    private readonly ICodeNavigator? _codeNavigator;
+
+    private readonly HashSet<CallGraph.Procedure> _visibleProcedures;
+
+    public CallGraphExplorer(CallGraph callGraph, IProgramTypes types, ICodeNavigator? codeNavigator = null)
+    {
+        _callGraph = callGraph;
+        _types = types;
+        _codeNavigator = codeNavigator;
+
+        _visibleProcedures = [.. callGraph.RootProcedures];
+    }
 
     public async Task<IModel> InitAsync() => await CreateGraphAsync();
 
@@ -25,9 +38,9 @@ public class CallGraphExplorer(CallGraph callGraph, IProgramTypes types, ICodeNa
             command.Parameters.TryGetValue(_idActionParameterName, out var id))
         {
             var elementId = new ElementId(id);
-            var caller = callGraph.AllProcedures.Single(p => p.ProcedureElement.Id == elementId);
+            var caller = _callGraph.AllProcedures.Single(p => p.ProcedureElement.Id == elementId);
 
-            _visibleProcedures.UnionWith(caller.CallSites.Select(callGraph.GetTarget));
+            _visibleProcedures.UnionWith(caller.CallSites.Select(_callGraph.GetTarget));
 
             await TryNavigateToAsync(caller.ProcedureElement);
 
@@ -39,12 +52,12 @@ public class CallGraphExplorer(CallGraph callGraph, IProgramTypes types, ICodeNa
 
     private async Task TryNavigateToAsync(ElementInfo procedureElement)
     {
-        if (codeNavigator is null || !types.HasCodeLocation(types.Procedure))
+        if (_codeNavigator is null || !_types.HasCodeLocation(_types.Procedure))
         {
             return;
         }
 
-        var codeLocationProvider = callGraph.OriginalSlice.GetElementAttributeProviderAsyncCallback(CommonAttributeNames.CodeLocation);
+        var codeLocationProvider = _callGraph.OriginalSlice.GetElementAttributeProviderAsyncCallback(CommonAttributeNames.CodeLocation);
         var codeLocationString = await codeLocationProvider(procedureElement.Id);
         var codeLocation = CodeLocation.Parse(codeLocationString);
 
@@ -53,13 +66,13 @@ public class CallGraphExplorer(CallGraph callGraph, IProgramTypes types, ICodeNa
             return;
         }
 
-        await codeNavigator.NavigateToAsync(codeLocation);
+        await _codeNavigator.NavigateToAsync(codeLocation);
     }
 
     private async Task<Graph> CreateGraphAsync()
     {
-        var nameProvider = types.HasName(types.Procedure)
-            ? callGraph.OriginalSlice.GetElementAttributeProviderAsyncCallback(CommonAttributeNames.Name)
+        var nameProvider = _types.HasName(_types.Procedure)
+            ? _callGraph.OriginalSlice.GetElementAttributeProviderAsyncCallback(CommonAttributeNames.Name)
             : null;
 
         var nodes = new List<Node>();
@@ -77,7 +90,7 @@ public class CallGraphExplorer(CallGraph callGraph, IProgramTypes types, ICodeNa
 
             foreach (var callSite in caller.CallSites)
             {
-                var callee = callGraph.GetTarget(callSite);
+                var callee = _callGraph.GetTarget(callSite);
 
                 if (!_visibleProcedures.Contains(callee))
                 {
