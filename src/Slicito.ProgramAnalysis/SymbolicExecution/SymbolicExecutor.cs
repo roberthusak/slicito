@@ -15,24 +15,27 @@ public sealed class SymbolicExecutor(ISolverFactory solverFactory)
 {
     public async ValueTask<ExecutionResult> ExecuteAsync(
         IFlowGraph flowGraph,
-        IEnumerable<BasicBlock> targetBlocks)
+        IEnumerable<BasicBlock> targetBlocks,
+        IEnumerable<Expression>? initialConstraints = null)
     {
-        return await new Executor(flowGraph, targetBlocks, solverFactory).ExecuteAsync();
+        return await new Executor(flowGraph, targetBlocks, initialConstraints ?? [], solverFactory).ExecuteAsync();
     }
 
     private class Executor
     {
         private readonly IFlowGraph _flowGraph;
-        private readonly IEnumerable<BasicBlock> _targetBlocks;
+        private readonly List<BasicBlock> _targetBlocks;
+        private readonly List<Expression> _initialConstraints;
         private readonly ISolverFactory _solverFactory;
 
         private readonly Dictionary<BasicBlock, int> _topologicalOrder;
         private readonly SortedSet<ExecutionState> _workList;
 
-        public Executor(IFlowGraph flowGraph, IEnumerable<BasicBlock> targetBlocks, ISolverFactory solverFactory)
+        public Executor(IFlowGraph flowGraph, IEnumerable<BasicBlock> targetBlocks, IEnumerable<Expression> initialConstraints, ISolverFactory solverFactory)
         {
             _flowGraph = flowGraph;
-            _targetBlocks = targetBlocks;
+            _targetBlocks = targetBlocks.ToList();
+            _initialConstraints = initialConstraints.ToList();
             _solverFactory = solverFactory;
 
             var reachableBlocks = FlowGraphHelper.GetBlocksReachingTargets(_flowGraph, _targetBlocks);
@@ -136,10 +139,12 @@ public sealed class SymbolicExecutor(ISolverFactory solverFactory)
                 versionMap = versionMap.Add(paramFunc, 0);
             }
 
+            var condition = _initialConstraints.Aggregate((Term)Terms.True, (acc, constraint) => Terms.And(acc, TranslateExpression(constraint, versionMap)));
+
             return new ExecutionState(
                 CurrentBlock: _flowGraph.Entry,
                 VersionMap: versionMap,
-                ConditionStack: new ImmutableConditionStack(Terms.True),
+                ConditionStack: new ImmutableConditionStack(condition),
                 UnmergedCondition: null);
         }
 

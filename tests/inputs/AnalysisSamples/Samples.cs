@@ -54,6 +54,11 @@ public static class Samples
         return b;
     }
 
+    public static bool ConditionalReachabilitySample(int a, int b)
+    {
+        return a == b + 1;
+    }
+
     public static int Caller(int a)
     {
         int res = 0;
