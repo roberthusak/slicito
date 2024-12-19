@@ -267,7 +267,7 @@ public sealed class SymbolicExecutor(ISolverFactory solverFactory)
             await solver.AssertAsync(CreateBlockReachingBoolean(state.CurrentBlock));
             
             ExecutionModel? executionModel = null;
-            var satResult = await solver.CheckSatisfiabilityAsync(model =>
+            var satResult = await solver.CheckSatisfiabilityAsync(async model =>
             {
                 // If satisfiable, construct execution model from parameter values
                 var parameterValues = new List<Expression.Constant>();
@@ -275,14 +275,12 @@ public sealed class SymbolicExecutor(ISolverFactory solverFactory)
                 {
                     var paramFunc = new Function.Nullary($"{param.Name}", GetSortForType(param.Type));
                     var paramTerm = CreateVersionedConstant(paramFunc, 0);
-                    var value = model.Evaluate(paramTerm);
+                    var value = await model.EvaluateAsync(paramTerm);
 
                     parameterValues.Add(ConvertTermToConstant(value, param.Type));
                 }
 
                 executionModel = new ExecutionModel([.. parameterValues]);
-
-                return new();
             });
 
             return satResult switch

@@ -251,14 +251,14 @@ public sealed class SmtLibCliSolver : ISolver
             _solver = solver;
         }
 
-        public Term Evaluate(Term term)
+        public async ValueTask<Term> EvaluateAsync(Term term)
         {
             if (_isDisposed)
             {
                 throw new ObjectDisposedException(nameof(SmtLibModel));
             }
 
-            return _solver.EvaluateAsync(term).AsTask().Result;
+            return await _solver.EvaluateAsync(term);
         }
 
         public void Dispose()

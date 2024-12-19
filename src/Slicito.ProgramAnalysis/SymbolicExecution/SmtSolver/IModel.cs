@@ -4,5 +4,5 @@ namespace Slicito.ProgramAnalysis.SymbolicExecution.SmtSolver;
 
 public interface IModel : IDisposable
 {
-    Term Evaluate(Term term);
+    ValueTask<Term> EvaluateAsync(Term term);
 }

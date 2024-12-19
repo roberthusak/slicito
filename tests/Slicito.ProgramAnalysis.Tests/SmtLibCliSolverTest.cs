@@ -41,11 +41,9 @@ public class SmtLibCliSolverTest
 
         Term? xValue = null;
 
-        var result = await solver.CheckSatisfiabilityAsync(model =>
+        var result = await solver.CheckSatisfiabilityAsync(async model =>
         {
-            xValue = model.Evaluate(Terms.Constant(x));
-            
-            return ValueTask.CompletedTask;
+            xValue = await model.EvaluateAsync(Terms.Constant(x));
         });
 
         // Assert
@@ -97,11 +95,9 @@ public class SmtLibCliSolverTest
                 Terms.Constant(x)));
 
         Term? xValue = null;
-        var result = await solver.CheckSatisfiabilityAsync(model =>
+        var result = await solver.CheckSatisfiabilityAsync(async model =>
         {
-            xValue = model.Evaluate(Terms.Constant(x));
-            
-            return ValueTask.CompletedTask;
+            xValue = await model.EvaluateAsync(Terms.Constant(x));
         });
 
         // Assert
