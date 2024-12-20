@@ -1,3 +1,5 @@
+using System.IO;
+
 using Microsoft.VisualStudio.LanguageServices;
 
 using Slicito.Abstractions;
@@ -7,6 +9,7 @@ using Slicito.Common;
 using Slicito.Common.Extensibility;
 using Slicito.DotNet;
 using Slicito.ProgramAnalysis;
+using Slicito.ProgramAnalysis.SymbolicExecution.SmtSolver;
 
 namespace Slicito.VisualStudio.Implementation;
 
@@ -20,12 +23,14 @@ internal class VisualStudioSlicitoContext : ProgramAnalysisContextBase
         ISliceManager sliceManager,
         DotNetTypes dotNetTypes,
         ICodeNavigator codeNavigator,
+        ISolverFactory solverFactory,
         VisualStudioWorkspace workspace) : base(typeSystem, sliceManager, dotNetTypes)
     {
         _workspace = workspace;
         _lastDotNetSolutionContext = new DotNetSolutionContext(workspace.CurrentSolution, dotNetTypes, sliceManager);
 
         SetService(codeNavigator);
+        SetService(solverFactory);
     }
 
     public static VisualStudioSlicitoContext Create(VisualStudioWorkspace workspace)
@@ -37,7 +42,11 @@ internal class VisualStudioSlicitoContext : ProgramAnalysisContextBase
 
         var codeNavigator = new VisualStudioCodeNavigator();
 
-        return new VisualStudioSlicitoContext(typeSystem, sliceManager, dotNetTypes, codeNavigator, workspace);
+        var assemblyPath = Path.GetDirectoryName(typeof(VisualStudioSlicitoContext).Assembly.Location);
+        var z3Path = Path.Combine(assemblyPath, "z3.exe");
+        var solverFactory = new SmtLibCliSolverFactory(z3Path, ["-in"]);
+
+        return new VisualStudioSlicitoContext(typeSystem, sliceManager, dotNetTypes, codeNavigator, solverFactory, workspace);
     }
 
     public override ILazySlice WholeSlice => GetCurrentDotNetSolutionContext().LazySlice;
