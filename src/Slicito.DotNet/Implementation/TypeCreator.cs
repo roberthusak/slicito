@@ -11,7 +11,7 @@ internal static class TypeCreator
     {
         return specialType switch
         {
-            SpecialType.System_Boolean => new DataType.Boolean(),
+            SpecialType.System_Boolean => DataType.Boolean.Instance,
             
             SpecialType.System_SByte => new DataType.Integer(Signed: true, Bits: 8),
             SpecialType.System_Int16 => new DataType.Integer(Signed: true, Bits: 16),
