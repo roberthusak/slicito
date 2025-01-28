@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 
 using Slicito.Abstractions;
 using Slicito.ProgramAnalysis.Notation;
+using Slicito.ProgramAnalysis.Notation.TypedExpressions;
 using Slicito.ProgramAnalysis.SymbolicExecution;
 using Slicito.ProgramAnalysis.SymbolicExecution.SmtSolver;
 
@@ -47,13 +48,61 @@ public class ReachabilityAnalysis
 
         public IEnumerable<Expression> Constraints => _constraints;
 
-        public Variable GetParameter(string name)
+        public BooleanExpression GetBooleanParameter(string name)
+        {
+            var variable = GetParameterVariable(name);
+
+            if (variable.Type is not DataType.Boolean)
+            {
+                throw new InvalidOperationException($"Parameter '{name}' is not a boolean variable.");
+            }
+
+            return new BooleanExpression(new Expression.VariableReference(variable));
+        }
+
+        public IntegerExpression GetIntegerParameter(string name)
+        {
+            var variable = GetParameterVariable(name);
+
+            if (variable.Type is not DataType.Integer)
+            {
+                throw new InvalidOperationException($"Parameter '{name}' is not an integer variable.");
+            }
+
+            return new IntegerExpression(new Expression.VariableReference(variable));
+        }
+
+        public BooleanExpression GetBooleanReturnValue()
+        {
+            var variable = GetReturnValueVariable();
+
+            if (variable.Type is not DataType.Boolean)
+            {
+                throw new InvalidOperationException("Return value is not a boolean variable.");
+            }
+
+            return new BooleanExpression(new Expression.VariableReference(variable));
+        }
+
+        public IntegerExpression GetIntegerReturnValue()
+        {
+            var variable = GetReturnValueVariable();
+
+            if (variable.Type is not DataType.Integer)
+            {
+                throw new InvalidOperationException("Return value is not an integer variable.");
+            }
+
+            return new IntegerExpression(new Expression.VariableReference(variable));
+        }
+
+        private Variable GetParameterVariable(string name)
         {
             return flowGraph.Entry.Parameters.FirstOrDefault(v => v.Name == name)
                 ?? throw new ArgumentException($"Parameter '{name}' not found in procedure.");
         }
 
-        public Variable GetReturnValue()
+        private Variable GetReturnValueVariable()
         {
             var returnValues = flowGraph.Exit.ReturnValues;
             if (returnValues.Length != 1)
@@ -69,9 +118,9 @@ public class ReachabilityAnalysis
             return variable;
         }
 
-        public IProcedureReachabilityOptions AddConstraint(Expression constraint)
+        public IProcedureReachabilityOptions AddConstraint(BooleanExpression constraint)
         {
-            _constraints.Add(constraint);
+            _constraints.Add(constraint.Expression);
             return this;
         }
     }

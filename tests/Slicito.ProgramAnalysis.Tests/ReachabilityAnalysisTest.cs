@@ -45,19 +45,11 @@ public class ReachabilityAnalysisTest
         var reachabilityAnalysis = new ReachabilityAnalysis.Builder(_solutionContext, SolverHelper.CreateSolverFactory(TestContext!))
             .WithProcedureEntryToExit(method, options =>
             {
-                var a = options.GetParameter("a");
-                options.AddConstraint(
-                    new Expression.BinaryOperator(
-                        BinaryOperatorKind.GreaterThan,
-                        new Expression.VariableReference(a),
-                        new Expression.Constant.SignedInteger(42, new DataType.Integer(true, 32))));
+                var a = options.GetIntegerParameter("a");
+                options.AddConstraint(a > 42);
 
-                var returned = options.GetReturnValue();
-                options.AddConstraint(
-                    new Expression.BinaryOperator(
-                        BinaryOperatorKind.Equal,
-                        new Expression.VariableReference(returned),
-                        new Expression.Constant.Boolean(true)));
+                var returned = options.GetBooleanReturnValue();
+                options.AddConstraint(returned);
             })
             .Build();
 

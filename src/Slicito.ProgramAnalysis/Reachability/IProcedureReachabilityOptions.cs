@@ -1,12 +1,16 @@
-using Slicito.ProgramAnalysis.Notation;
+using Slicito.ProgramAnalysis.Notation.TypedExpressions;
 
 namespace Slicito.ProgramAnalysis.Reachability;
 
 public interface IProcedureReachabilityOptions
 {
-    Variable GetParameter(string name);
+    BooleanExpression GetBooleanParameter(string name);
 
-    Variable GetReturnValue();
+    IntegerExpression GetIntegerParameter(string name);
 
-    IProcedureReachabilityOptions AddConstraint(Expression constraint);
+    BooleanExpression GetBooleanReturnValue();
+
+    IntegerExpression GetIntegerReturnValue();
+
+    IProcedureReachabilityOptions AddConstraint(BooleanExpression constraint);
 }
