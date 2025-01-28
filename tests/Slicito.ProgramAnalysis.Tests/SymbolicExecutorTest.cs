@@ -76,6 +76,6 @@ public class SymbolicExecutorTest
         bIntValue.Should().NotBeNull();
 
         aIntValue!.Value.Should().BeGreaterThan(8);
-        unchecked((int)((bIntValue!.Value - aIntValue.Value - 1) * 2)).Should().Be(0);
+        ((int)((bIntValue!.Value - aIntValue.Value - 1) * 2)).Should().Be(0);
     }
 }

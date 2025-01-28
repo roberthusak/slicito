@@ -77,6 +77,6 @@ public class ReachabilityAnalysisTest
         bIntValue.Should().NotBeNull();
 
         aIntValue!.Value.Should().BeGreaterThan(42);
-        aIntValue!.Value.Should().Be(unchecked(bIntValue!.Value + 1));
+        aIntValue!.Value.Should().Be(bIntValue!.Value + 1);
     }
 }

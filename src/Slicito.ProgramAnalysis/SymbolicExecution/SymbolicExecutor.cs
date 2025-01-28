@@ -399,8 +399,8 @@ public sealed class SymbolicExecutor(ISolverFactory solverFactory)
             _ => throw new ArgumentException($"Unsupported term type: {term.GetType()}")
         };
 
-        private static long ReinterpretAsSigned(ulong value) => unchecked((long)value);
+        private static long ReinterpretAsSigned(ulong value) => (long)value;
 
-        private static ulong ReinterpretAsUnsigned(long value) => unchecked((ulong)value);
+        private static ulong ReinterpretAsUnsigned(long value) => (ulong)value;
     }
 }
