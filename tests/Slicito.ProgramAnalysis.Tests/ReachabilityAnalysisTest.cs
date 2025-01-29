@@ -69,6 +69,45 @@ public class ReachabilityAnalysisTest
         bIntValue.Should().NotBeNull();
 
         aIntValue!.Value.Should().BeGreaterThan(42);
-        aIntValue!.Value.Should().Be(bIntValue!.Value + 1);
+        aIntValue.Value.Should().Be(bIntValue!.Value + 1);
+    }
+
+    [TestMethod]
+    public async Task Finds_String_For_Which_StringValidationSample_Returns_True()
+    {
+        // Arrange
+
+        _solutionContext.Should().NotBeNull("Solution context should be initialized");
+        _types.Should().NotBeNull(".NET link and element types should be initialized");
+
+        var methods = await DotNetMethodHelper.GetAllMethodsWithDisplayNamesAsync(_solutionContext!.LazySlice, _types!);
+        var method = methods.Single(m => m.DisplayName == "AnalysisSamples.Samples.StringValidationSample").Method;
+
+        // Act
+
+        var reachabilityAnalysis = new ReachabilityAnalysis.Builder(_solutionContext, SolverHelper.CreateSolverFactory(TestContext!))
+            .WithProcedureEntryToExit(method, options =>
+            {
+                var returned = options.GetBooleanReturnValue();
+                options.AddConstraint(returned);
+
+                var s = options.GetStringParameter("s");
+                options.AddConstraint(s.Length >= 9);
+            })
+            .Build();
+
+        var result = await reachabilityAnalysis.AnalyzeAsync();
+        var reachableResult = result as ReachabilityResult.Reachable;
+
+        var sStringValue = reachableResult!.Assignments.SingleOrDefault(a => a.Key.Name == "s").Value as Expression.Constant.Utf16String;
+
+        // Assert
+
+        result.Should().BeOfType<ReachabilityResult.Reachable>();
+
+        sStringValue.Should().NotBeNull();
+        sStringValue!.Value.Should().StartWith("<");
+        sStringValue.Value.Should().EndWith(">");
+        sStringValue.Value.Length.Should().BeGreaterThanOrEqualTo(9).And.BeLessThanOrEqualTo(16);
     }
 }

@@ -81,4 +81,19 @@ public static class Samples
     }
 
     public static void VoidCallee(int _) { }
+
+    public static bool StringValidationSample(string s)
+    {
+        if (s.Length < 8 || s.Length > 16)
+        {
+            return false;
+        }
+
+        if (!s.StartsWith("<") || !s.EndsWith(">"))
+        {
+            return false;
+        }
+
+        return true;
+    }
 }

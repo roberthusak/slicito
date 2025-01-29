@@ -72,6 +72,18 @@ public class ReachabilityAnalysis
             return new IntegerExpression(new Expression.VariableReference(variable));
         }
 
+        public StringExpression GetStringParameter(string name)
+        {
+            var variable = GetParameterVariable(name);
+
+            if (variable.Type is not DataType.Utf16String)
+            {
+                throw new InvalidOperationException($"Parameter '{name}' is not a string variable.");
+            }
+
+            return new StringExpression(new Expression.VariableReference(variable));
+        }
+
         public BooleanExpression GetBooleanReturnValue()
         {
             var variable = GetReturnValueVariable();
@@ -94,6 +106,18 @@ public class ReachabilityAnalysis
             }
 
             return new IntegerExpression(new Expression.VariableReference(variable));
+        }
+
+        public StringExpression GetStringReturnValue()
+        {
+            var variable = GetReturnValueVariable();
+
+            if (variable.Type is not DataType.Utf16String)
+            {
+                throw new InvalidOperationException("Return value is not a string variable.");
+            }
+
+            return new StringExpression(new Expression.VariableReference(variable));
         }
 
         private Variable GetParameterVariable(string name)

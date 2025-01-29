@@ -342,7 +342,11 @@ public sealed class SymbolicExecutor(ISolverFactory solverFactory)
                 Expression.Constant.SignedInteger i => 
                     Terms.BitVec.Literal(ReinterpretAsUnsigned(i.Value), Sorts.BitVec(i.Type.Bits)),
                 
+                Expression.Constant.Utf16String s => Terms.String.Literal(s.Value),
+                
                 Expression.VariableReference varRef => TranslateVariableReference(varRef.Variable, versionMap),
+                
+                Expression.UnaryOperator op => TranslateUnaryOperator(op, versionMap),
                 
                 Expression.BinaryOperator op => TranslateBinaryOperator(op, versionMap),
                 
@@ -362,6 +366,21 @@ public sealed class SymbolicExecutor(ISolverFactory solverFactory)
             return Terms.Constant(varFunc with { Name = $"{varFunc.Name}!{version}" });
         }
 
+        private Term TranslateUnaryOperator(Expression.UnaryOperator op, VersionMap versionMap)
+        {
+            var operand = TranslateExpression(op.Operand, versionMap);
+
+            return op.Kind switch
+            {
+                UnaryOperatorKind.Negate => Terms.BitVec.Negate(operand),
+                UnaryOperatorKind.Not => Terms.Not(operand),
+                UnaryOperatorKind.StringLength => Terms.Int.ToBitVec(
+                    Terms.String.Length(operand),
+                    ((DataType.Integer)op.GetDataType()).Bits),
+                _ => throw new ArgumentException($"Unsupported unary operator: {op.Kind}", nameof(op))
+            };
+        }
+
         private Term TranslateBinaryOperator(Expression.BinaryOperator op, VersionMap versionMap)
         {
             var left = TranslateExpression(op.Left, versionMap);
@@ -378,6 +397,8 @@ public sealed class SymbolicExecutor(ISolverFactory solverFactory)
                 BinaryOperatorKind.Add => Terms.BitVec.Add(left, right),
                 BinaryOperatorKind.Subtract => Terms.BitVec.Subtract(left, right),
                 BinaryOperatorKind.Multiply => Terms.BitVec.Multiply(left, right),
+                BinaryOperatorKind.StringStartsWith => Terms.String.IsPrefixOf(right, left),
+                BinaryOperatorKind.StringEndsWith => Terms.String.IsSuffixOf(right, left),
                 _ => throw new ArgumentException($"Unsupported binary operator: {op.Kind}", nameof(op))
             };
         }
@@ -386,6 +407,7 @@ public sealed class SymbolicExecutor(ISolverFactory solverFactory)
         {
             DataType.Boolean => Sorts.Bool,
             DataType.Integer { Bits: var bits } => Sorts.BitVec(bits),
+            DataType.Utf16String => Sorts.String,
             _ => throw new ArgumentException($"Unsupported type: {type}")
         };
 
@@ -396,6 +418,7 @@ public sealed class SymbolicExecutor(ISolverFactory solverFactory)
                 intType.Signed 
                     ? new Expression.Constant.SignedInteger(ReinterpretAsSigned(bv.Value), intType)
                     : new Expression.Constant.UnsignedInteger(bv.Value, intType),
+            Term.Constant.String s => new Expression.Constant.Utf16String(s.Value),
             _ => throw new ArgumentException($"Unsupported term type: {term.GetType()}")
         };
 

@@ -9,6 +9,7 @@ using Slicito.ProgramAnalysis.Notation;
 
 using RoslynBinaryOperatorKind = Microsoft.CodeAnalysis.Operations.BinaryOperatorKind;
 
+using SlicitoUnaryOperatorKind = Slicito.ProgramAnalysis.Notation.UnaryOperatorKind;
 using SlicitoBinaryOperatorKind = Slicito.ProgramAnalysis.Notation.BinaryOperatorKind;
 using SlicitoLocation = Slicito.ProgramAnalysis.Notation.Location;
 
@@ -43,6 +44,7 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
             ulong i => new Expression.Constant.UnsignedInteger(i, (DataType.Integer) TypeCreator.Create(SpecialType.System_UInt64)),
             float f => new Expression.Constant.Float(f, (DataType.Float) TypeCreator.Create(SpecialType.System_Single)),
             double d => new Expression.Constant.Float(d, (DataType.Float) TypeCreator.Create(SpecialType.System_Double)),
+            string s => new Expression.Constant.Utf16String(s),
             _ => throw new NotSupportedException($"Unsupported literal type: {operation.ConstantValue.Value?.GetType().Name ?? "null"}."),
         };
     }
@@ -89,13 +91,49 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
         return new Expression.BinaryOperator(TranslateBinaryOperatorKind(operation.OperatorKind), left, right);
     }
 
+    public override Expression? VisitPropertyReference(IPropertyReferenceOperation operation, Empty _)
+    {
+        if (operation.Instance is not null)
+        {
+            var instance = VisitEnsureNonNull(operation.Instance);
+    
+            if (operation.Instance.Type is { SpecialType: SpecialType.System_String }
+                && operation.Property.Name == nameof(string.Length))
+            {
+                return new Expression.UnaryOperator(SlicitoUnaryOperatorKind.StringLength, instance);
+            }
+        }
+
+        throw new NotSupportedException($"Unsupported property reference: {operation.Property.Name}.");
+    }
+
     public override Expression? VisitInvocation(IInvocationOperation operation, Empty _)
     {
-        var signature = ProcedureSignatureCreator.Create(operation.TargetMethod);
-
         var arguments = operation.Arguments
             .Select(a => VisitEnsureNonNull(a.Value))
             .ToImmutableArray();
+
+        if (operation.Instance is not null)
+        {
+            var instance = VisitEnsureNonNull(operation.Instance);
+
+            if (arguments.Length == 1
+                && operation.Instance.Type is { SpecialType: SpecialType.System_String })
+            {
+                if (operation.TargetMethod.Name == nameof(string.StartsWith))
+                {
+                    return new Expression.BinaryOperator(SlicitoBinaryOperatorKind.StringStartsWith, instance, arguments[0]);
+                }
+                else if (operation.TargetMethod.Name == nameof(string.EndsWith))
+                {
+                    return new Expression.BinaryOperator(SlicitoBinaryOperatorKind.StringEndsWith, instance, arguments[0]);
+                }
+            }
+
+            throw new NotSupportedException($"Unsupported invocation of a non-static method '{operation.TargetMethod.Name}'.");
+        }
+
+        var signature = ProcedureSignatureCreator.Create(operation.TargetMethod);
 
         var returnLocations = signature.ReturnTypes
             .Select(t => (SlicitoLocation?) new SlicitoLocation.VariableReference(context.CreateTemporaryVariable(t)))

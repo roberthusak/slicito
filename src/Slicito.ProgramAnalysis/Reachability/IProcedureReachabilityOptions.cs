@@ -8,9 +8,13 @@ public interface IProcedureReachabilityOptions
 
     IntegerExpression GetIntegerParameter(string name);
 
+    StringExpression GetStringParameter(string name);
+
     BooleanExpression GetBooleanReturnValue();
 
     IntegerExpression GetIntegerReturnValue();
+
+    StringExpression GetStringReturnValue();
 
     IProcedureReachabilityOptions AddConstraint(BooleanExpression constraint);
 }

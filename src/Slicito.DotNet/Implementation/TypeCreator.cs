@@ -25,6 +25,8 @@ internal static class TypeCreator
             
             SpecialType.System_Single => new DataType.Float(ExponentBits: 8, MantissaBits: 24),
             SpecialType.System_Double => new DataType.Float(ExponentBits: 11, MantissaBits: 53),
+
+            SpecialType.System_String => DataType.Utf16String.Instance,
             
             _ => throw new NotSupportedException($"Special type {specialType} is not supported")
         };
