@@ -104,4 +104,51 @@ public class SmtLibCliSolverTest
         result.Should().Be(SolverResult.Satisfiable);
         xValue.Should().Be(Terms.BitVec.Literal(42, Sorts.BitVec64));
     }
+
+    [TestMethod]
+    public async Task Int_To_BitVec_And_Back_To_Natural_Yields_Unsigned_Original_Value()
+    {
+        // Arrange
+        var solver = await SolverHelper.CreateSolverFactory(TestContext!).CreateSolverAsync();
+
+        // Act
+
+        var x = new Function.Nullary("x", Sorts.Int);
+        var y = new Function.Nullary("y", Sorts.BitVec8);
+        var z = new Function.Nullary("z", Sorts.Int);
+
+        await solver.AssertAsync(
+            Terms.Equal(
+                Terms.Constant(x),
+                Terms.Int.Literal(-42)));
+
+        await solver.AssertAsync(
+            Terms.Equal(
+                Terms.Constant(y),
+                Terms.Int.ToBitVec(
+                    Terms.Constant(x),
+                    8)));
+
+        await solver.AssertAsync(
+            Terms.Equal(
+                Terms.Constant(z),
+                Terms.BitVec.ToNatural(
+                    Terms.Constant(y))));
+
+        Term? xValue = null;
+        Term? yValue = null;
+        Term? zValue = null;
+        var result = await solver.CheckSatisfiabilityAsync(async model =>
+        {
+            xValue = await model.EvaluateAsync(Terms.Constant(x));
+            yValue = await model.EvaluateAsync(Terms.Constant(y));
+            zValue = await model.EvaluateAsync(Terms.Constant(z));
+        });
+
+        // Assert
+        result.Should().Be(SolverResult.Satisfiable);
+        xValue.Should().Be(Terms.Int.Literal(-42));
+        yValue.Should().Be(Terms.BitVec.Literal(unchecked((byte) -42), Sorts.BitVec8));
+        zValue.Should().Be(Terms.Int.Literal(unchecked((byte) -42)));
+    }
 }

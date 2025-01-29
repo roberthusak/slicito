@@ -24,6 +24,37 @@ public static class Terms
 
     public static Term.FunctionApplication IfThenElse(Term condition, Term then, Term @else) => new(Functions.IfThenElse(then.Sort), [condition, then, @else]);
 
+    public static class Int
+    {
+        public static Term.Constant.Int Literal(long value) => new(value);
+
+        public static Term.FunctionApplication Negate(Term value) => new(Functions.Int.Negate, [value]);
+
+        public static Term.FunctionApplication Subtract(Term left, Term right) => new(Functions.Int.Subtract, [left, right]);
+
+        public static Term.FunctionApplication Add(Term left, Term right) => new(Functions.Int.Add, [left, right]);
+
+        public static Term.FunctionApplication Multiply(Term left, Term right) => new(Functions.Int.Multiply, [left, right]);
+
+        public static Term.FunctionApplication Divide(Term left, Term right) => new(Functions.Int.Divide, [left, right]);
+
+        public static Term.FunctionApplication Modulo(Term left, Term right) => new(Functions.Int.Modulo, [left, right]);
+
+        public static Term.FunctionApplication AbsoluteValue(Term value) => new(Functions.Int.AbsoluteValue, [value]);
+
+        public static Term.FunctionApplication LessThanOrEqual(Term left, Term right) => new(Functions.Int.LessThanOrEqual, [left, right]);
+
+        public static Term.FunctionApplication LessThan(Term left, Term right) => new(Functions.Int.LessThan, [left, right]);
+
+        public static Term.FunctionApplication GreaterThanOrEqual(Term left, Term right) => new(Functions.Int.GreaterThanOrEqual, [left, right]);
+
+        public static Term.FunctionApplication GreaterThan(Term left, Term right) => new(Functions.Int.GreaterThan, [left, right]);
+
+        public static Term.FunctionApplication DivisibleBy(Term value, ulong divisor) => new(Functions.Int.DivisibleBy(divisor), [value]);
+
+        public static Term.FunctionApplication ToBitVec(Term value, int width) => new(Functions.Int.ToBitVec(width), [value]);
+    }
+
     public static class BitVec
     {
         public static Term.Constant.BitVec Literal(ulong value, Sort.BitVec bitVecSort) => new(value, bitVecSort);
@@ -95,6 +126,8 @@ public static class Terms
         public static Term.FunctionApplication UnsignedGreaterThan(Term left, Term right) => new(Functions.BitVec.UnsignedGreaterThan(GetWidth(left.Sort)), [left, right]);
 
         public static Term.FunctionApplication SignedGreaterThan(Term left, Term right) => new(Functions.BitVec.SignedGreaterThan(GetWidth(left.Sort)), [left, right]);
+
+        public static Term.FunctionApplication ToNatural(Term value) => new(Functions.BitVec.ToNatural(GetWidth(value.Sort)), [value]);
 
         private static int GetWidth(Sort sort)
         {

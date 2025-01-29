@@ -168,6 +168,7 @@ public sealed class SmtLibCliSolver : ISolver
     private static string SerializeSort(Sort sort) => sort switch
     {
         Sort.Bool => "Bool",
+        Sort.Int => "Int",
         Sort.BitVec bv => $"(_ BitVec {bv.Width})",
         _ => throw new ArgumentException($"Unsupported sort: {sort.GetType()}")
     };
@@ -175,6 +176,7 @@ public sealed class SmtLibCliSolver : ISolver
     private static string SerializeTerm(Term term) => term switch
     {
         Term.Constant.Bool b => b.Value.ToString().ToLowerInvariant(),
+        Term.Constant.Int i => i.Value.ToString(),
         Term.Constant.BitVec bv => $"(_ bv{bv.Value} {bv.BitVecSort.Width})",
         Term.FunctionApplication app when app.function is Function.Nullary => app.function.Name,
         Term.FunctionApplication app => $"({app.function.Name} {string.Join(" ", app.Arguments.Select(SerializeTerm))})",
@@ -183,14 +185,28 @@ public sealed class SmtLibCliSolver : ISolver
 
     private static Term ParseValue(string response)
     {
-        // Basic parsing of SMT-LIB response like ((x true))
-        var value = response.Trim('(', ')').Split(' ')[1];
+        // Basic parsing of SMT-LIB response like ((x (- 42)))
+        var trimmed = response.Trim('(', ')');
+        var value = trimmed.Substring(trimmed.IndexOf(' ') + 1);
         
         if (bool.TryParse(value, out var boolValue))
         {
             return new Term.Constant.Bool(boolValue);
         }
-        
+
+        if (long.TryParse(value, out var intValue))
+        {
+            return new Term.Constant.Int(intValue);
+        }
+        else if (value.StartsWith("(- "))
+        {
+            var parts = value.Trim('(', ')').Split(' ');
+            if (parts.Length == 2 && long.TryParse(parts[1], out var positiveValue) && positiveValue > 0)
+            {
+                return new Term.Constant.Int(-positiveValue);
+            }
+        }
+
         if (value.StartsWith("(_ bv"))
         {
             var parts = value.Trim('(', ')').Split(' ');

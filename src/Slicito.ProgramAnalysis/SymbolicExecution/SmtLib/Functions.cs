@@ -18,6 +18,35 @@ public static class Functions
 
     public static Function IfThenElse(Sort sort) => new Function.Ternary("ite", Sorts.Bool, sort, sort, sort, IsBuiltIn: true);
 
+    public static class Int
+    {
+        public static Function Negate { get; } = new Function.Unary("-", Sorts.Int, Sorts.Int, IsBuiltIn: true);
+
+        public static Function Subtract { get; } = new Function.Binary("-", Sorts.Int, Sorts.Int, Sorts.Int, IsBuiltIn: true);
+
+        public static Function Add { get; } = new Function.Binary("+", Sorts.Int, Sorts.Int, Sorts.Int, IsBuiltIn: true);
+
+        public static Function Multiply { get; } = new Function.Binary("*", Sorts.Int, Sorts.Int, Sorts.Int, IsBuiltIn: true);
+
+        public static Function Divide { get; } = new Function.Binary("/", Sorts.Int, Sorts.Int, Sorts.Int, IsBuiltIn: true);
+
+        public static Function Modulo { get; } = new Function.Binary("mod", Sorts.Int, Sorts.Int, Sorts.Int, IsBuiltIn: true);
+
+        public static Function AbsoluteValue { get; } = new Function.Unary("abs", Sorts.Int, Sorts.Int, IsBuiltIn: true);
+
+        public static Function LessThanOrEqual { get; } = new Function.Binary("<=", Sorts.Int, Sorts.Int, Sorts.Bool, IsBuiltIn: true);
+
+        public static Function LessThan { get; } = new Function.Binary("<", Sorts.Int, Sorts.Int, Sorts.Bool, IsBuiltIn: true);
+
+        public static Function GreaterThanOrEqual { get; } = new Function.Binary(">=", Sorts.Int, Sorts.Int, Sorts.Bool, IsBuiltIn: true);
+
+        public static Function GreaterThan { get; } = new Function.Binary(">", Sorts.Int, Sorts.Int, Sorts.Bool, IsBuiltIn: true);
+
+        public static Function DivisibleBy(ulong divisor) => new Function.Unary($"(_ divisible {divisor})", Sorts.Int, Sorts.Bool, IsBuiltIn: true);
+
+        public static Function ToBitVec(int width) => new Function.Unary($"(_ int2bv {width})", Sorts.Int, Sorts.BitVec(width), IsBuiltIn: true);
+    }
+
     public static class BitVec
     {
         public static Function Negate(int width) => new Function.Unary("bvneg", Sorts.BitVec(width), Sorts.BitVec(width), IsBuiltIn: true);
@@ -87,5 +116,7 @@ public static class Functions
         public static Function UnsignedGreaterThan(int width) => new Function.Binary("bvugt", Sorts.BitVec(width), Sorts.BitVec(width), Sorts.Bool, IsBuiltIn: true);
 
         public static Function SignedGreaterThan(int width) => new Function.Binary("bvsgt", Sorts.BitVec(width), Sorts.BitVec(width), Sorts.Bool, IsBuiltIn: true);
+
+        public static Function ToNatural(int width) => new Function.Unary("bv2nat", Sorts.BitVec(width), Sorts.Int, IsBuiltIn: true);
     }
 }

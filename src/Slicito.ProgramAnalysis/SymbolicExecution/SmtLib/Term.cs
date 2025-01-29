@@ -17,6 +17,12 @@ public abstract record Term
             public override Sort Sort => Sorts.Bool;
         }
 
+        public sealed record Int(long Value) : Constant
+        {
+            public override Sort Sort => Sorts.Int;
+        }
+
+
         public sealed record BitVec(ulong Value, Sort.BitVec BitVecSort) : Constant
         {
             public override Sort Sort => BitVecSort;
