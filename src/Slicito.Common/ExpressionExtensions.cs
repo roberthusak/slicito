@@ -12,30 +12,53 @@ public static class ExpressionExtensions
             Expression.Constant.Boolean boolConst => boolConst.Value.ToString(),
             Expression.Constant.SignedInteger intConst => intConst.Value.ToString(),
             Expression.Constant.UnsignedInteger uintConst => uintConst.Value.ToString(),
-            Expression.BinaryOperator binOp => $"{binOp.Left.Format()} {binOp.Kind.Format()} {binOp.Right.Format()}",
+            Expression.Constant.Float floatConst => floatConst.Value.ToString(),
+            Expression.Constant.Utf16String stringConst => $"\"{stringConst.Value}\"",
+            Expression.UnaryOperator unaryOp => FormatUnaryOperator(unaryOp),
+            Expression.BinaryOperator binOp => FormatBinaryOperator(binOp),
             _ => throw new ArgumentException($"Unsupported expression type {expression.GetType().Name}.")
         };
     }
 
-    public static string Format(this BinaryOperatorKind kind)
+    private static string FormatUnaryOperator(Expression.UnaryOperator @operator)
     {
-        return kind switch
+        return @operator.Kind switch
         {
-            BinaryOperatorKind.Add => "+",
-            BinaryOperatorKind.Subtract => "-",
-            BinaryOperatorKind.Multiply => "*",
-            BinaryOperatorKind.Equal => "==",
-            BinaryOperatorKind.GreaterThan => ">",
-            BinaryOperatorKind.LessThan => "<",
-            BinaryOperatorKind.GreaterThanOrEqual => ">=",
-            BinaryOperatorKind.LessThanOrEqual => "<=",
-            BinaryOperatorKind.NotEqual => "!=",
-            BinaryOperatorKind.And => "&",
-            BinaryOperatorKind.Or => "|",
-            BinaryOperatorKind.Xor => "^",
-            BinaryOperatorKind.ShiftLeft => "<<",
-            BinaryOperatorKind.ShiftRight => ">>",
-            _ => throw new ArgumentException($"Unsupported binary operator kind {kind}.")
+            UnaryOperatorKind.Negate => $"-{@operator.Operand.Format()}",
+            UnaryOperatorKind.Not => $"!{@operator.Operand.Format()}",
+            UnaryOperatorKind.StringLength => $"len({@operator.Operand.Format()})",
+            _ => throw new ArgumentException($"Unsupported unary operator kind {@operator.Kind}.")
         };
+    }
+
+    private static string FormatBinaryOperator(Expression.BinaryOperator op)
+    {
+        return op.Kind switch
+        {
+            BinaryOperatorKind.Add => FormatInfix("+"),
+            BinaryOperatorKind.Subtract => FormatInfix("-"),
+            BinaryOperatorKind.Multiply => FormatInfix("*"),
+            BinaryOperatorKind.Divide => FormatInfix("/"),
+            BinaryOperatorKind.Modulo => FormatInfix("%"),
+            BinaryOperatorKind.Equal => FormatInfix("=="),
+            BinaryOperatorKind.GreaterThan => FormatInfix(">"),
+            BinaryOperatorKind.LessThan => FormatInfix("<"),
+            BinaryOperatorKind.GreaterThanOrEqual => FormatInfix(">="),
+            BinaryOperatorKind.LessThanOrEqual => FormatInfix("<="),
+            BinaryOperatorKind.NotEqual => FormatInfix("!="),
+            BinaryOperatorKind.And => FormatInfix("&"),
+            BinaryOperatorKind.Or => FormatInfix("|"),
+            BinaryOperatorKind.Xor => FormatInfix("^"),
+            BinaryOperatorKind.ShiftLeft => FormatInfix(">>"),
+            BinaryOperatorKind.ShiftRight => FormatInfix(">>"),
+            BinaryOperatorKind.StringStartsWith => $"startsWith({op.Left.Format()}, {op.Right.Format()})",
+            BinaryOperatorKind.StringEndsWith => $"endsWith({op.Left.Format()}, {op.Right.Format()})",
+            _ => throw new ArgumentException($"Unsupported binary operator kind {op.Kind}.")
+        };
+
+        string FormatInfix(string operatorSymbol)
+        {
+            return $"{op.Left.Format()} {operatorSymbol} {op.Right.Format()}";
+        }
     }
 }

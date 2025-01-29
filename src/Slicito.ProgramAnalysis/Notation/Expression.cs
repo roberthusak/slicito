@@ -30,11 +30,22 @@ public abstract class Expression
             public double Value { get; } = value;
             public DataType.Float Type { get; } = type;
         }
+
+        public sealed class Utf16String(string value) : Constant
+        {
+            public string Value { get; } = value;
+        }
     }
 
     public sealed class VariableReference(Variable variable) : Expression
     {
         public Variable Variable { get; } = variable;
+    }
+
+    public sealed class UnaryOperator(UnaryOperatorKind kind, Expression operand) : Expression
+    {
+        public UnaryOperatorKind Kind { get; } = kind;
+        public Expression Operand { get; } = operand;
     }
 
     public sealed class BinaryOperator(BinaryOperatorKind kind, Expression left, Expression right) : Expression

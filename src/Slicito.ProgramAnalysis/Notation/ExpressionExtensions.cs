@@ -19,9 +19,22 @@ public static class ExpressionExtensions
             Expression.Constant.SignedInteger signedInteger => signedInteger.Type,
             Expression.Constant.UnsignedInteger unsignedInteger => unsignedInteger.Type,
             Expression.Constant.Float @float => @float.Type,
+            Expression.Constant.Utf16String _ => DataType.Utf16String.Instance,
             Expression.VariableReference variableReference => variableReference.Variable.Type,
+            Expression.UnaryOperator unaryOperator => GetUnaryOperatorDataType(unaryOperator),
             Expression.BinaryOperator binaryOperator => GetBinaryOperatorDataType(binaryOperator),
             _ => throw new InvalidOperationException($"Expression of type '{expression.GetType().Name}' is not supported."),
+        };
+    }
+
+    private static DataType GetUnaryOperatorDataType(Expression.UnaryOperator unaryOperator)
+    {
+        return unaryOperator.Kind switch
+        {
+            UnaryOperatorKind.Negate => unaryOperator.Operand.GetDataType(),
+            UnaryOperatorKind.Not => DataType.Boolean.Instance,
+            UnaryOperatorKind.StringLength => new DataType.Integer(true, 32),
+            _ => throw new InvalidOperationException($"Unary operator of kind '{unaryOperator.Kind}' is not supported."),
         };
     }
 
@@ -45,6 +58,8 @@ public static class ExpressionExtensions
             BinaryOperatorKind.LessThanOrEqual => DataType.Boolean.Instance,
             BinaryOperatorKind.GreaterThan => DataType.Boolean.Instance,
             BinaryOperatorKind.GreaterThanOrEqual => DataType.Boolean.Instance,
+            BinaryOperatorKind.StringStartsWith => DataType.Boolean.Instance,
+            BinaryOperatorKind.StringEndsWith => DataType.Boolean.Instance,
             _ => throw new InvalidOperationException($"Binary operator '{binaryOperator.Kind}' is not supported."),
         };
     }
