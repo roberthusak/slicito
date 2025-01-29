@@ -52,7 +52,7 @@ public class SmtLibCliSolverTest
     }
 
     [TestMethod]
-    public async Task DeMorgans_Law_On_BitVec64_Is_Valid()
+    public async Task DeMorgans_Law_On_BitVec64_Are_Validated()
     {
         // Arrange
         var solver = await SolverHelper.CreateSolverFactory(TestContext!).CreateSolverAsync();
@@ -150,5 +150,69 @@ public class SmtLibCliSolverTest
         xValue.Should().Be(Terms.Int.Literal(-42));
         yValue.Should().Be(Terms.BitVec.Literal(unchecked((byte) -42), Sorts.BitVec8));
         zValue.Should().Be(Terms.Int.Literal(unchecked((byte) -42)));
+    }
+
+    [TestMethod]
+    public async Task Unicode_Strings_With_Special_Characters_Are_Correctly_Serialized_And_Parsed()
+    {
+        // Arrange
+        var solver = await SolverHelper.CreateSolverFactory(TestContext!).CreateSolverAsync();
+
+        // Act
+
+        var testString = "Příliš žluťoučký kůň\núpěl ďábelské ódy\t\u27E8";
+
+        var x = new Function.Nullary("x", Sorts.String);
+
+        await solver.AssertAsync(
+            Terms.Equal(
+                Terms.Constant(x),
+                Terms.String.Literal(testString)));
+
+        Term? xValue = null;
+        var result = await solver.CheckSatisfiabilityAsync(async model =>
+        {
+            xValue = await model.EvaluateAsync(Terms.Constant(x));
+        });
+
+        // Assert
+        result.Should().Be(SolverResult.Satisfiable);
+        xValue.Should().Be(Terms.String.Literal(testString));
+    }
+
+    [TestMethod]
+    public async Task Produces_Correct_String_For_Simple_Regular_Expression()
+    {
+        // Arrange
+        var solver = await SolverHelper.CreateSolverFactory(TestContext!).CreateSolverAsync();
+
+        // Act
+
+        var x = new Function.Nullary("x", Sorts.String);
+
+        await solver.AssertAsync(
+            Terms.String.IsInRegLan(
+                Terms.Constant(x),
+                Terms.RegLan.Loop(
+                    Terms.String.ToRegLan(
+                        Terms.String.Literal("ab")),
+                    1,
+                    3)));
+
+        await solver.AssertAsync(
+            Terms.Equal(
+                Terms.String.Length(
+                    Terms.Constant(x)),
+                Terms.Int.Literal(6)));
+
+        Term? xValue = null;
+        var result = await solver.CheckSatisfiabilityAsync(async model =>
+        {
+            xValue = await model.EvaluateAsync(Terms.Constant(x));
+        });
+
+        // Assert
+        result.Should().Be(SolverResult.Satisfiable);
+        xValue.Should().Be(Terms.String.Literal("ababab"));
     }
 }

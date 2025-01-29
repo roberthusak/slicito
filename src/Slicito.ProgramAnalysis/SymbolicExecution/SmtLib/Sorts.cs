@@ -22,4 +22,8 @@ public static class Sorts
         64 => BitVec64,
         _ => new Sort.BitVec(width)
     };
+
+    public static Sort.String String { get; } = new Sort.String();
+
+    public static Sort.RegLan RegLan { get; } = new Sort.RegLan();
 }

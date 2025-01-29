@@ -22,10 +22,14 @@ public abstract record Term
             public override Sort Sort => Sorts.Int;
         }
 
-
         public sealed record BitVec(ulong Value, Sort.BitVec BitVecSort) : Constant
         {
             public override Sort Sort => BitVecSort;
+        }
+
+        public sealed record String(string Value) : Constant
+        {
+            public override Sort Sort => Sorts.String;
         }
     }
 

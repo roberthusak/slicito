@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Slicito.ProgramAnalysis.SymbolicExecution.SmtLib;
+using System.Text;
 
 namespace Slicito.ProgramAnalysis.SymbolicExecution.SmtSolver;
 
@@ -170,6 +171,8 @@ public sealed class SmtLibCliSolver : ISolver
         Sort.Bool => "Bool",
         Sort.Int => "Int",
         Sort.BitVec bv => $"(_ BitVec {bv.Width})",
+        Sort.String => "String",
+        Sort.RegLan => "RegLan",
         _ => throw new ArgumentException($"Unsupported sort: {sort.GetType()}")
     };
 
@@ -178,10 +181,36 @@ public sealed class SmtLibCliSolver : ISolver
         Term.Constant.Bool b => b.Value.ToString().ToLowerInvariant(),
         Term.Constant.Int i => i.Value.ToString(),
         Term.Constant.BitVec bv => $"(_ bv{bv.Value} {bv.BitVecSort.Width})",
+        Term.Constant.String str => SerializeStringConstant(str),
         Term.FunctionApplication app when app.function is Function.Nullary => app.function.Name,
         Term.FunctionApplication app => $"({app.function.Name} {string.Join(" ", app.Arguments.Select(SerializeTerm))})",
         _ => throw new ArgumentException($"Unsupported term: {term.GetType()}")
     };
+
+    private static string SerializeStringConstant(Term.Constant.String str)
+    {
+        var result = new StringBuilder(str.Value.Length + 2);
+        result.Append('"');
+        
+        foreach (var c in str.Value)
+        {
+            if (c == '"')
+            {
+                result.Append("\"\"");  // Double quotes are escaped by doubling
+            }
+            else if (c < 0x20 || c > 0x7E)
+            {
+                result.Append($"\\u{{{(int)c:X}}}");  // Unicode escape for non-printable characters
+            }
+            else
+            {
+                result.Append(c);  // Regular printable ASCII characters are unchanged
+            }
+        }
+        
+        result.Append('"');
+        return result.ToString();
+    }
 
     private static Term ParseValue(string response)
     {
@@ -230,7 +259,65 @@ public sealed class SmtLibCliSolver : ISolver
             return new Term.Constant.BitVec(bitVecValue, new Sort.BitVec(width));
         }
 
+        if (value.StartsWith("\""))
+        {
+            return new Term.Constant.String(ParseStringConstant(value));
+        }
+
         throw new InvalidOperationException($"Failed to parse SMT-LIB value: {value}");
+    }
+
+    private static string ParseStringConstant(string value)
+    {
+        if (!value.StartsWith("\"") || !value.EndsWith("\""))
+        {
+            throw new InvalidOperationException($"Invalid string constant format: {value}");
+        }
+
+        var result = new StringBuilder(value.Length);
+        var i = 1; // Skip initial quote
+        
+        while (i < value.Length - 1) // Stop before final quote
+        {
+            if (value[i] == '"')
+            {
+                if (i + 1 < value.Length - 1 && value[i + 1] == '"')
+                {
+                    // Double quote escaped as ""
+                    result.Append('"');
+                    i += 2;
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Invalid string constant format - unescaped quote: {value}");
+                }
+            }
+            else if (value[i] == '\\' && value[i + 1] == 'u' && value[i + 2] == '{')
+            {
+                // Parse Unicode escape sequence \u{XXXX}
+                var closeBrace = value.IndexOf('}', i + 3);
+                if (closeBrace == -1)
+                {
+                    throw new InvalidOperationException($"Invalid Unicode escape sequence in: {value}");
+                }
+                
+                var hexValue = value.Substring(i + 3, closeBrace - (i + 3));
+                if (!int.TryParse(hexValue, System.Globalization.NumberStyles.HexNumber, null, out var unicodeValue))
+                {
+                    throw new InvalidOperationException($"Invalid Unicode escape sequence \\u{{{hexValue}}} in: {value}");
+                }
+                
+                result.Append((char)unicodeValue);
+                i = closeBrace + 1;
+            }
+            else
+            {
+                result.Append(value[i]);
+                i++;
+            }
+        }
+        
+        return result.ToString();
     }
 
     private static async Task SendCommandAsync(StreamWriter input, string command, Action<string>? linePrinter)

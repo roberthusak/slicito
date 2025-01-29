@@ -139,5 +139,82 @@ public static class Terms
             return bitVec.Width;
         }
     }
-}
 
+    public static class String
+    {
+        public static Term.Constant.String Literal(string value) => new(value);
+
+        public static Term.FunctionApplication Concatenate(Term left, Term right) => new(Functions.String.Concatenate, [left, right]);
+
+        public static Term.FunctionApplication Length(Term value) => new(Functions.String.Length, [value]);
+
+        public static Term.FunctionApplication IsLexicographicallyLessThan(Term left, Term right) => new(Functions.String.IsLexicographicallyLessThan, [left, right]);
+
+        public static Term.FunctionApplication IsLexicographicallyLessThanOrEqual(Term left, Term right) => new(Functions.String.IsLexicographicallyLessThanOrEqual, [left, right]);
+
+        public static Term.FunctionApplication At(Term value, Term index) => new(Functions.String.At, [value, index]);
+
+        public static Term.FunctionApplication Substring(Term value, Term start, Term end) => new(Functions.String.Substring, [value, start, end]);
+
+        public static Term.FunctionApplication IsPrefixOf(Term left, Term right) => new(Functions.String.IsPrefixOf, [left, right]);
+
+        public static Term.FunctionApplication IsSuffixOf(Term left, Term right) => new(Functions.String.IsSuffixOf, [left, right]);
+
+        public static Term.FunctionApplication Contains(Term left, Term right) => new(Functions.String.Contains, [left, right]);
+
+        public static Term.FunctionApplication IndexOf(Term left, Term right, Term start) => new(Functions.String.IndexOf, [left, right, start]);
+
+        public static Term.FunctionApplication Replace(Term left, Term right, Term replacement) => new(Functions.String.Replace, [left, right, replacement]);
+
+        public static Term.FunctionApplication ReplaceAll(Term left, Term right, Term replacement) => new(Functions.String.ReplaceAll, [left, right, replacement]);
+
+        public static Term.FunctionApplication ReplaceRegLan(Term left, Term right, Term replacement) => new(Functions.String.ReplaceRegLan, [left, right, replacement]);
+
+        public static Term.FunctionApplication ReplaceRegLanAll(Term left, Term right, Term replacement) => new(Functions.String.ReplaceRegLanAll, [left, right, replacement]);
+
+        public static Term.FunctionApplication IsDigit(Term value) => new(Functions.String.IsDigit, [value]);
+
+        public static Term.FunctionApplication ToCode(Term value) => new(Functions.String.ToCode, [value]);
+
+        public static Term.FunctionApplication FromCode(Term value) => new(Functions.String.FromCode, [value]);
+
+        public static Term.FunctionApplication ToInt(Term value) => new(Functions.String.ToInt, [value]);
+
+        public static Term.FunctionApplication FromInt(Term value) => new(Functions.String.FromInt, [value]);
+
+        public static Term.FunctionApplication ToRegLan(Term value) => new(Functions.String.ToRegLan, [value]);
+
+        public static Term.FunctionApplication IsInRegLan(Term left, Term right) => new(Functions.String.IsInRegLan, [left, right]);
+    }
+
+    public static class RegLan
+    {
+        public static Term.FunctionApplication None { get; } = new(Functions.RegLan.None, []);
+
+        public static Term.FunctionApplication All { get; } = new(Functions.RegLan.All, []);
+
+        public static Term.FunctionApplication AllCharacters { get; } = new(Functions.RegLan.AllCharacters, []);
+
+        public static Term.FunctionApplication Concatenate(Term left, Term right) => new(Functions.RegLan.Concatenate, [left, right]);
+
+        public static Term.FunctionApplication Union(Term left, Term right) => new(Functions.RegLan.Union, [left, right]);
+
+        public static Term.FunctionApplication Intersection(Term left, Term right) => new(Functions.RegLan.Intersection, [left, right]);
+
+        public static Term.FunctionApplication KleeneStar(Term value) => new(Functions.RegLan.KleeneStar, [value]);
+
+        public static Term.FunctionApplication Complement(Term value) => new(Functions.RegLan.Complement, [value]);
+
+        public static Term.FunctionApplication Difference(Term left, Term right) => new(Functions.RegLan.Difference, [left, right]);
+
+        public static Term.FunctionApplication KleenePlus(Term value) => new(Functions.RegLan.KleenePlus, [value]);
+
+        public static Term.FunctionApplication Optional(Term value) => new(Functions.RegLan.Optional, [value]);
+
+        public static Term.FunctionApplication Range(Term left, Term right) => new(Functions.RegLan.Range, [left, right]);
+
+        public static Term.FunctionApplication Power(Term value, int n) => new(Functions.RegLan.Power(n), [value]);
+
+        public static Term.FunctionApplication Loop(Term value, int n1, int n2) => new(Functions.RegLan.Loop(n1, n2), [value]);
+    }
+}

@@ -119,4 +119,80 @@ public static class Functions
 
         public static Function ToNatural(int width) => new Function.Unary("bv2nat", Sorts.BitVec(width), Sorts.Int, IsBuiltIn: true);
     }
+
+    public static class String
+    {
+        public static Function Concatenate { get; } = new Function.Binary("str.++", Sorts.String, Sorts.String, Sorts.String, IsBuiltIn: true);
+
+        public static Function Length { get; } = new Function.Unary("str.len", Sorts.String, Sorts.Int, IsBuiltIn: true);
+
+        public static Function IsLexicographicallyLessThan { get; } = new Function.Binary("str.<", Sorts.String, Sorts.String, Sorts.Bool, IsBuiltIn: true);
+
+        public static Function IsLexicographicallyLessThanOrEqual { get; } = new Function.Binary("str.<=", Sorts.String, Sorts.String, Sorts.Bool, IsBuiltIn: true);
+
+        public static Function At { get; } = new Function.Binary("str.at", Sorts.String, Sorts.Int, Sorts.String, IsBuiltIn: true);
+
+        public static Function Substring { get; } = new Function.Ternary("str.substr", Sorts.String, Sorts.Int, Sorts.Int, Sorts.String, IsBuiltIn: true);
+
+        public static Function IsPrefixOf { get; } = new Function.Binary("str.prefixof", Sorts.String, Sorts.String, Sorts.Bool, IsBuiltIn: true);
+
+        public static Function IsSuffixOf { get; } = new Function.Binary("str.suffixof", Sorts.String, Sorts.String, Sorts.Bool, IsBuiltIn: true);
+
+        public static Function Contains { get; } = new Function.Binary("str.contains", Sorts.String, Sorts.String, Sorts.Bool, IsBuiltIn: true);
+
+        public static Function IndexOf { get; } = new Function.Ternary("str.indexof", Sorts.String, Sorts.String, Sorts.Int, Sorts.Int, IsBuiltIn: true);
+
+        public static Function Replace { get; } = new Function.Ternary("str.replace", Sorts.String, Sorts.String, Sorts.String, Sorts.String, IsBuiltIn: true);
+
+        public static Function ReplaceAll { get; } = new Function.Ternary("str.replace_all", Sorts.String, Sorts.String, Sorts.String, Sorts.String, IsBuiltIn: true);
+
+        public static Function ReplaceRegLan { get; } = new Function.Ternary("str.replace_re", Sorts.String, Sorts.RegLan, Sorts.String, Sorts.String, IsBuiltIn: true);
+
+        public static Function ReplaceRegLanAll { get; } = new Function.Ternary("str.replace_re_all", Sorts.String, Sorts.RegLan, Sorts.String, Sorts.String, IsBuiltIn: true);
+
+        public static Function IsDigit { get; } = new Function.Unary("str.is_digit", Sorts.String, Sorts.Bool, IsBuiltIn: true);
+
+        public static Function ToCode { get; } = new Function.Unary("str.to_code", Sorts.String, Sorts.Int, IsBuiltIn: true);
+
+        public static Function FromCode { get; } = new Function.Unary("str.from_code", Sorts.Int, Sorts.String, IsBuiltIn: true);
+
+        public static Function ToInt { get; } = new Function.Unary("str.to_int", Sorts.String, Sorts.Int, IsBuiltIn: true);
+
+        public static Function FromInt { get; } = new Function.Unary("str.from_int", Sorts.Int, Sorts.String, IsBuiltIn: true);
+
+        public static Function ToRegLan { get; } = new Function.Unary("str.to_re", Sorts.String, Sorts.RegLan, IsBuiltIn: true);
+
+        public static Function IsInRegLan { get; } = new Function.Binary("str.in_re", Sorts.String, Sorts.RegLan, Sorts.Bool, IsBuiltIn: true);
+    }
+
+    public static class RegLan
+    {
+        public static Function None { get; } = new Function.Nullary("re.none", Sorts.RegLan, IsBuiltIn: true);
+
+        public static Function All { get; } = new Function.Nullary("re.all", Sorts.RegLan, IsBuiltIn: true);
+
+        public static Function AllCharacters { get; } = new Function.Nullary("re.allchar", Sorts.RegLan, IsBuiltIn: true);
+
+        public static Function Concatenate { get; } = new Function.Binary("re.++", Sorts.RegLan, Sorts.RegLan, Sorts.RegLan, IsBuiltIn: true);
+
+        public static Function Union { get; } = new Function.Binary("re.union", Sorts.RegLan, Sorts.RegLan, Sorts.RegLan, IsBuiltIn: true);
+
+        public static Function Intersection { get; } = new Function.Binary("re.inter", Sorts.RegLan, Sorts.RegLan, Sorts.RegLan, IsBuiltIn: true);
+
+        public static Function KleeneStar { get; } = new Function.Unary("re.*", Sorts.RegLan, Sorts.RegLan, IsBuiltIn: true);
+
+        public static Function Complement { get; } = new Function.Unary("re.comp", Sorts.RegLan, Sorts.RegLan, IsBuiltIn: true);
+
+        public static Function Difference { get; } = new Function.Binary("re.diff", Sorts.RegLan, Sorts.RegLan, Sorts.RegLan, IsBuiltIn: true);
+
+        public static Function KleenePlus { get; } = new Function.Unary("re.+", Sorts.RegLan, Sorts.RegLan, IsBuiltIn: true);
+
+        public static Function Optional { get; } = new Function.Unary("re.opt", Sorts.RegLan, Sorts.RegLan, IsBuiltIn: true);
+
+        public static Function Range { get; } = new Function.Binary("re.range", Sorts.String, Sorts.String, Sorts.RegLan, IsBuiltIn: true);
+
+        public static Function Power(int n) => new Function.Unary($"(_ re.^ {n})", Sorts.RegLan, Sorts.RegLan, IsBuiltIn: true);
+
+        public static Function Loop(int n1, int n2) => new Function.Unary($"(_ re.loop {n1} {n2})", Sorts.RegLan, Sorts.RegLan, IsBuiltIn: true);
+    }
 }
