@@ -21,6 +21,7 @@ public static class ExpressionExtensions
             Expression.Constant.UnsignedInteger unsignedInteger => unsignedInteger.Type,
             Expression.Constant.Float @float => @float.Type,
             Expression.Constant.Utf16String _ => DataType.Utf16String.Instance,
+            Expression.Constant.StringPattern _ => DataType.StringPattern.Instance,
             Expression.VariableReference variableReference => variableReference.Variable.Type,
             Expression.UnaryOperator unaryOperator => GetUnaryOperatorDataType(unaryOperator),
             Expression.BinaryOperator binaryOperator => GetBinaryOperatorDataType(binaryOperator),
@@ -61,6 +62,7 @@ public static class ExpressionExtensions
             BinaryOperatorKind.GreaterThanOrEqual => DataType.Boolean.Instance,
             BinaryOperatorKind.StringStartsWith => DataType.Boolean.Instance,
             BinaryOperatorKind.StringEndsWith => DataType.Boolean.Instance,
+            BinaryOperatorKind.StringMatchesPattern => DataType.Boolean.Instance,
             _ => throw new InvalidOperationException($"Binary operator '{binaryOperator.Kind}' is not supported."),
         };
     }

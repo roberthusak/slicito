@@ -14,6 +14,7 @@ public static class ExpressionExtensions
             Expression.Constant.UnsignedInteger uintConst => uintConst.Value.ToString(),
             Expression.Constant.Float floatConst => floatConst.Value.ToString(),
             Expression.Constant.Utf16String stringConst => $"\"{stringConst.Value}\"",
+            Expression.Constant.StringPattern patternConst => $"\"{patternConst.Pattern}\"",
             Expression.UnaryOperator unaryOp => FormatUnaryOperator(unaryOp),
             Expression.BinaryOperator binOp => FormatBinaryOperator(binOp),
             _ => throw new ArgumentException($"Unsupported expression type {expression.GetType().Name}.")
@@ -53,6 +54,7 @@ public static class ExpressionExtensions
             BinaryOperatorKind.ShiftRight => FormatInfix(">>"),
             BinaryOperatorKind.StringStartsWith => $"startsWith({op.Left.Format()}, {op.Right.Format()})",
             BinaryOperatorKind.StringEndsWith => $"endsWith({op.Left.Format()}, {op.Right.Format()})",
+            BinaryOperatorKind.StringMatchesPattern => $"matches({op.Left.Format()}, {op.Right.Format()})",
             _ => throw new ArgumentException($"Unsupported binary operator kind {op.Kind}.")
         };
 

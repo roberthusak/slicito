@@ -17,4 +17,9 @@ public abstract record DataType
     {
         public static Utf16String Instance { get; } = new();
     }
+
+    public sealed record StringPattern() : DataType
+    {
+        public static StringPattern Instance { get; } = new();
+    }
 }

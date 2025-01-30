@@ -35,6 +35,11 @@ public abstract class Expression
         {
             public string Value { get; } = value;
         }
+
+        public sealed class StringPattern(Strings.StringPattern pattern) : Constant
+        {
+            public Strings.StringPattern Pattern { get; } = pattern;
+        }
     }
 
     public sealed class VariableReference(Variable variable) : Expression
