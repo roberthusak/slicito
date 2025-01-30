@@ -6,6 +6,7 @@ public static class ExpressionExtensions
     {
         return expression switch
         {
+            Expression.UnaryOperator unaryOperator => unaryOperator == other || unaryOperator.Operand.Contains(other),
             Expression.BinaryOperator binaryOperator => binaryOperator == other || binaryOperator.Left.Contains(other) || binaryOperator.Right.Contains(other),
             _ => expression == other,
         };
