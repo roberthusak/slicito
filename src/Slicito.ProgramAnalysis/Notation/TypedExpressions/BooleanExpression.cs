@@ -19,16 +19,19 @@ public readonly struct BooleanExpression
         return new BooleanExpression(new Expression.Constant.Boolean(value));
     }
 
+    public static BooleanExpression operator !(BooleanExpression expression) =>
+        new BooleanExpression(new Expression.UnaryOperator(UnaryOperatorKind.Not, expression.Expression));
+
     public static BooleanExpression operator &(BooleanExpression left, BooleanExpression right) =>
-        CreateOperatorExpression(BinaryOperatorKind.And, left, right);
+        CreateBinaryOperatorExpression(BinaryOperatorKind.And, left, right);
 
     public static BooleanExpression operator |(BooleanExpression left, BooleanExpression right) =>
-        CreateOperatorExpression(BinaryOperatorKind.Or, left, right);
+        CreateBinaryOperatorExpression(BinaryOperatorKind.Or, left, right);
 
     public static BooleanExpression operator ^(BooleanExpression left, BooleanExpression right) =>
-        CreateOperatorExpression(BinaryOperatorKind.Xor, left, right);
+        CreateBinaryOperatorExpression(BinaryOperatorKind.Xor, left, right);
 
-    private static BooleanExpression CreateOperatorExpression(BinaryOperatorKind kind, BooleanExpression left, BooleanExpression right)
+    private static BooleanExpression CreateBinaryOperatorExpression(BinaryOperatorKind kind, BooleanExpression left, BooleanExpression right)
     {
         return new BooleanExpression(
             new Expression.BinaryOperator(
