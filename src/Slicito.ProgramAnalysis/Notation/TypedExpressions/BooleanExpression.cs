@@ -14,6 +14,11 @@ public readonly struct BooleanExpression
         }
     }
 
+    public static implicit operator BooleanExpression(bool value)
+    {
+        return new BooleanExpression(new Expression.Constant.Boolean(value));
+    }
+
     public static BooleanExpression operator &(BooleanExpression left, BooleanExpression right) =>
         CreateOperatorExpression(BinaryOperatorKind.And, left, right);
 
@@ -32,10 +37,5 @@ public readonly struct BooleanExpression
                 right.Expression
             )
         );
-    }
-
-    public static implicit operator BooleanExpression(bool value)
-    {
-        return new BooleanExpression(new Expression.Constant.Boolean(value));
     }
 }
