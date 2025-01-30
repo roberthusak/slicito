@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 using Slicito.ProgramAnalysis.Notation;
+using Slicito.ProgramAnalysis.Strings;
 using Slicito.ProgramAnalysis.SymbolicExecution.Implementation;
 using Slicito.ProgramAnalysis.SymbolicExecution.SmtLib;
 using Slicito.ProgramAnalysis.SymbolicExecution.SmtSolver;
@@ -344,13 +345,71 @@ public sealed class SymbolicExecutor(ISolverFactory solverFactory)
                 
                 Expression.Constant.Utf16String s => Terms.String.Literal(s.Value),
                 
+                Expression.Constant.StringPattern p => TranslateStringPattern(p.Pattern),
+                
                 Expression.VariableReference varRef => TranslateVariableReference(varRef.Variable, versionMap),
                 
                 Expression.UnaryOperator op => TranslateUnaryOperator(op, versionMap),
                 
                 Expression.BinaryOperator op => TranslateBinaryOperator(op, versionMap),
-                
+
                 _ => throw new ArgumentException($"Unsupported expression type: {expr.GetType()}", nameof(expr))
+            };
+        }
+
+        private Term TranslateStringPattern(StringPattern pattern)
+        {
+            return pattern switch
+            {
+                StringPattern.All => Terms.RegLan.All,
+
+                StringPattern.Literal s =>
+                    Terms.String.ToRegLan(
+                        Terms.String.Literal(s.Value)),
+
+                StringPattern.Character c => TranslateCharacterClass(c.CharacterClass),
+
+                StringPattern.Concatenation c =>
+                    Terms.RegLan.Concatenate(
+                        TranslateStringPattern(c.Left),
+                        TranslateStringPattern(c.Right)),
+                
+                StringPattern.Alternation a => Terms.RegLan.Union(
+                    TranslateStringPattern(a.Left),
+                    TranslateStringPattern(a.Right)),
+
+                StringPattern.Loop { Pattern: var starPattern, Min: 0, Max: null } =>
+                    Terms.RegLan.KleeneStar(TranslateStringPattern(starPattern)),
+
+                StringPattern.Loop { Pattern: var plusPattern, Min: 1, Max: null } =>
+                    Terms.RegLan.KleenePlus(TranslateStringPattern(plusPattern)),
+
+                StringPattern.Loop { Pattern: var loopPattern, Min: var min, Max: int max } =>
+                    Terms.RegLan.Loop(TranslateStringPattern(loopPattern), min, max),
+
+                _ => throw new ArgumentException($"Unsupported string pattern: '{pattern.GetType().Name}'", nameof(pattern))
+            };
+        }
+
+        private Term.FunctionApplication TranslateCharacterClass(CharacterClass characterClass)
+        {
+            return characterClass switch
+            {
+                CharacterClass.Any => Terms.RegLan.AllCharacters,
+
+                CharacterClass.Single c =>
+                    Terms.String.ToRegLan(
+                        Terms.String.Literal(c.Value.ToString())),
+
+                CharacterClass.Range range => Terms.RegLan.Range(
+                    Terms.String.Literal(range.From.ToString()),
+                    Terms.String.Literal(range.To.ToString())),
+
+                CharacterClass.Union u => Terms.RegLan.Union(
+                    TranslateCharacterClass(u.Left),
+                    TranslateCharacterClass(u.Right)),
+
+                _ => throw new ArgumentException($"Unsupported character class: '{characterClass.GetType().Name}'", nameof(characterClass))
             };
         }
 
@@ -402,6 +461,7 @@ public sealed class SymbolicExecutor(ISolverFactory solverFactory)
                 BinaryOperatorKind.GreaterThanOrEqual => Terms.BitVec.SignedGreaterOrEqual(left, right),
                 BinaryOperatorKind.StringStartsWith => Terms.String.IsPrefixOf(right, left),
                 BinaryOperatorKind.StringEndsWith => Terms.String.IsSuffixOf(right, left),
+                BinaryOperatorKind.StringMatchesPattern => Terms.String.IsInRegLan(left, right),
                 _ => throw new ArgumentException($"Unsupported binary operator: {op.Kind}", nameof(op))
             };
         }
