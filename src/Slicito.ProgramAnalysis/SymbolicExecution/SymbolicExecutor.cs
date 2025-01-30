@@ -388,15 +388,18 @@ public sealed class SymbolicExecutor(ISolverFactory solverFactory)
 
             return op.Kind switch
             {
+                BinaryOperatorKind.Add => Terms.BitVec.Add(left, right),
+                BinaryOperatorKind.Subtract => Terms.BitVec.Subtract(left, right),
+                BinaryOperatorKind.Multiply => Terms.BitVec.Multiply(left, right),
+                BinaryOperatorKind.And => Terms.And(left, right),
+                BinaryOperatorKind.Or => Terms.Or(left, right),
+                BinaryOperatorKind.Xor => Terms.Xor(left, right),
                 BinaryOperatorKind.Equal => Terms.Equal(left, right),
                 BinaryOperatorKind.NotEqual => Terms.Distinct(left, right),
                 BinaryOperatorKind.LessThan => Terms.BitVec.SignedLessThan(left, right),
                 BinaryOperatorKind.LessThanOrEqual => Terms.BitVec.SignedLessOrEqual(left, right),
                 BinaryOperatorKind.GreaterThan => Terms.BitVec.SignedGreaterThan(left, right),
                 BinaryOperatorKind.GreaterThanOrEqual => Terms.BitVec.SignedGreaterOrEqual(left, right),
-                BinaryOperatorKind.Add => Terms.BitVec.Add(left, right),
-                BinaryOperatorKind.Subtract => Terms.BitVec.Subtract(left, right),
-                BinaryOperatorKind.Multiply => Terms.BitVec.Multiply(left, right),
                 BinaryOperatorKind.StringStartsWith => Terms.String.IsPrefixOf(right, left),
                 BinaryOperatorKind.StringEndsWith => Terms.String.IsSuffixOf(right, left),
                 _ => throw new ArgumentException($"Unsupported binary operator: {op.Kind}", nameof(op))
