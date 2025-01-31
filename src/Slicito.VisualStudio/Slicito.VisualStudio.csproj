@@ -116,6 +116,7 @@
     <PackageReference Include="Community.VisualStudio.VSCT" PrivateAssets="all" />
     <PackageReference Include="Community.VisualStudio.Toolkit.17" ExcludeAssets="Runtime" />
     <PackageReference Include="Dotnet.Script.Core" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" />
     <PackageReference Include="Microsoft.VisualStudio.LanguageServices" />
     <PackageReference Include="Microsoft.VSSDK.BuildTools" />
     <PackageReference Include="StrongNamer" />

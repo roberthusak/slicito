@@ -1,7 +1,7 @@
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <RoslynVersion>4.11.0</RoslynVersion>
+    <RoslynVersion>4.12.0</RoslynVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="AutomaticGraphLayout.WpfGraphControl" Version="1.1.12" />
@@ -18,6 +18,8 @@
     <PackageVersion Include="Microsoft.AspNetCore.WebUtilities" Version="2.2.0" />
     <PackageVersion Include="Microsoft.Build.Locator" Version="1.7.8" />
     <PackageVersion Include="Microsoft.CodeAnalysis" Version="$(RoslynVersion)" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="$(RoslynVersion)" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="$(RoslynVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="$(RoslynVersion)" />
     <PackageVersion Include="Microsoft.DotNet.Interactive" Version="1.0.0-beta.22606.2" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
