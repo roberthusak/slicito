@@ -369,7 +369,7 @@ public sealed class SymbolicExecutor(ISolverFactory solverFactory)
 
                 StringPattern.Character c => TranslateCharacterClass(c.CharacterClass),
 
-                StringPattern.Concatenation c =>
+                StringPattern.Sequence c =>
                     Terms.RegLan.Concatenate(
                         TranslateStringPattern(c.Left),
                         TranslateStringPattern(c.Right)),

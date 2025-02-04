@@ -30,7 +30,7 @@ public readonly struct StringExpression
         var characterClass = characterClassCallback(CharacterClassProvider.Instance);
 
         var pattern = new Expression.Constant.StringPattern(
-            new Strings.StringPattern.Concatenation(
+            new Strings.StringPattern.Sequence(
                 new Strings.StringPattern.Character(characterClass.CharacterClass),
                 Strings.StringPattern.All.Instance
             )
@@ -47,7 +47,7 @@ public readonly struct StringExpression
         var characterClass = characterClassCallback(CharacterClassProvider.Instance);
 
         var pattern = new Expression.Constant.StringPattern(
-            new Strings.StringPattern.Concatenation(
+            new Strings.StringPattern.Sequence(
                 Strings.StringPattern.All.Instance,
                 new Strings.StringPattern.Character(characterClass.CharacterClass)
             )

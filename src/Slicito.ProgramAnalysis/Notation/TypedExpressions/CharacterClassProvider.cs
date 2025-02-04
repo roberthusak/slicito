@@ -8,7 +8,7 @@ public class CharacterClassProvider
 
     private CharacterClassProvider() { }
 
-    public CharacterClassHandle Any { get; } = new(new CharacterClass.Any());
+    public CharacterClassHandle Any { get; } = new(CharacterClass.Any.Instance);
 
     public CharacterClassHandle Digit { get; } = new(NamedClasses.Digit);
 

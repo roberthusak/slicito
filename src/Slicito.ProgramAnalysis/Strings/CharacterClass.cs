@@ -4,7 +4,10 @@ public abstract record CharacterClass
 {
     private CharacterClass() { }
     
-    public sealed record Any : CharacterClass;
+    public sealed record Any : CharacterClass
+    {
+        public static readonly Any Instance = new();
+    }
 
     public sealed record Single(char Value) : CharacterClass;
 

@@ -13,7 +13,7 @@ public abstract record StringPattern
 
     public sealed record Character(CharacterClass CharacterClass) : StringPattern;
 
-    public sealed record Concatenation(StringPattern Left, StringPattern Right) : StringPattern;
+    public sealed record Sequence(StringPattern Left, StringPattern Right) : StringPattern;
 
     public sealed record Alternation(StringPattern Left, StringPattern Right) : StringPattern;
 
