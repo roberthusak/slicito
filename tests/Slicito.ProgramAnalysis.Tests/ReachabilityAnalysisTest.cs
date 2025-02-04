@@ -110,4 +110,47 @@ public class ReachabilityAnalysisTest
         sStringValue.Value.Should().EndWith(">");
         sStringValue.Value.Length.Should().BeGreaterThanOrEqualTo(9).And.BeLessThanOrEqualTo(16);
     }
+
+    [TestMethod]
+    public async Task Finds_String_Matching_Regex_And_Additional_Constraints()
+    {
+        // Arrange
+
+        _solutionContext.Should().NotBeNull("Solution context should be initialized");
+        _types.Should().NotBeNull(".NET link and element types should be initialized");
+
+        var methods = await DotNetMethodHelper.GetAllMethodsWithDisplayNamesAsync(_solutionContext!.LazySlice, _types!);
+        var method = methods.Single(m => m.DisplayName == "AnalysisSamples.Samples.RegexValidationSample").Method;
+
+        // Act
+
+        var reachabilityAnalysis = new ReachabilityAnalysis.Builder(_solutionContext, SolverHelper.CreateSolverFactory(TestContext!))
+            .WithProcedureEntryToExit(method, options =>
+            {
+                var s = options.GetStringParameter("s");
+                var condition = 
+                    s.Length >= 1
+                    & s.Length <= 64
+                    & s.ContainsOnly(c => c.Alphanumeric | '-')
+                    & s.StartsWith(c => c.Alphanumeric)
+                    & s.EndsWith(c => c.Alphanumeric);
+                options.AddConstraint(!condition);
+
+                var returned = options.GetBooleanReturnValue();
+                options.AddConstraint(returned);
+            })
+            .Build();
+
+        var result = await reachabilityAnalysis.AnalyzeAsync();
+        var reachableResult = result as ReachabilityResult.Reachable;
+
+        var sStringValue = reachableResult!.Assignments.SingleOrDefault(a => a.Key.Name == "s").Value as Expression.Constant.Utf16String;
+
+        // Assert
+
+        result.Should().BeOfType<ReachabilityResult.Reachable>();
+
+        sStringValue.Should().NotBeNull();
+        sStringValue!.Value.Should().Be("-");
+    }
 }

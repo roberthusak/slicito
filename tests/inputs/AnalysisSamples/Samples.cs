@@ -96,4 +96,9 @@ public static class Samples
 
         return true;
     }
+
+    public static bool RegexValidationSample(string s)
+    {
+        return Regex.IsMatch(s, "^[a-z0-9-]{1,64}$");
+    }
 }

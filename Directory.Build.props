@@ -3,8 +3,9 @@
     <LangVersion>12.0</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyVersion>0.2.0.0</AssemblyVersion>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>../../slicito.snk</AssemblyOriginatorKeyFile>
-    <AssemblyVersion>0.2.0.0</AssemblyVersion>
+    <PublicKey>0024000004800000940000000602000000240000525341310004000001000100013838aab9855331cf6b06dc6414e8dea4a0ce8de439a2d097e60e4fde13ca25c8b6f2391a09d85525f695483136fa936a2fbb1f517aa9ee72f3ce3a9079d5c9fed876b79deebf679af095eca309fae42c7443259ad8cd80d0abeb746b623d757f11aadd9cda915dd09ba4f9aa52290112cc57e9e9678fed94e00a7a69fe56b4</PublicKey>
   </PropertyGroup>
 </Project>

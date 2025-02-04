@@ -10,6 +10,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Slicito.Microsoft.CodeAnalysis.EmbeddedLanguages" />
   </ItemGroup>
 
   <ItemGroup>
@@ -17,4 +18,7 @@
     <ProjectReference Include="..\Slicito.ProgramAnalysis\Slicito.ProgramAnalysis.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Slicito.DotNet.Tests" />
+  </ItemGroup>
 </Project>

@@ -12,11 +12,16 @@ using RoslynBinaryOperatorKind = Microsoft.CodeAnalysis.Operations.BinaryOperato
 using SlicitoUnaryOperatorKind = Slicito.ProgramAnalysis.Notation.UnaryOperatorKind;
 using SlicitoBinaryOperatorKind = Slicito.ProgramAnalysis.Notation.BinaryOperatorKind;
 using SlicitoLocation = Slicito.ProgramAnalysis.Notation.Location;
+using System.Text.RegularExpressions;
 
 namespace Slicito.DotNet.Implementation;
 
 internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context) : OperationVisitor<Empty, Expression>
 {
+    private static readonly SymbolDisplayFormat _fullNameFormat = new(
+        typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces
+    );
+
     public override Expression? DefaultVisit(IOperation operation, Empty _)
     {
         throw new NotSupportedException($"Operation {operation.Kind} (type: {operation.GetType().Name}) is not supported.");
@@ -133,6 +138,14 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
             throw new NotSupportedException($"Unsupported invocation of a non-static method '{operation.TargetMethod.Name}'.");
         }
 
+        if (operation.Instance is null
+            && operation.TargetMethod.Name == nameof(Regex.IsMatch)
+            && arguments.Length == 2
+            && operation.TargetMethod.ContainingType.ToDisplayString(_fullNameFormat) == "System.Text.RegularExpressions.Regex")
+        {
+            return new Expression.BinaryOperator(SlicitoBinaryOperatorKind.StringMatchesPattern, arguments[0], TranslateRegex(arguments[1]));
+        }
+
         var signature = ProcedureSignatureCreator.Create(operation.TargetMethod);
 
         var returnLocations = signature.ReturnTypes
@@ -174,6 +187,18 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
             RoslynBinaryOperatorKind.GreaterThanOrEqual => SlicitoBinaryOperatorKind.GreaterThanOrEqual,
             _ => throw new NotSupportedException($"Unsupported binary operator kind: {operatorKind}."),
         };
+    }
+
+    private Expression TranslateRegex(Expression expression)
+    {
+        if (expression is not Expression.Constant.Utf16String stringConstant)
+        {
+            throw new NotSupportedException($"Only string constants are supported as regex arguments, but got: '{expression.GetType().Name}'.");
+        }
+
+        var pattern = StringPatternCreator.ParseRegex(stringConstant.Value);
+
+        return new Expression.Constant.StringPattern(pattern);
     }
 
     private Expression VisitEnsureNonNull(
