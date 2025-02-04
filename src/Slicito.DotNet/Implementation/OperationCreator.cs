@@ -24,6 +24,11 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
 
     public override Expression? DefaultVisit(IOperation operation, Empty _)
     {
+        if (operation.ConstantValue.HasValue)
+        {
+            return TranslateConstantValue(operation.ConstantValue.Value);
+        }
+
         throw new NotSupportedException($"Operation {operation.Kind} (type: {operation.GetType().Name}) is not supported.");
     }
 
@@ -36,22 +41,7 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
     {
         Debug.Assert(operation.ConstantValue.HasValue);
 
-        return operation.ConstantValue.Value switch
-        {
-            bool b => new Expression.Constant.Boolean(b),
-            sbyte i => new Expression.Constant.SignedInteger(i, (DataType.Integer) TypeCreator.Create(SpecialType.System_SByte)),
-            byte i => new Expression.Constant.UnsignedInteger(i, (DataType.Integer) TypeCreator.Create(SpecialType.System_Byte)),
-            short i => new Expression.Constant.SignedInteger(i, (DataType.Integer) TypeCreator.Create(SpecialType.System_Int16)),
-            ushort i => new Expression.Constant.UnsignedInteger(i, (DataType.Integer) TypeCreator.Create(SpecialType.System_UInt16)),
-            int i => new Expression.Constant.SignedInteger(i, (DataType.Integer) TypeCreator.Create(SpecialType.System_Int32)),
-            uint i => new Expression.Constant.UnsignedInteger(i, (DataType.Integer) TypeCreator.Create(SpecialType.System_UInt32)),
-            long i => new Expression.Constant.SignedInteger(i, (DataType.Integer) TypeCreator.Create(SpecialType.System_Int64)),
-            ulong i => new Expression.Constant.UnsignedInteger(i, (DataType.Integer) TypeCreator.Create(SpecialType.System_UInt64)),
-            float f => new Expression.Constant.Float(f, (DataType.Float) TypeCreator.Create(SpecialType.System_Single)),
-            double d => new Expression.Constant.Float(d, (DataType.Float) TypeCreator.Create(SpecialType.System_Double)),
-            string s => new Expression.Constant.Utf16String(s),
-            _ => throw new NotSupportedException($"Unsupported literal type: {operation.ConstantValue.Value?.GetType().Name ?? "null"}."),
-        };
+        return TranslateConstantValue(operation.ConstantValue.Value);
     }
 
     public override Expression? VisitParameterReference(IParameterReferenceOperation operation, Empty _)
@@ -163,6 +153,26 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
         return returnLocations.IsEmpty || returnLocations[0] is not SlicitoLocation.VariableReference returnVariableReference
             ? null
             : new Expression.VariableReference(returnVariableReference.Variable);
+    }
+
+    private static Expression TranslateConstantValue(object? value)
+    {
+        return value switch
+        {
+            bool b => new Expression.Constant.Boolean(b),
+            sbyte i => new Expression.Constant.SignedInteger(i, (DataType.Integer) TypeCreator.Create(SpecialType.System_SByte)),
+            byte i => new Expression.Constant.UnsignedInteger(i, (DataType.Integer) TypeCreator.Create(SpecialType.System_Byte)),
+            short i => new Expression.Constant.SignedInteger(i, (DataType.Integer) TypeCreator.Create(SpecialType.System_Int16)),
+            ushort i => new Expression.Constant.UnsignedInteger(i, (DataType.Integer) TypeCreator.Create(SpecialType.System_UInt16)),
+            int i => new Expression.Constant.SignedInteger(i, (DataType.Integer) TypeCreator.Create(SpecialType.System_Int32)),
+            uint i => new Expression.Constant.UnsignedInteger(i, (DataType.Integer) TypeCreator.Create(SpecialType.System_UInt32)),
+            long i => new Expression.Constant.SignedInteger(i, (DataType.Integer) TypeCreator.Create(SpecialType.System_Int64)),
+            ulong i => new Expression.Constant.UnsignedInteger(i, (DataType.Integer) TypeCreator.Create(SpecialType.System_UInt64)),
+            float f => new Expression.Constant.Float(f, (DataType.Float) TypeCreator.Create(SpecialType.System_Single)),
+            double d => new Expression.Constant.Float(d, (DataType.Float) TypeCreator.Create(SpecialType.System_Double)),
+            string s => new Expression.Constant.Utf16String(s),
+            _ => throw new NotSupportedException($"Unsupported literal type: {value?.GetType().Name ?? "null"}."),
+        };
     }
 
     private static SlicitoBinaryOperatorKind TranslateBinaryOperatorKind(RoslynBinaryOperatorKind operatorKind)
