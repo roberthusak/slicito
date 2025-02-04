@@ -120,6 +120,10 @@ public sealed class SlicitoPackage : ToolkitPackage
         {
             await CreateToolWindowAsync(new ModelDisplayer(model));
         }
+        else if (SlicitoContext.TryCreateModel(result, out var createdModel))
+        {
+            await CreateToolWindowAsync(new ModelDisplayer(createdModel));
+        }
         else if (result is object obj)
         {
             var textModel = new Tree([new(obj.ToString(), [])]);
