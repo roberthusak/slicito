@@ -11,6 +11,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Slicito.Microsoft.CodeAnalysis.EmbeddedLanguages" />
+    <PackageReference Include="StrongNamer" />
   </ItemGroup>
 
   <ItemGroup>
