@@ -132,7 +132,8 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
             return new Expression.BinaryOperator(SlicitoBinaryOperatorKind.StringMatchesPattern, arguments[0], TranslateRegex(arguments[1]));
         }
 
-        var signature = ProcedureSignatureCreator.Create(operation.TargetMethod);
+        var targetMethodId = context.GetElement(operation.TargetMethod).Id;
+        var signature = ProcedureSignatureCreator.Create(operation.TargetMethod, targetMethodId);
 
         var returnLocations = signature.ReturnTypes
             .Select(t => (SlicitoLocation?) new SlicitoLocation.VariableReference(context.CreateTemporaryVariable(t)))
@@ -156,7 +157,7 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
         return value switch
         {
             bool b => new Expression.Constant.Boolean(b),
-            
+
             sbyte i => new Expression.Constant.SignedInteger(i, (DataType.Integer) TypeCreator.Create(SpecialType.System_SByte)),
             byte i => new Expression.Constant.UnsignedInteger(i, (DataType.Integer) TypeCreator.Create(SpecialType.System_Byte)),
             short i => new Expression.Constant.SignedInteger(i, (DataType.Integer) TypeCreator.Create(SpecialType.System_Int16)),

@@ -42,14 +42,14 @@ internal class SliceCreator
             return null;
         }
 
-        return _flowGraphCache.GetOrAdd(method, _ => FlowGraphCreator.TryCreate(method, _solution));
+        return _flowGraphCache.GetOrAdd(method, _ => FlowGraphCreator.TryCreate(method, _solution, _elementCache));
     }
 
     public ProcedureSignature GetProcedureSignature(ElementId elementId)
     {
         var method = _elementCache.GetMethod(elementId);
 
-        return _procedureSignatureCache.GetOrAdd(method, _ => ProcedureSignatureCreator.Create(method));
+        return _procedureSignatureCache.GetOrAdd(method, _ => ProcedureSignatureCreator.Create(method, elementId));
     }
 
     public ISymbol GetSymbol(ElementId elementId) => _elementCache.GetSymbol(elementId);

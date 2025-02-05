@@ -4,6 +4,7 @@ using System.Diagnostics;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FlowAnalysis;
 
+using Slicito.Abstractions;
 using Slicito.ProgramAnalysis.Notation;
 
 using RoslynBasicBlock = Microsoft.CodeAnalysis.FlowAnalysis.BasicBlock;
@@ -16,6 +17,7 @@ namespace Slicito.DotNet.Implementation;
 internal class FlowGraphCreator
 {
     private readonly ControlFlowGraph _roslynCfg;
+    private readonly ElementCache _elementCache;
 
     private readonly Dictionary<RoslynBasicBlock, (SlicitoBasicBlock First, SlicitoBasicBlock Last)> _roslynToSlicitoBasicBlocksMap = [];
     private readonly Dictionary<ISymbol, Variable> _variableMap = [];
@@ -24,9 +26,11 @@ internal class FlowGraphCreator
     private readonly OperationMapping.Builder _operationMappingBuilder;
     private readonly Variable? _returnVariable;
 
-    private FlowGraphCreator(IMethodSymbol methodSymbol, ControlFlowGraph roslynCfg)
+    private FlowGraphCreator(IMethodSymbol methodSymbol, ControlFlowGraph roslynCfg, ElementCache elementCache)
     {
         _roslynCfg = roslynCfg;
+        _elementCache = elementCache;
+
         _operationMappingBuilder = new(ElementIdProvider.GetOperationIdPrefix(methodSymbol));
 
         var parameters = methodSymbol.Parameters
@@ -48,7 +52,7 @@ internal class FlowGraphCreator
         _builder = new(parameters, returnValues);
     }
 
-    public static (IFlowGraph FlowGraph, OperationMapping OperationMapping)? TryCreate(IMethodSymbol method, Solution solution)
+    public static (IFlowGraph FlowGraph, OperationMapping OperationMapping)? TryCreate(IMethodSymbol method, Solution solution, ElementCache elementCache)
     {
         var roslynCfg = TryCreateRoslynControlFlowGraph(method, solution);
         if (roslynCfg is null)
@@ -56,7 +60,7 @@ internal class FlowGraphCreator
             return null;
         }
 
-        var creator = new FlowGraphCreator(method, roslynCfg);
+        var creator = new FlowGraphCreator(method, roslynCfg, elementCache);
         var flowGraph = creator.CreateFlowGraph();
         var operationMapping = creator._operationMappingBuilder.Build();
 
@@ -289,5 +293,7 @@ internal class FlowGraphCreator
         public Variable GetOrCreateVariable(IParameterSymbol parameter) => creator.GetOrCreateVariable(parameter);
 
         public Variable CreateTemporaryVariable(DataType type) => creator.CreateTemporaryVariable(type);
+
+        public ElementInfo GetElement(ISymbol symbol) => creator._elementCache.GetElement(symbol);
     }
 }
