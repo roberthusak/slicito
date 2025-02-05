@@ -130,10 +130,10 @@ public class ReachabilityAnalysisTest
                 var s = options.GetStringParameter("s");
                 var condition = 
                     s.Length >= 1
-                    & s.Length <= 64
-                    & s.ContainsOnly(c => c.Alphanumeric | '-')
-                    & s.StartsWith(c => c.Alphanumeric)
-                    & s.EndsWith(c => c.Alphanumeric);
+                    && s.Length <= 64
+                    && s.ContainsOnly(c => c.Alphanumeric | '-')
+                    && s.StartsWith(c => c.Alphanumeric)
+                    && s.EndsWith(c => c.Alphanumeric);
                 options.AddConstraint(!condition);
 
                 var returned = options.GetBooleanReturnValue();
