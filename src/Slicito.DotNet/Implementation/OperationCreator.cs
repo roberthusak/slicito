@@ -18,10 +18,6 @@ namespace Slicito.DotNet.Implementation;
 
 internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context) : OperationVisitor<Empty, Expression>
 {
-    private static readonly SymbolDisplayFormat _fullNameFormat = new(
-        typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces
-    );
-
     public override Expression? DefaultVisit(IOperation operation, Empty _)
     {
         if (operation.ConstantValue.HasValue)
@@ -131,7 +127,7 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
         if (operation.Instance is null
             && operation.TargetMethod.Name == nameof(Regex.IsMatch)
             && arguments.Length == 2
-            && operation.TargetMethod.ContainingType.ToDisplayString(_fullNameFormat) == "System.Text.RegularExpressions.Regex")
+            && RoslynHelper.GetFullName(operation.TargetMethod.ContainingType) == "System.Text.RegularExpressions.Regex")
         {
             return new Expression.BinaryOperator(SlicitoBinaryOperatorKind.StringMatchesPattern, arguments[0], TranslateRegex(arguments[1]));
         }
