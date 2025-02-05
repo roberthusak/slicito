@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+
 namespace AnalysisSamples;
 
 public static class Samples
