@@ -25,7 +25,7 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
             return TranslateConstantValue(operation.ConstantValue.Value);
         }
 
-        return new Expression.Unsupported($"Operation {operation.Kind} (type: {operation.GetType().Name})");
+        return new Expression.Unsupported($"Operation: {operation.Kind} (type: {operation.GetType().Name})");
     }
 
     public override Expression? VisitExpressionStatement(IExpressionStatementOperation operation, Empty _)
@@ -60,8 +60,13 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
         {
             ILocalReferenceOperation localReferenceOperation => context.GetOrCreateVariable(localReferenceOperation.Local),
             IParameterReferenceOperation parameterReferenceOperation => context.GetOrCreateVariable(parameterReferenceOperation.Parameter),
-            _ => throw new NotSupportedException($"Unsupported target of a simple assignment operation: {operation.Target.GetType().Name}."),
+            _ => null,
         };
+
+        if (variable is null)
+        {
+            return new Expression.Unsupported($"Assignment target: {operation.Target.Kind} (type: {operation.Target.GetType().Name})");
+        }
 
         var value = VisitEnsureNonNull(operation.Value);
 
@@ -79,7 +84,13 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
         var left = VisitEnsureNonNull(operation.LeftOperand);
         var right = VisitEnsureNonNull(operation.RightOperand);
 
-        return new Expression.BinaryOperator(TranslateBinaryOperatorKind(operation.OperatorKind), left, right);
+        var kind = TranslateBinaryOperatorKind(operation.OperatorKind);
+        if (kind is null)
+        {
+            return new Expression.Unsupported($"Binary operator: {operation.OperatorKind}");
+        }
+
+        return new Expression.BinaryOperator(kind.Value, left, right);
     }
 
     public override Expression? VisitPropertyReference(IPropertyReferenceOperation operation, Empty _)
@@ -95,21 +106,23 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
             }
         }
 
-        throw new NotSupportedException($"Unsupported property reference: {operation.Property.Name}.");
+        return DefaultVisit(operation, default);
     }
 
     public override Expression? VisitInvocation(IInvocationOperation operation, Empty _)
     {
-        var arguments = operation.Arguments
-            .Select(a => VisitEnsureNonNull(a.Value))
+        var instance = operation.Instance is not null ? VisitEnsureNonNull(operation.Instance) : null;
+        
+        IEnumerable<Expression> instanceEnumerable = instance is not null ? [instance] : [];
+
+        var arguments = instanceEnumerable
+            .Concat(operation.Arguments.Select(a => VisitEnsureNonNull(a.Value)))
             .ToImmutableArray();
 
-        if (operation.Instance is not null)
+        if (instance is not null)
         {
-            var instance = VisitEnsureNonNull(operation.Instance);
-
             if (arguments.Length == 1
-                && operation.Instance.Type is { SpecialType: SpecialType.System_String })
+                && operation.Instance!.Type is { SpecialType: SpecialType.System_String })
             {
                 if (operation.TargetMethod.Name == nameof(string.StartsWith))
                 {
@@ -120,16 +133,24 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
                     return new Expression.BinaryOperator(SlicitoBinaryOperatorKind.StringEndsWith, instance, arguments[0]);
                 }
             }
-
-            throw new NotSupportedException($"Unsupported invocation of a non-static method '{operation.TargetMethod.Name}'.");
         }
 
-        if (operation.Instance is null
+        if (instance is null
             && operation.TargetMethod.Name == nameof(Regex.IsMatch)
             && arguments.Length == 2
             && RoslynHelper.GetFullName(operation.TargetMethod.ContainingType) == "System.Text.RegularExpressions.Regex")
         {
-            return new Expression.BinaryOperator(SlicitoBinaryOperatorKind.StringMatchesPattern, arguments[0], TranslateRegex(arguments[1]));
+            Expression pattern;
+            try
+            {
+                pattern = TranslateRegex(arguments[1]);
+            }
+            catch (NotSupportedException e)
+            {
+                return new Expression.Unsupported($"Regex: {e.Message}");
+            }
+
+            return new Expression.BinaryOperator(SlicitoBinaryOperatorKind.StringMatchesPattern, arguments[0], pattern);
         }
 
         var targetMethodId = context.GetElement(operation.TargetMethod).Id;
@@ -152,6 +173,11 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
             : new Expression.VariableReference(returnVariableReference.Variable);
     }
 
+    public override Expression? VisitAwait(IAwaitOperation operation, Empty _)
+    {
+        return Visit(operation.Operation, default);
+    }
+
     private static Expression TranslateConstantValue(object? value)
     {
         return value switch
@@ -172,11 +198,11 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
 
             string s => new Expression.Constant.Utf16String(s),
 
-            _ => throw new NotSupportedException($"Unsupported literal type: {value?.GetType().Name ?? "null"}."),
+            _ => new Expression.Unsupported($"Literal type: {value?.GetType().Name ?? "null"}"),
         };
     }
 
-    private static SlicitoBinaryOperatorKind TranslateBinaryOperatorKind(RoslynBinaryOperatorKind operatorKind)
+    private static SlicitoBinaryOperatorKind? TranslateBinaryOperatorKind(RoslynBinaryOperatorKind operatorKind)
     {
         return operatorKind switch
         {
@@ -196,7 +222,7 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
             RoslynBinaryOperatorKind.LessThanOrEqual => SlicitoBinaryOperatorKind.LessThanOrEqual,
             RoslynBinaryOperatorKind.GreaterThan => SlicitoBinaryOperatorKind.GreaterThan,
             RoslynBinaryOperatorKind.GreaterThanOrEqual => SlicitoBinaryOperatorKind.GreaterThanOrEqual,
-            _ => throw new NotSupportedException($"Unsupported binary operator kind: {operatorKind}."),
+            _ => null,
         };
     }
 
@@ -204,7 +230,7 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
     {
         if (expression is not Expression.Constant.Utf16String stringConstant)
         {
-            throw new NotSupportedException($"Only string constants are supported as regex arguments, but got: '{expression.GetType().Name}'.");
+            return new Expression.Unsupported($"Regex pattern: {expression.GetType().Name}.");
         }
 
         var pattern = StringPatternCreator.ParseRegex(stringConstant.Value);
@@ -217,7 +243,7 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
         [CallerMemberName] string? callerName = null)
     {
         return operation.Accept(this, default)
-            ?? throw new NotSupportedException(
+            ?? throw new InvalidOperationException(
                 $"Visiting operation {operation.Kind} (type: {operation.GetType().Name}) in {callerName} returned null.");
     }
 }

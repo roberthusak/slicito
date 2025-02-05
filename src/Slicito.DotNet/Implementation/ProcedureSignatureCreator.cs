@@ -11,8 +11,10 @@ internal static class ProcedureSignatureCreator
 {
     public static ProcedureSignature Create(IMethodSymbol method, ElementId id)
     {
-        var parameterTypes = method.Parameters
-            .Select(p => TypeCreator.Create(p.Type))
+        IEnumerable<DataType> instanceTypeEnumerable = method.IsStatic ? [] : [TypeCreator.Create(method.ContainingType)];
+
+        var parameterTypes = instanceTypeEnumerable
+            .Concat(method.Parameters.Select(p => TypeCreator.Create(p.Type)))
             .ToImmutableArray();
 
         var returnType = method.ReturnType.SpecialType == SpecialType.System_Void

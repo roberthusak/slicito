@@ -33,8 +33,13 @@ internal class FlowGraphCreator
 
         _operationMappingBuilder = new(ElementIdProvider.GetOperationIdPrefix(methodSymbol));
 
-        var parameters = methodSymbol.Parameters
-            .Select(GetOrCreateVariable)
+        IEnumerable<Variable> instanceEnumerable =
+            methodSymbol.IsStatic
+            ? []
+            : [CreateTemporaryVariable(TypeCreator.Create(methodSymbol.ContainingType))];
+
+        var parameters = instanceEnumerable
+            .Concat(methodSymbol.Parameters.Select(GetOrCreateVariable))
             .ToImmutableArray();
 
         ImmutableArray<Expression> returnValues;
