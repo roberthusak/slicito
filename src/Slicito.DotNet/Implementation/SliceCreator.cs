@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 using Slicito.Abstractions;
 using Slicito.Abstractions.Interaction;
@@ -50,6 +51,8 @@ internal class SliceCreator
 
         return _procedureSignatureCache.GetOrAdd(method, _ => ProcedureSignatureCreator.Create(method));
     }
+
+    public ISymbol GetSymbol(ElementId elementId) => _elementCache.GetSymbol(elementId);
 
     private ILazySlice CreateSlice()
     {
@@ -172,13 +175,27 @@ internal class SliceCreator
 
         var syntax = symbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
 
-        var span = syntax?.GetLocation().GetLineSpan();
+        var span = syntax switch
+        {
+            MethodDeclarationSyntax methodDeclaration => methodDeclaration.Identifier.Span,
+            _ => syntax?.Span
+        };
+
         if (span is null)
         {
             return "";
         }
 
-        var codeLocation = new CodeLocation(span.Value.Path, span.Value.StartLinePosition.Line + 1, span.Value.StartLinePosition.Character);
+        var lineSpan = syntax?.SyntaxTree.GetLocation(span.Value).GetLineSpan();
+        if (lineSpan is null)
+        {
+            return "";
+        }
+
+        var codeLocation = new CodeLocation(
+            lineSpan.Value.Path,
+            lineSpan.Value.StartLinePosition.Line + 1,
+            lineSpan.Value.StartLinePosition.Character);
 
         return codeLocation.Format();
     }

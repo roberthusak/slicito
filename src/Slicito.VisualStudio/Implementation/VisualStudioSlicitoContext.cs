@@ -53,12 +53,14 @@ internal class VisualStudioSlicitoContext : ProgramAnalysisContextBase
 
     public override IFlowGraphProvider FlowGraphProvider => GetCurrentDotNetSolutionContext();
 
+    public new DotNetTypes ProgramTypes => (DotNetTypes) base.ProgramTypes;
+
     private DotNetSolutionContext GetCurrentDotNetSolutionContext()
     {
         var currentSolution = _workspace.CurrentSolution;
         if (currentSolution != _lastDotNetSolutionContext.Solution)
         {
-            _lastDotNetSolutionContext = new DotNetSolutionContext(currentSolution, (DotNetTypes)ProgramTypes, SliceManager);
+            _lastDotNetSolutionContext = new DotNetSolutionContext(currentSolution, ProgramTypes, SliceManager);
         }
 
         return _lastDotNetSolutionContext;
