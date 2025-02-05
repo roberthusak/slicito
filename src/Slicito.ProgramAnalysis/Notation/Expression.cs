@@ -59,4 +59,9 @@ public abstract class Expression
         public Expression Left { get; } = left;
         public Expression Right { get; } = right;
     }
+
+    public sealed class Unsupported(string kind) : Expression
+    {
+        public string Kind { get; } = kind;
+    }
 }

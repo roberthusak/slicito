@@ -22,4 +22,6 @@ public abstract record DataType
     {
         public static StringPattern Instance { get; } = new();
     }
+
+    public sealed record Unsupported(string Name) : DataType;
 }

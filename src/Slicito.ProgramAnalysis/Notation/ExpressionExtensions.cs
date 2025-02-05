@@ -25,6 +25,7 @@ public static class ExpressionExtensions
             Expression.VariableReference variableReference => variableReference.Variable.Type,
             Expression.UnaryOperator unaryOperator => GetUnaryOperatorDataType(unaryOperator),
             Expression.BinaryOperator binaryOperator => GetBinaryOperatorDataType(binaryOperator),
+            Expression.Unsupported unsupported => new DataType.Unsupported($"Type of unsupported expression: {unsupported.Kind}"),
             _ => throw new InvalidOperationException($"Expression of type '{expression.GetType().Name}' is not supported."),
         };
     }

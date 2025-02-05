@@ -17,6 +17,7 @@ public static class ExpressionExtensions
             Expression.Constant.StringPattern patternConst => $"\"{patternConst.Pattern}\"",
             Expression.UnaryOperator unaryOp => FormatUnaryOperator(unaryOp),
             Expression.BinaryOperator binOp => FormatBinaryOperator(binOp),
+            Expression.Unsupported unsupported => $"unsupported ({unsupported.Kind})",
             _ => throw new ArgumentException($"Unsupported expression type {expression.GetType().Name}.")
         };
     }

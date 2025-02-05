@@ -25,7 +25,7 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
             return TranslateConstantValue(operation.ConstantValue.Value);
         }
 
-        throw new NotSupportedException($"Operation {operation.Kind} (type: {operation.GetType().Name}) is not supported.");
+        return new Expression.Unsupported($"Operation {operation.Kind} (type: {operation.GetType().Name})");
     }
 
     public override Expression? VisitExpressionStatement(IExpressionStatementOperation operation, Empty _)
@@ -156,6 +156,7 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
         return value switch
         {
             bool b => new Expression.Constant.Boolean(b),
+            
             sbyte i => new Expression.Constant.SignedInteger(i, (DataType.Integer) TypeCreator.Create(SpecialType.System_SByte)),
             byte i => new Expression.Constant.UnsignedInteger(i, (DataType.Integer) TypeCreator.Create(SpecialType.System_Byte)),
             short i => new Expression.Constant.SignedInteger(i, (DataType.Integer) TypeCreator.Create(SpecialType.System_Int16)),
@@ -164,9 +165,12 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
             uint i => new Expression.Constant.UnsignedInteger(i, (DataType.Integer) TypeCreator.Create(SpecialType.System_UInt32)),
             long i => new Expression.Constant.SignedInteger(i, (DataType.Integer) TypeCreator.Create(SpecialType.System_Int64)),
             ulong i => new Expression.Constant.UnsignedInteger(i, (DataType.Integer) TypeCreator.Create(SpecialType.System_UInt64)),
+
             float f => new Expression.Constant.Float(f, (DataType.Float) TypeCreator.Create(SpecialType.System_Single)),
             double d => new Expression.Constant.Float(d, (DataType.Float) TypeCreator.Create(SpecialType.System_Double)),
+
             string s => new Expression.Constant.Utf16String(s),
+
             _ => throw new NotSupportedException($"Unsupported literal type: {value?.GetType().Name ?? "null"}."),
         };
     }
