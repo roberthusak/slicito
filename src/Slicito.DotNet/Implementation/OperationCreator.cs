@@ -121,16 +121,16 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
 
         if (instance is not null)
         {
-            if (arguments.Length == 1
+            if (arguments.Length == 2
                 && operation.Instance!.Type is { SpecialType: SpecialType.System_String })
             {
                 if (operation.TargetMethod.Name == nameof(string.StartsWith))
                 {
-                    return new Expression.BinaryOperator(SlicitoBinaryOperatorKind.StringStartsWith, instance, arguments[0]);
+                    return new Expression.BinaryOperator(SlicitoBinaryOperatorKind.StringStartsWith, instance, arguments[1]);
                 }
                 else if (operation.TargetMethod.Name == nameof(string.EndsWith))
                 {
-                    return new Expression.BinaryOperator(SlicitoBinaryOperatorKind.StringEndsWith, instance, arguments[0]);
+                    return new Expression.BinaryOperator(SlicitoBinaryOperatorKind.StringEndsWith, instance, arguments[1]);
                 }
             }
         }
