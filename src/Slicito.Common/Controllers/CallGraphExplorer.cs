@@ -161,4 +161,10 @@ public class CallGraphExplorer : IController
             _expandActionName,
             ImmutableDictionary<string, string>.Empty.Add(_idActionParameterName, element.Id.Value));
     }
+
+    public bool IsVisible(CallGraph.Procedure procedure) => _visibleProcedures.Contains(procedure);
+
+    public bool IsExpanded(CallGraph.Procedure procedure) =>
+        procedure.CallSites.All(callSite =>
+            _visibleProcedures.Contains(_callGraph.GetTarget(callSite)));
 }
