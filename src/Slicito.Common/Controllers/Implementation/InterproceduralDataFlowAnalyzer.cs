@@ -92,20 +92,23 @@ public static class InterproceduralDataFlowAnalyzer
                     case Operation.Call call:
                         var targetProcedure = _signatureNameToProcedureMap[call.Signature.Name];
                         var calleeFlowGraph = flowGraphProvider.TryGetFlowGraph(targetProcedure.ProcedureElement);
-                        if (calleeFlowGraph is not null)
-                        {
-                            for (var i = 0; i < call.Arguments.Length; i++)
-                            {
-                                var argument = call.Arguments[i];
-                                var calleeParameter = calleeFlowGraph.Entry.Parameters[i];
 
-                                if (argument.Contains(defUse.Use.Expression))
-                                {
-                                    yield return new ProcedureParameter(targetProcedure, calleeParameter);
-                                }
+                        for (var i = 0; i < call.Arguments.Length; i++)
+                        {
+                            var argument = call.Arguments[i];
+
+                            if (argument.Contains(defUse.Use.Expression))
+                            {
+                                // Synthesize parameter if the callee does not have an implementation
+                                var calleeParameter =
+                                    calleeFlowGraph?.Entry.Parameters[i]
+                                    ?? new Variable($"!param_{i}", call.Signature.ParameterTypes[i]);
+
+                                yield return new ProcedureParameter(targetProcedure, calleeParameter);
                             }
                         }
                         break;
+
 
                     case Operation.Assignment assignment:
                         foreach (var followingDefUse in defUses.Where(du => du.Definition == defUse.Use.Block))
