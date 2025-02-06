@@ -25,6 +25,7 @@ public partial class MainWindowControl : UserControl
         [
             new("Structure Browser", () => new SampleStructureBrowser(
                 _package.SlicitoContext.TypeSystem,
+                (DotNetSolutionContext) _package.SlicitoContext.FlowGraphProvider,
                 _package.SlicitoContext.WholeSlice)),
 
             new("API Endpoint Catalog", () => new ApiEndpointCatalog(

@@ -19,5 +19,7 @@ public class DotNetSolutionContext(Solution solution, DotNetTypes types, ISliceM
 
     public ProcedureSignature GetProcedureSignature(ElementId elementId) => _sliceCreator.GetProcedureSignature(elementId);
 
+    public Project GetProject(ElementId elementId) => _sliceCreator.GetProject(elementId);
+
     public ISymbol GetSymbol(ElementId elementId) => _sliceCreator.GetSymbol(elementId);
 }

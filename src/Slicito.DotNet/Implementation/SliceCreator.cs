@@ -52,6 +52,8 @@ internal class SliceCreator
         return _procedureSignatureCache.GetOrAdd(method, _ => ProcedureSignatureCreator.Create(method, elementId));
     }
 
+    public Project GetProject(ElementId elementId) => _elementCache.GetProject(elementId);
+
     public ISymbol GetSymbol(ElementId elementId) => _elementCache.GetSymbol(elementId);
 
     private ILazySlice CreateSlice()
