@@ -7,6 +7,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Slicito.Common\Slicito.Common.csproj" />
     <ProjectReference Include="..\Slicito.DotNet\Slicito.DotNet.csproj" />
+    <ProjectReference Include="..\Slicito.Wpf\Slicito.Wpf.csproj" />
   </ItemGroup>
 
 </Project>
