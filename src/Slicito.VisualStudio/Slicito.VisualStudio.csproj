@@ -122,10 +122,6 @@
     <PackageReference Include="StrongNamer" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\samples\Controllers\Controllers.csproj">
-      <Project>{cca637e7-2aac-4188-aada-1314386bc45b}</Project>
-      <Name>Controllers</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Slicito.Abstractions\Slicito.Abstractions.csproj">
       <Project>{722d866d-ae3a-42cb-a64d-f18c3f441cbf}</Project>
       <Name>Slicito.Abstractions</Name>

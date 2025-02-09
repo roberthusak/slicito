@@ -2,10 +2,9 @@ using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 
-using Controllers;
-
 using Slicito.Abstractions;
 using Slicito.Abstractions.Interaction;
+using Slicito.Common.Controllers;
 using Slicito.DotNet;
 using Slicito.DotNet.AspNetCore;
 namespace Slicito.VisualStudio;
@@ -23,9 +22,7 @@ public partial class MainWindowControl : UserControl
 
         _controllerFactories =
         [
-            new("Structure Browser", () => new SampleStructureBrowser(
-                _package.SlicitoContext.TypeSystem,
-                (DotNetSolutionContext) _package.SlicitoContext.FlowGraphProvider,
+            new("Structure Browser", () => new StructureBrowser(
                 _package.SlicitoContext.WholeSlice)),
 
             new("API Endpoint Catalog", () => new ApiEndpointCatalog(
