@@ -1,12 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0;net8.0-windows;net48</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Slicito.Common\Slicito.Common.csproj" />
     <ProjectReference Include="..\Slicito.DotNet\Slicito.DotNet.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0-windows' Or '$(TargetFramework)' == 'net48'">
     <ProjectReference Include="..\Slicito.Wpf\Slicito.Wpf.csproj" />
   </ItemGroup>
 

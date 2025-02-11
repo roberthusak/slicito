@@ -1,0 +1,16 @@
+<Project>
+  <Import Project="../Directory.Build.props" />
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <Version>0.2.1</Version>
+    <Authors>Robert Husák</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Title>Slicito - a set of tools for program comprehension</Title>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/roberthusak/slicito</RepositoryUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\build\README-NuGet.md" Pack="true" PackagePath="\README.md" />
+  </ItemGroup>
+</Project>
