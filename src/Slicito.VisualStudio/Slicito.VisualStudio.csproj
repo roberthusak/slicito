@@ -26,6 +26,9 @@
     <StartAction>Program</StartAction>
     <StartProgram Condition="'$(DevEnvDir)' != ''">$(DevEnvDir)devenv.exe</StartProgram>
     <StartArguments>/rootsuffix Exp</StartArguments>
+    <!-- The version must be more specific that the one used in NuGet packages;
+         otherwise, InitializeComponent tries to load a wrong assembly. -->
+    <AssemblyVersion>$(Version).0</AssemblyVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
