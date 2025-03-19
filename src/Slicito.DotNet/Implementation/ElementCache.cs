@@ -90,7 +90,8 @@ internal class ElementCache
 
     public ISymbol GetSymbol(ElementId id) => (ISymbol) _elementRoslynObjects[id];
 
-    public ISymbol? TryGetSymbol(ElementId id) => _elementRoslynObjects[id] as ISymbol;
+    public ISymbol? TryGetSymbol(ElementId id) =>
+        _elementRoslynObjects.TryGetValue(id, out var value) ? value as ISymbol : null;
 
     public INamespaceSymbol GetNamespace(ElementId id) => (INamespaceSymbol) _elementRoslynObjects[id];
 
@@ -104,6 +105,13 @@ internal class ElementCache
         {
             if (!existing.Equals(roslynObject))
             {
+                if (existing is ISymbol existingSymbol && roslynObject is ISymbol newSymbol &&
+                    existingSymbol.Locations.SequenceEqual(newSymbol.Locations))
+                {
+                    // Same symbol represented by different objects (there's probably "retargeting" going on)
+                    return existing;
+                }
+
                 throw new InvalidOperationException(
                     $"Element ID '{id}' is already mapped to a different object ({existing}) than the one to store ({roslynObject}).");
             }

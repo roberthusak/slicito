@@ -1,8 +1,10 @@
 using System.Collections.Concurrent;
 
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 using Slicito.Abstractions;
+using Slicito.Abstractions.Interaction;
 using Slicito.ProgramAnalysis.Notation;
 
 namespace Slicito.DotNet.Implementation;
@@ -40,15 +42,19 @@ internal class SliceCreator
             return null;
         }
 
-        return _flowGraphCache.GetOrAdd(method, _ => FlowGraphCreator.TryCreate(method, _solution));
+        return _flowGraphCache.GetOrAdd(method, _ => FlowGraphCreator.TryCreate(method, _solution, _elementCache));
     }
 
     public ProcedureSignature GetProcedureSignature(ElementId elementId)
     {
         var method = _elementCache.GetMethod(elementId);
 
-        return _procedureSignatureCache.GetOrAdd(method, _ => ProcedureSignatureCreator.Create(method));
+        return _procedureSignatureCache.GetOrAdd(method, _ => ProcedureSignatureCreator.Create(method, elementId));
     }
+
+    public Project GetProject(ElementId elementId) => _elementCache.GetProject(elementId);
+
+    public ISymbol GetSymbol(ElementId elementId) => _elementCache.GetSymbol(elementId);
 
     private ILazySlice CreateSlice()
     {
@@ -67,6 +73,7 @@ internal class SliceCreator
             .AddElementAttribute(_types.Project, DotNetAttributeNames.Name, LoadProjectName)
             .AddElementAttribute(symbolTypes, DotNetAttributeNames.Name, LoadSymbolName)
             .AddElementAttribute(_types.Operation, DotNetAttributeNames.Name, LoadOperationName)
+            .AddElementAttribute(symbolTypes, CommonAttributeNames.CodeLocation, LoadCodeLocation)
             .BuildLazy();
     }
 
@@ -162,6 +169,37 @@ internal class SliceCreator
         var syntax = _flowGraphCache[method]!.Value.OperationMapping.GetSyntax(elementId);
 
         return syntax.ToString();
+    }
+
+    private string LoadCodeLocation(ElementId elementId)
+    {
+        var symbol = _elementCache.GetSymbol(elementId);
+
+        var syntax = symbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
+
+        var span = syntax switch
+        {
+            MethodDeclarationSyntax methodDeclaration => methodDeclaration.Identifier.Span,
+            _ => syntax?.Span
+        };
+
+        if (span is null)
+        {
+            return "";
+        }
+
+        var lineSpan = syntax?.SyntaxTree.GetLocation(span.Value).GetLineSpan();
+        if (lineSpan is null)
+        {
+            return "";
+        }
+
+        var codeLocation = new CodeLocation(
+            lineSpan.Value.Path,
+            lineSpan.Value.StartLinePosition.Line + 1,
+            lineSpan.Value.StartLinePosition.Character);
+
+        return codeLocation.Format();
     }
 
     private static ISliceBuilder.PartialElementInfo ToPartialElementInfo(ElementInfo element) =>

@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+
 namespace AnalysisSamples;
 
 public static class Samples
@@ -54,6 +56,11 @@ public static class Samples
         return b;
     }
 
+    public static bool ConditionalReachabilitySample(int a, int b)
+    {
+        return a == b + 1;
+    }
+
     public static int Caller(int a)
     {
         int res = 0;
@@ -76,4 +83,24 @@ public static class Samples
     }
 
     public static void VoidCallee(int _) { }
+
+    public static bool StringValidationSample(string s)
+    {
+        if (s.Length < 8 || s.Length > 16)
+        {
+            return false;
+        }
+
+        if (!s.StartsWith("<") || !s.EndsWith(">"))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    public static bool RegexValidationSample(string s)
+    {
+        return Regex.IsMatch(s, "^[a-z0-9-]{1,64}$");
+    }
 }

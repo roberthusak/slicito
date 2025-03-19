@@ -1,8 +1,4 @@
-# Datamole Editorconfig - version 0.2.0
-
-# Please, discuss any changes to this file with maintainers and do not forget to increase the version properly.
-
-# Maintainers: Tomas Pajurek <tomas.pajurek@datamole.ai>
+# Slicito EditorConfig (original version from Datamole, copied with their permission)
 
 # http://EditorConfig.org
 
@@ -25,6 +21,13 @@ dotnet_style_prefer_auto_properties = true:warning
 dotnet_style_object_initializer = true:suggestion
 dotnet_style_collection_initializer = true:suggestion
 dotnet_style_prefer_simplified_boolean_expressions = true:suggestion
+
+# Project files ----------------------------------------------------------------
+
+[*.{csproj,props}]
+
+indent_style = space
+indent_size = 2
 
 # C# files ---------------------------------------------------------------------
 

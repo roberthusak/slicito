@@ -5,13 +5,17 @@ namespace Slicito.DotNet.Implementation;
 
 internal static class TypeCreator
 {
-    public static DataType Create(ITypeSymbol typeSymbol) => Create(typeSymbol.SpecialType);
+    public static DataType Create(ITypeSymbol typeSymbol) =>
+        CreateOrNull(typeSymbol.SpecialType) ?? new DataType.Unsupported(typeSymbol.Name);
 
-    public static DataType Create(SpecialType specialType)
+    public static DataType Create(SpecialType specialType) =>
+        CreateOrNull(specialType) ?? throw new NotSupportedException($"Special type {specialType} is not supported");
+
+    public static DataType? CreateOrNull(SpecialType specialType)
     {
         return specialType switch
         {
-            SpecialType.System_Boolean => new DataType.Boolean(),
+            SpecialType.System_Boolean => DataType.Boolean.Instance,
             
             SpecialType.System_SByte => new DataType.Integer(Signed: true, Bits: 8),
             SpecialType.System_Int16 => new DataType.Integer(Signed: true, Bits: 16),
@@ -25,8 +29,10 @@ internal static class TypeCreator
             
             SpecialType.System_Single => new DataType.Float(ExponentBits: 8, MantissaBits: 24),
             SpecialType.System_Double => new DataType.Float(ExponentBits: 11, MantissaBits: 53),
+
+            SpecialType.System_String => DataType.Utf16String.Instance,
             
-            _ => throw new NotSupportedException($"Special type {specialType} is not supported")
+            _ => null
         };
     }
 }

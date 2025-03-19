@@ -12,6 +12,8 @@ using Microsoft.VisualStudio.LanguageServices;
 using Microsoft.VisualStudio.Shell.Interop;
 
 using Slicito.Abstractions;
+using Slicito.Abstractions.Models;
+using Slicito.Common.Controllers;
 using Slicito.Common.Extensibility;
 using Slicito.VisualStudio.Implementation;
 
@@ -113,6 +115,19 @@ public sealed class SlicitoPackage : ToolkitPackage
         if (result is IController controller)
         {
             await CreateToolWindowAsync(controller);
+        }
+        else if (result is IModel model)
+        {
+            await CreateToolWindowAsync(new ModelDisplayer(model));
+        }
+        else if (SlicitoContext.TryCreateModel(result, out var createdModel))
+        {
+            await CreateToolWindowAsync(new ModelDisplayer(createdModel));
+        }
+        else if (result is object obj)
+        {
+            var textModel = new Tree([new(obj.ToString(), [])]);
+            await CreateToolWindowAsync(new ModelDisplayer(textModel));
         }
     }
 

@@ -6,11 +6,19 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis" />
+    <PackageReference Include="PolySharp">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Slicito.Microsoft.CodeAnalysis.EmbeddedLanguages" />
+    <PackageReference Include="StrongNamer" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Slicito.Abstractions\Slicito.Abstractions.csproj" />
     <ProjectReference Include="..\Slicito.ProgramAnalysis\Slicito.ProgramAnalysis.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Slicito.DotNet.Tests" />
+  </ItemGroup>
 </Project>

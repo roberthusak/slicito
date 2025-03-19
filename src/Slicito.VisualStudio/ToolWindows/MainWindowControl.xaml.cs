@@ -1,30 +1,36 @@
 using System.Collections.Generic;
-using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 
-using Controllers;
-
-using Microsoft.VisualStudio.Shell.Interop;
-using Microsoft.VisualStudio.Threading;
-
 using Slicito.Abstractions;
-using Slicito.Common;
+using Slicito.Abstractions.Interaction;
+using Slicito.Common.Controllers;
+using Slicito.DotNet;
+using Slicito.DotNet.AspNetCore;
 namespace Slicito.VisualStudio;
 
 public partial class MainWindowControl : UserControl
 {
     private readonly SlicitoPackage _package;
 
-    private readonly List<Tuple<string, Func<IController>>> _controllerFactories =
-    [
-        new("Sample Structure Browser", () => new SampleStructureBrowser(new TypeSystem())),
-    ];
+    private readonly List<Tuple<string, Func<IController>>> _controllerFactories;
 
     public MainWindowControl(SlicitoPackage package)
     {
         InitializeComponent();
         _package = package;
+
+        _controllerFactories =
+        [
+            new("Structure Browser", () => new StructureBrowser(
+                _package.SlicitoContext.WholeSlice)),
+
+            new("API Endpoint Catalog", () => new ApiEndpointCatalog(
+                _package.SlicitoContext.WholeSlice,
+                (DotNetSolutionContext) _package.SlicitoContext.FlowGraphProvider,
+                _package.SlicitoContext.ProgramTypes,
+                _package.SlicitoContext.GetService<ICodeNavigator>())),
+        ];
 
         _controllersComboBox.ItemsSource = _controllerFactories;
     }

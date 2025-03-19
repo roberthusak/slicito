@@ -7,6 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="PolySharp">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\Slicito.Abstractions\Slicito.Abstractions.csproj" />
     <ProjectReference Include="..\..\src\Slicito.DotNet\Slicito.DotNet.csproj" />
     <ProjectReference Include="..\..\src\Slicito.Common\Slicito.Common.csproj" />

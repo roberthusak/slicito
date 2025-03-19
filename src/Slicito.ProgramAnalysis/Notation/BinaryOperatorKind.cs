@@ -18,4 +18,7 @@ public enum BinaryOperatorKind
     LessThanOrEqual,
     GreaterThan,
     GreaterThanOrEqual,
+    StringStartsWith,
+    StringEndsWith,
+    StringMatchesPattern,
 }

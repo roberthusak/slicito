@@ -2,19 +2,19 @@ using System.Collections.Immutable;
 
 using Microsoft.CodeAnalysis;
 
+using Slicito.Abstractions;
 using Slicito.ProgramAnalysis.Notation;
 
 namespace Slicito.DotNet.Implementation;
 
 internal static class ProcedureSignatureCreator
 {
-    public static ProcedureSignature Create(IMethodSymbol method)
+    public static ProcedureSignature Create(IMethodSymbol method, ElementId id)
     {
-        // Ensure uniqueness and simplify mapping back to the element
-        var id = ElementIdProvider.GetId(method);
+        IEnumerable<DataType> instanceTypeEnumerable = method.IsStatic ? [] : [TypeCreator.Create(method.ContainingType)];
 
-        var parameterTypes = method.Parameters
-            .Select(p => TypeCreator.Create(p.Type))
+        var parameterTypes = instanceTypeEnumerable
+            .Concat(method.Parameters.Select(p => TypeCreator.Create(p.Type)))
             .ToImmutableArray();
 
         var returnType = method.ReturnType.SpecialType == SpecialType.System_Void

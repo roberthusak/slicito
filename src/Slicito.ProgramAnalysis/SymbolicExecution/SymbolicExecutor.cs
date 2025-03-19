@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 using Slicito.ProgramAnalysis.Notation;
+using Slicito.ProgramAnalysis.Strings;
 using Slicito.ProgramAnalysis.SymbolicExecution.Implementation;
 using Slicito.ProgramAnalysis.SymbolicExecution.SmtLib;
 using Slicito.ProgramAnalysis.SymbolicExecution.SmtSolver;
@@ -15,24 +16,27 @@ public sealed class SymbolicExecutor(ISolverFactory solverFactory)
 {
     public async ValueTask<ExecutionResult> ExecuteAsync(
         IFlowGraph flowGraph,
-        IEnumerable<BasicBlock> targetBlocks)
+        IEnumerable<BasicBlock> targetBlocks,
+        IEnumerable<Expression>? initialConstraints = null)
     {
-        return await new Executor(flowGraph, targetBlocks, solverFactory).ExecuteAsync();
+        return await new Executor(flowGraph, targetBlocks, initialConstraints ?? [], solverFactory).ExecuteAsync();
     }
 
     private class Executor
     {
         private readonly IFlowGraph _flowGraph;
-        private readonly IEnumerable<BasicBlock> _targetBlocks;
+        private readonly List<BasicBlock> _targetBlocks;
+        private readonly List<Expression> _initialConstraints;
         private readonly ISolverFactory _solverFactory;
 
         private readonly Dictionary<BasicBlock, int> _topologicalOrder;
         private readonly SortedSet<ExecutionState> _workList;
 
-        public Executor(IFlowGraph flowGraph, IEnumerable<BasicBlock> targetBlocks, ISolverFactory solverFactory)
+        public Executor(IFlowGraph flowGraph, IEnumerable<BasicBlock> targetBlocks, IEnumerable<Expression> initialConstraints, ISolverFactory solverFactory)
         {
             _flowGraph = flowGraph;
-            _targetBlocks = targetBlocks;
+            _targetBlocks = targetBlocks.ToList();
+            _initialConstraints = initialConstraints.ToList();
             _solverFactory = solverFactory;
 
             var reachableBlocks = FlowGraphHelper.GetBlocksReachingTargets(_flowGraph, _targetBlocks);
@@ -136,10 +140,12 @@ public sealed class SymbolicExecutor(ISolverFactory solverFactory)
                 versionMap = versionMap.Add(paramFunc, 0);
             }
 
+            var condition = _initialConstraints.Aggregate((Term)Terms.True, (acc, constraint) => Terms.And(acc, TranslateExpression(constraint, versionMap)));
+
             return new ExecutionState(
                 CurrentBlock: _flowGraph.Entry,
                 VersionMap: versionMap,
-                ConditionStack: new ImmutableConditionStack(Terms.True),
+                ConditionStack: new ImmutableConditionStack(condition),
                 UnmergedCondition: null);
         }
 
@@ -262,7 +268,7 @@ public sealed class SymbolicExecutor(ISolverFactory solverFactory)
             await solver.AssertAsync(CreateBlockReachingBoolean(state.CurrentBlock));
             
             ExecutionModel? executionModel = null;
-            var satResult = await solver.CheckSatisfiabilityAsync(model =>
+            var satResult = await solver.CheckSatisfiabilityAsync(async model =>
             {
                 // If satisfiable, construct execution model from parameter values
                 var parameterValues = new List<Expression.Constant>();
@@ -270,14 +276,12 @@ public sealed class SymbolicExecutor(ISolverFactory solverFactory)
                 {
                     var paramFunc = new Function.Nullary($"{param.Name}", GetSortForType(param.Type));
                     var paramTerm = CreateVersionedConstant(paramFunc, 0);
-                    var value = model.Evaluate(paramTerm);
+                    var value = await model.EvaluateAsync(paramTerm);
 
                     parameterValues.Add(ConvertTermToConstant(value, param.Type));
                 }
 
                 executionModel = new ExecutionModel([.. parameterValues]);
-
-                return new();
             });
 
             return satResult switch
@@ -339,11 +343,73 @@ public sealed class SymbolicExecutor(ISolverFactory solverFactory)
                 Expression.Constant.SignedInteger i => 
                     Terms.BitVec.Literal(ReinterpretAsUnsigned(i.Value), Sorts.BitVec(i.Type.Bits)),
                 
+                Expression.Constant.Utf16String s => Terms.String.Literal(s.Value),
+                
+                Expression.Constant.StringPattern p => TranslateStringPattern(p.Pattern),
+                
                 Expression.VariableReference varRef => TranslateVariableReference(varRef.Variable, versionMap),
                 
-                Expression.BinaryOperator op => TranslateBinaryOperator(op, versionMap),
+                Expression.UnaryOperator op => TranslateUnaryOperator(op, versionMap),
                 
+                Expression.BinaryOperator op => TranslateBinaryOperator(op, versionMap),
+
                 _ => throw new ArgumentException($"Unsupported expression type: {expr.GetType()}", nameof(expr))
+            };
+        }
+
+        private Term TranslateStringPattern(StringPattern pattern)
+        {
+            return pattern switch
+            {
+                StringPattern.All => Terms.RegLan.All,
+
+                StringPattern.Literal s =>
+                    Terms.String.ToRegLan(
+                        Terms.String.Literal(s.Value)),
+
+                StringPattern.Character c => TranslateCharacterClass(c.CharacterClass),
+
+                StringPattern.Sequence c =>
+                    Terms.RegLan.Concatenate(
+                        TranslateStringPattern(c.Left),
+                        TranslateStringPattern(c.Right)),
+                
+                StringPattern.Alternation a => Terms.RegLan.Union(
+                    TranslateStringPattern(a.Left),
+                    TranslateStringPattern(a.Right)),
+
+                StringPattern.Loop { Pattern: var starPattern, Min: 0, Max: null } =>
+                    Terms.RegLan.KleeneStar(TranslateStringPattern(starPattern)),
+
+                StringPattern.Loop { Pattern: var plusPattern, Min: 1, Max: null } =>
+                    Terms.RegLan.KleenePlus(TranslateStringPattern(plusPattern)),
+
+                StringPattern.Loop { Pattern: var loopPattern, Min: var min, Max: int max } =>
+                    Terms.RegLan.Loop(TranslateStringPattern(loopPattern), min, max),
+
+                _ => throw new ArgumentException($"Unsupported string pattern: '{pattern.GetType().Name}'", nameof(pattern))
+            };
+        }
+
+        private Term.FunctionApplication TranslateCharacterClass(CharacterClass characterClass)
+        {
+            return characterClass switch
+            {
+                CharacterClass.Any => Terms.RegLan.AllCharacters,
+
+                CharacterClass.Single c =>
+                    Terms.String.ToRegLan(
+                        Terms.String.Literal(c.Value.ToString())),
+
+                CharacterClass.Range range => Terms.RegLan.Range(
+                    Terms.String.Literal(range.From.ToString()),
+                    Terms.String.Literal(range.To.ToString())),
+
+                CharacterClass.Union u => Terms.RegLan.Union(
+                    TranslateCharacterClass(u.Left),
+                    TranslateCharacterClass(u.Right)),
+
+                _ => throw new ArgumentException($"Unsupported character class: '{characterClass.GetType().Name}'", nameof(characterClass))
             };
         }
 
@@ -359,6 +425,21 @@ public sealed class SymbolicExecutor(ISolverFactory solverFactory)
             return Terms.Constant(varFunc with { Name = $"{varFunc.Name}!{version}" });
         }
 
+        private Term TranslateUnaryOperator(Expression.UnaryOperator op, VersionMap versionMap)
+        {
+            var operand = TranslateExpression(op.Operand, versionMap);
+
+            return op.Kind switch
+            {
+                UnaryOperatorKind.Negate => Terms.BitVec.Negate(operand),
+                UnaryOperatorKind.Not => Terms.Not(operand),
+                UnaryOperatorKind.StringLength => Terms.Int.ToBitVec(
+                    Terms.String.Length(operand),
+                    ((DataType.Integer)op.GetDataType()).Bits),
+                _ => throw new ArgumentException($"Unsupported unary operator: {op.Kind}", nameof(op))
+            };
+        }
+
         private Term TranslateBinaryOperator(Expression.BinaryOperator op, VersionMap versionMap)
         {
             var left = TranslateExpression(op.Left, versionMap);
@@ -366,15 +447,21 @@ public sealed class SymbolicExecutor(ISolverFactory solverFactory)
 
             return op.Kind switch
             {
+                BinaryOperatorKind.Add => Terms.BitVec.Add(left, right),
+                BinaryOperatorKind.Subtract => Terms.BitVec.Subtract(left, right),
+                BinaryOperatorKind.Multiply => Terms.BitVec.Multiply(left, right),
+                BinaryOperatorKind.And => Terms.And(left, right),
+                BinaryOperatorKind.Or => Terms.Or(left, right),
+                BinaryOperatorKind.Xor => Terms.Xor(left, right),
                 BinaryOperatorKind.Equal => Terms.Equal(left, right),
                 BinaryOperatorKind.NotEqual => Terms.Distinct(left, right),
                 BinaryOperatorKind.LessThan => Terms.BitVec.SignedLessThan(left, right),
                 BinaryOperatorKind.LessThanOrEqual => Terms.BitVec.SignedLessOrEqual(left, right),
                 BinaryOperatorKind.GreaterThan => Terms.BitVec.SignedGreaterThan(left, right),
                 BinaryOperatorKind.GreaterThanOrEqual => Terms.BitVec.SignedGreaterOrEqual(left, right),
-                BinaryOperatorKind.Add => Terms.BitVec.Add(left, right),
-                BinaryOperatorKind.Subtract => Terms.BitVec.Subtract(left, right),
-                BinaryOperatorKind.Multiply => Terms.BitVec.Multiply(left, right),
+                BinaryOperatorKind.StringStartsWith => Terms.String.IsPrefixOf(right, left),
+                BinaryOperatorKind.StringEndsWith => Terms.String.IsSuffixOf(right, left),
+                BinaryOperatorKind.StringMatchesPattern => Terms.String.IsInRegLan(left, right),
                 _ => throw new ArgumentException($"Unsupported binary operator: {op.Kind}", nameof(op))
             };
         }
@@ -383,6 +470,7 @@ public sealed class SymbolicExecutor(ISolverFactory solverFactory)
         {
             DataType.Boolean => Sorts.Bool,
             DataType.Integer { Bits: var bits } => Sorts.BitVec(bits),
+            DataType.Utf16String => Sorts.String,
             _ => throw new ArgumentException($"Unsupported type: {type}")
         };
 
@@ -393,11 +481,12 @@ public sealed class SymbolicExecutor(ISolverFactory solverFactory)
                 intType.Signed 
                     ? new Expression.Constant.SignedInteger(ReinterpretAsSigned(bv.Value), intType)
                     : new Expression.Constant.UnsignedInteger(bv.Value, intType),
+            Term.Constant.String s => new Expression.Constant.Utf16String(s.Value),
             _ => throw new ArgumentException($"Unsupported term type: {term.GetType()}")
         };
 
-        private static long ReinterpretAsSigned(ulong value) => unchecked((long)value);
+        private static long ReinterpretAsSigned(ulong value) => (long)value;
 
-        private static ulong ReinterpretAsUnsigned(long value) => unchecked((ulong)value);
+        private static ulong ReinterpretAsUnsigned(long value) => (ulong)value;
     }
 }

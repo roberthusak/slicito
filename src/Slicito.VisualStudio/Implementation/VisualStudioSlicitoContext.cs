@@ -1,11 +1,15 @@
+using System.IO;
+
 using Microsoft.VisualStudio.LanguageServices;
 
 using Slicito.Abstractions;
+using Slicito.Abstractions.Interaction;
 using Slicito.Abstractions.Queries;
 using Slicito.Common;
 using Slicito.Common.Extensibility;
 using Slicito.DotNet;
 using Slicito.ProgramAnalysis;
+using Slicito.ProgramAnalysis.SymbolicExecution.SmtSolver;
 
 namespace Slicito.VisualStudio.Implementation;
 
@@ -18,10 +22,15 @@ internal class VisualStudioSlicitoContext : ProgramAnalysisContextBase
         ITypeSystem typeSystem,
         ISliceManager sliceManager,
         DotNetTypes dotNetTypes,
+        ICodeNavigator codeNavigator,
+        ISolverFactory solverFactory,
         VisualStudioWorkspace workspace) : base(typeSystem, sliceManager, dotNetTypes)
     {
         _workspace = workspace;
         _lastDotNetSolutionContext = new DotNetSolutionContext(workspace.CurrentSolution, dotNetTypes, sliceManager);
+
+        SetService(codeNavigator);
+        SetService(solverFactory);
     }
 
     public static VisualStudioSlicitoContext Create(VisualStudioWorkspace workspace)
@@ -31,19 +40,27 @@ internal class VisualStudioSlicitoContext : ProgramAnalysisContextBase
 
         var dotNetTypes = new DotNetTypes(typeSystem);
 
-        return new VisualStudioSlicitoContext(typeSystem, sliceManager, dotNetTypes, workspace);
+        var codeNavigator = new VisualStudioCodeNavigator();
+
+        var assemblyPath = Path.GetDirectoryName(typeof(VisualStudioSlicitoContext).Assembly.Location);
+        var z3Path = Path.Combine(assemblyPath, "z3.exe");
+        var solverFactory = new SmtLibCliSolverFactory(z3Path, ["-in"]);
+
+        return new VisualStudioSlicitoContext(typeSystem, sliceManager, dotNetTypes, codeNavigator, solverFactory, workspace);
     }
 
     public override ILazySlice WholeSlice => GetCurrentDotNetSolutionContext().LazySlice;
 
     public override IFlowGraphProvider FlowGraphProvider => GetCurrentDotNetSolutionContext();
 
+    public new DotNetTypes ProgramTypes => (DotNetTypes) base.ProgramTypes;
+
     private DotNetSolutionContext GetCurrentDotNetSolutionContext()
     {
         var currentSolution = _workspace.CurrentSolution;
         if (currentSolution != _lastDotNetSolutionContext.Solution)
         {
-            _lastDotNetSolutionContext = new DotNetSolutionContext(currentSolution, (DotNetTypes)ProgramTypes, SliceManager);
+            _lastDotNetSolutionContext = new DotNetSolutionContext(currentSolution, ProgramTypes, SliceManager);
         }
 
         return _lastDotNetSolutionContext;
