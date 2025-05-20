@@ -18,6 +18,15 @@ public class ElementTypeInferenceTests
     {
     }
 
+    [ElementAttribute("Purpose", "Fun")]
+    private interface IFunElement : ISampleElement
+    {
+    }
+
+    private interface IConflictedPurposeElement : ITestElement, IFunElement
+    {
+    }
+
     [TestMethod]
     public void IElement_IsInferredTo_Unrestricted_ElementType()
     {
@@ -67,9 +76,23 @@ public class ElementTypeInferenceTests
         var anyElementType = typeSystem.GetElementTypeFromInterface(typeof(IElement));
         var sampleElementType = typeSystem.GetElementTypeFromInterface(typeof(ISampleElement));
         var testElementType = typeSystem.GetElementTypeFromInterface(typeof(ITestElement));
+        var funElementType = typeSystem.GetElementTypeFromInterface(typeof(IFunElement));
 
         // Assert
         anyElementType.Value.IsStrictSupersetOf(sampleElementType.Value).Should().BeTrue();
         sampleElementType.Value.IsStrictSupersetOf(testElementType.Value).Should().BeTrue();
+        sampleElementType.Value.IsStrictSupersetOf(funElementType.Value).Should().BeTrue();
+        testElementType.Value.TryGetIntersection(funElementType.Value).Should().BeNull();
+    }
+
+    [TestMethod]
+    public void IConflictedPurposeElement_Throws_ArgumentException()
+    {
+        // Arrange
+        var typeSystem = new TypeSystem();
+
+        // Act & Assert
+        typeSystem.Invoking(ts => ts.GetElementTypeFromInterface(typeof(IConflictedPurposeElement)))
+            .Should().Throw<ArgumentException>();
     }
 }
