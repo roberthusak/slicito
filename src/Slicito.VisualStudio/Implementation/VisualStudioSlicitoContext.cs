@@ -49,7 +49,7 @@ internal class VisualStudioSlicitoContext : ProgramAnalysisContextBase
         return new VisualStudioSlicitoContext(typeSystem, sliceManager, dotNetTypes, codeNavigator, solverFactory, workspace);
     }
 
-    public override ISlice WholeSlice => GetCurrentDotNetSolutionContext().LazySlice;
+    public override ISlice WholeSlice => GetCurrentDotNetSolutionContext().Slice;
 
     public override IFlowGraphProvider FlowGraphProvider => GetCurrentDotNetSolutionContext();
 

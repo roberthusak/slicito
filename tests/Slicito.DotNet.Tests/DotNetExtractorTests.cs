@@ -27,7 +27,7 @@ public class DotNetExtractorTests
         _solutionContext = new DotNetSolutionContext(solution, _dotNetTypes, sliceManager);
         
         _methods = await DotNetMethodHelper.GetAllMethodsWithDisplayNamesAsync(
-            _solutionContext.LazySlice, 
+            _solutionContext.Slice, 
             _dotNetTypes);
     }
 
@@ -53,7 +53,7 @@ public class DotNetExtractorTests
         _solutionContext.Should().NotBeNull("Solution context should be initialized");
 
         // Act
-        var callGraph = await new CallGraph.Builder(_solutionContext!.LazySlice, _dotNetTypes!)
+        var callGraph = await new CallGraph.Builder(_solutionContext!.Slice, _dotNetTypes!)
             .AddCallerRoot(method.Id)
             .BuildAsync();
 

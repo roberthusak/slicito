@@ -33,7 +33,7 @@ public class DotNetMethodBrowser : IController
         _dotNetTypes = dotNetTypes;
         _codeNavigator = codeNavigator;
 
-        _slice = solutionContext.LazySlice;
+        _slice = solutionContext.Slice;
     }
 
     public async Task<IModel> InitAsync()

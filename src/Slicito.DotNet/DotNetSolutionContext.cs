@@ -13,7 +13,7 @@ public class DotNetSolutionContext(Solution solution, DotNetTypes types, ISliceM
 
     public Solution Solution => solution;
 
-    public ISlice LazySlice => _sliceCreator.LazySlice;
+    public ISlice Slice => _sliceCreator.Slice;
 
     public IFlowGraph? TryGetFlowGraph(ElementId elementId) => _sliceCreator.TryCreateFlowGraph(elementId);
 

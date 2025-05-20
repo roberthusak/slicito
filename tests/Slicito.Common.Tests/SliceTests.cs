@@ -23,7 +23,7 @@ public class SliceTests
             .AddRootElements(kindAType, () => new([new(new("A1"))]))
             .AddRootElements(kindAType, () => new([new(new("A2"))]))
             .AddRootElements(kindBType, () => new([new(new("B1")), new(new("B2"))]))
-            .BuildLazy();
+            .Build();
 
         var aElements = await slice.GetRootElementsAsync(kindAType);
         var bElements = await slice.GetRootElementsAsync(kindBType);
@@ -70,7 +70,7 @@ public class SliceTests
                 new(new("ABlue3"), kindAColorBlueType),
                 new(new("ARed3"), kindAColorRedType),
             ]))
-            .BuildLazy();
+            .Build();
 
         var aElements = await slice.GetRootElementsAsync(kindAType);
         var aBlueElements = await slice.GetRootElementsAsync(kindAColorBlueType);
@@ -141,7 +141,7 @@ public class SliceTests
             .AddElementAttribute(kindAType, "name", id => new($"Mr. {id.Value} A"))
             .AddElementAttribute(kindBType, "name", id => new($"Mr. {id.Value} B"))
             .AddElementAttribute(anyType, "greeting", id => new($"Hello, {id.Value}!"))
-            .BuildLazy();
+            .Build();
 
         var nameProvider = slice.GetElementAttributeProviderAsyncCallback("name");
         var greetingProvider = slice.GetElementAttributeProviderAsyncCallback("greeting");
@@ -242,7 +242,7 @@ public class SliceTests
             .AddElementAttribute(kindAType, "name", id => new($"Mr. {id.Value} A"))
             .AddElementAttribute(kindBType, "name", id => new($"Mr. {id.Value} B"))
             .AddElementAttribute(anyType, "greeting", id => new($"Hello, {id.Value}!"))
-            .BuildLazy();
+            .Build();
 
         var containsLinksExplorer = slice.GetLinkExplorer(kindContainsType);
 
@@ -365,7 +365,7 @@ public class SliceTests
                     _ => new([])
                 };
             })
-            .BuildLazy();
+            .Build();
 
         var allLinksExplorer = slice.GetLinkExplorer(anyLinkType);
         var pointsToLinksExplorer = slice.GetLinkExplorer(kindPointsToType);
@@ -483,7 +483,7 @@ public class SliceTests
             .AddLinks(kindPointsToType, kindAType, kindAType, _ => new([]))
             .AddLinks(kindPointsToType, kindAType, kindBType, _ => new([]))
             .AddLinks(kindPointsToColorBlueType, kindAType, kindBType, _ => new([]))
-            .BuildLazy()
+            .Build()
             .Schema;
 
         // Assert

@@ -38,7 +38,7 @@ public class SymbolicExecutorTest
         _solutionContext.Should().NotBeNull("Solution context should be initialized");
         _types.Should().NotBeNull(".NET link and element types should be initialized");
 
-        var methods = await DotNetMethodHelper.GetAllMethodsWithDisplayNamesAsync(_solutionContext!.LazySlice, _types!);
+        var methods = await DotNetMethodHelper.GetAllMethodsWithDisplayNamesAsync(_solutionContext!.Slice, _types!);
         var method = methods.Single(m => m.DisplayName == "AnalysisSamples.Samples.BasicSymbolicExecutionSample").Method;
         
         var flowGraph = _solutionContext.TryGetFlowGraph(method.Id);

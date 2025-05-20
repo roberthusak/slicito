@@ -18,7 +18,7 @@ internal class SliceCreator
     private readonly ConcurrentDictionary<IMethodSymbol, (IFlowGraph FlowGraph, OperationMapping OperationMapping)?> _flowGraphCache = [];
     private readonly ConcurrentDictionary<IMethodSymbol, ProcedureSignature> _procedureSignatureCache = [];
 
-    public ISlice LazySlice { get; }
+    public ISlice Slice { get; }
 
     public SliceCreator(Solution solution, DotNetTypes types, ISliceManager sliceManager)
     {
@@ -28,7 +28,7 @@ internal class SliceCreator
 
         _elementCache = new(types);
 
-        LazySlice = CreateSlice();
+        Slice = CreateSlice();
     }
 
     public IFlowGraph? TryCreateFlowGraph(ElementId elementId) => TryCreateFlowGraphAndMapping(elementId)?.FlowGraph;
@@ -74,7 +74,7 @@ internal class SliceCreator
             .AddElementAttribute(symbolTypes, DotNetAttributeNames.Name, LoadSymbolName)
             .AddElementAttribute(_types.Operation, DotNetAttributeNames.Name, LoadOperationName)
             .AddElementAttribute(symbolTypes, CommonAttributeNames.CodeLocation, LoadCodeLocation)
-            .BuildLazy();
+            .Build();
     }
 
     private IEnumerable<ISliceBuilder.PartialElementInfo> LoadProjects() =>

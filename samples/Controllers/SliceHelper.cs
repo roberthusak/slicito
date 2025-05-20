@@ -83,6 +83,6 @@ public static class SliceHelper
                 "root::helper::call3" => new(new(new("dependency::external_function"))),
                 _ => (ISliceBuilder.PartialLinkInfo?) null
             }))
-            .BuildLazy();
+            .Build();
     }
 }

@@ -131,7 +131,7 @@ public class SliceBuilder : ISliceBuilder
         return this;
     }
 
-    public ISlice BuildLazy()
+    public ISlice Build()
     {
         var elementTypes = _rootElementsLoaders.Keys
             .Concat(_elementAttributeLoaders.Keys.Select(key => key.ElementType))
@@ -159,7 +159,7 @@ public class SliceBuilder : ISliceBuilder
             [.. _rootElementsLoaders.Keys],
             _hierarchyLinkType);
 
-        return new LazySlice(
+        return new Slice(
             schema,
             _rootElementsLoaders,
             _elementAttributeLoaders,
