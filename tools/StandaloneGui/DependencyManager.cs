@@ -1,7 +1,8 @@
 using Microsoft.CodeAnalysis.MSBuild;
+
 using Slicito.Abstractions;
+using Slicito.Abstractions.Facts;
 using Slicito.Abstractions.Interaction;
-using Slicito.Abstractions.Queries;
 using Slicito.Common;
 using Slicito.DotNet;
 using Slicito.ProgramAnalysis.Notation;

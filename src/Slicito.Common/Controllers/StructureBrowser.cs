@@ -1,8 +1,8 @@
 using System.Collections.Immutable;
 
 using Slicito.Abstractions;
+using Slicito.Abstractions.Facts;
 using Slicito.Abstractions.Models;
-using Slicito.Abstractions.Queries;
 
 namespace Slicito.Common.Controllers;
 

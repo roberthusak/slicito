@@ -1,6 +1,6 @@
 using Slicito.Abstractions;
+using Slicito.Abstractions.Facts;
 using Slicito.Abstractions.Models;
-using Slicito.Abstractions.Queries;
 using Slicito.Common.Controllers;
 
 namespace Controllers;

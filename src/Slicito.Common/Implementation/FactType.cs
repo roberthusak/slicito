@@ -1,7 +1,7 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
 
-using Slicito.Abstractions.Queries;
+using Slicito.Abstractions.Facts;
 using Slicito.Common;
 
 namespace Slicito.Common.Implementation;

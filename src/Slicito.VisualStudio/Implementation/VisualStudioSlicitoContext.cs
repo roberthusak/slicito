@@ -3,8 +3,8 @@ using System.IO;
 using Microsoft.VisualStudio.LanguageServices;
 
 using Slicito.Abstractions;
+using Slicito.Abstractions.Facts;
 using Slicito.Abstractions.Interaction;
-using Slicito.Abstractions.Queries;
 using Slicito.Common;
 using Slicito.Common.Extensibility;
 using Slicito.DotNet;

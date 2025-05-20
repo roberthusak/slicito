@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 
-using Slicito.Abstractions.Queries;
+using Slicito.Abstractions.Facts;
 
 namespace Slicito.Abstractions;
 

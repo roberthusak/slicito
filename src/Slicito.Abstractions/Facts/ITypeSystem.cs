@@ -1,4 +1,4 @@
-namespace Slicito.Abstractions.Queries;
+namespace Slicito.Abstractions.Facts;
 
 public interface ITypeSystem
 {

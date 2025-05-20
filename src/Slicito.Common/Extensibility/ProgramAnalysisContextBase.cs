@@ -2,8 +2,8 @@ using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 
 using Slicito.Abstractions;
+using Slicito.Abstractions.Facts;
 using Slicito.Abstractions.Models;
-using Slicito.Abstractions.Queries;
 using Slicito.Common.Models;
 using Slicito.ProgramAnalysis;
 using Slicito.ProgramAnalysis.Reachability;

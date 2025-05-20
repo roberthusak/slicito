@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Web;
 
-using Slicito.Abstractions.Queries;
+using Slicito.Abstractions.Facts;
 using Slicito.Common.Implementation;
 
 namespace Slicito.Common;

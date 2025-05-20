@@ -1,7 +1,7 @@
 using FluentAssertions;
 
 using Slicito.Abstractions;
-using Slicito.Abstractions.Queries;
+using Slicito.Abstractions.Facts;
 
 namespace Slicito.Common.Tests;
 
