@@ -6,7 +6,7 @@ namespace Slicito.DotNet;
 public static class DotNetMethodHelper
 {
     public static async Task<ElementInfo> FindSingleMethodAsync(
-        ILazySlice slice,
+        ISlice slice,
         DotNetTypes dotNetTypes,
         string nameSuffix)
     {
@@ -16,7 +16,7 @@ public static class DotNetMethodHelper
     }
 
     public static async Task<IEnumerable<(ElementInfo Method, string DisplayName)>> GetAllMethodsWithDisplayNamesAsync(
-        ILazySlice slice,
+        ISlice slice,
         DotNetTypes dotNetTypes)
     {
         var methods = new List<(ElementInfo Method, string DisplayName)>();

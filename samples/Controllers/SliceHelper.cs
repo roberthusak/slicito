@@ -6,7 +6,7 @@ namespace Controllers;
 
 public static class SliceHelper
 {
-    public static ILazySlice CreateSampleSlice(ITypeSystem typeSystem)
+    public static ISlice CreateSampleSlice(ITypeSystem typeSystem)
     {
         var containsType = typeSystem.GetLinkType([("Kind", "Contains")]);
         var isFollowedByType = typeSystem.GetLinkType([("Kind", "IsFollowedBy")]);

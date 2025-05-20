@@ -18,7 +18,7 @@ public class ApiEndpointList
         Endpoints = endpoints;
     }
 
-    public class Builder(ILazySlice slice, DotNetSolutionContext dotnetContext, DotNetTypes dotnetTypes)
+    public class Builder(ISlice slice, DotNetSolutionContext dotnetContext, DotNetTypes dotnetTypes)
     {
         public async Task<ApiEndpointList> BuildAsync()
         {

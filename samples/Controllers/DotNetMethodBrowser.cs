@@ -25,7 +25,7 @@ public class DotNetMethodBrowser : IController
     private readonly DotNetSolutionContext _solutionContext;
     private readonly DotNetTypes _dotNetTypes;
     private readonly ICodeNavigator? _codeNavigator;
-    private readonly ILazySlice _slice;
+    private readonly ISlice _slice;
 
     public DotNetMethodBrowser(DotNetSolutionContext solutionContext, DotNetTypes dotNetTypes, ICodeNavigator? codeNavigator = null)
     {

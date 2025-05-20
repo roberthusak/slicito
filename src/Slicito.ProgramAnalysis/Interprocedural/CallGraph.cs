@@ -14,14 +14,14 @@ public sealed class CallGraph
     public ImmutableArray<Procedure> RootProcedures { get; }
     public ImmutableArray<Procedure> AllProcedures { get; }
 
-    public ILazySlice OriginalSlice { get; }
+    public ISlice OriginalSlice { get; }
 
     private CallGraph(
         ImmutableArray<Procedure> rootProcedures,
         ImmutableArray<Procedure> allProcedures,
         Dictionary<ElementId, Procedure> proceduresById,
         Dictionary<ElementId, ElementId> callTargets,
-        ILazySlice originalSlice)
+        ISlice originalSlice)
     {
         RootProcedures = rootProcedures;
         AllProcedures = allProcedures;
@@ -43,7 +43,7 @@ public sealed class CallGraph
             .Where(cs => _callTargets[cs.CallElement.Id] == callee.ProcedureElement.Id);
     }
 
-    public class Builder(ILazySlice slice, IProgramTypes types)
+    public class Builder(ISlice slice, IProgramTypes types)
     {
         private readonly HashSet<ElementId> _rootProcedureIds = [];
 

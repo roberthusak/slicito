@@ -5,7 +5,7 @@ using Slicito.Common.Controllers;
 
 namespace Controllers;
 
-public class SampleStructureBrowser(ITypeSystem typeSystem, ILazySlice? slice = null) : IController
+public class SampleStructureBrowser(ITypeSystem typeSystem, ISlice? slice = null) : IController
 {
     private readonly StructureBrowser _browser = new(slice ?? SliceHelper.CreateSampleSlice(typeSystem));
 

@@ -5,7 +5,7 @@ using Slicito.Abstractions.Queries;
 
 namespace Slicito.Common.Implementation;
 
-internal class LazySlice : ILazySlice
+internal class LazySlice : ISlice
 {
     private readonly Dictionary<ElementType, ISliceBuilder.LoadRootElementsAsyncCallback> _rootElementsLoaders;
     private readonly Dictionary<ElementTypeAttribute, ISliceBuilder.LoadElementAttributeAsyncCallback> _elementAttributeLoaders;

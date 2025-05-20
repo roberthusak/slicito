@@ -5,6 +5,6 @@ namespace Slicito.DotNet;
 
 public class DotNetSliceHelper
 {
-    public static ILazySlice GetProductionCodeSlice(ILazySlice originalSlice, DotNetSolutionContext solutionContext) =>
+    public static ISlice GetProductionCodeSlice(ISlice originalSlice, DotNetSolutionContext solutionContext) =>
         new ProductionSlice(originalSlice, solutionContext);
 }

@@ -10,7 +10,7 @@ public interface ISlicitoContext
 
     ISliceManager SliceManager { get; }
 
-    ILazySlice WholeSlice { get; }
+    ISlice WholeSlice { get; }
 
     T GetService<T>();
 

@@ -27,7 +27,7 @@ public abstract class ProgramAnalysisContextBase : IProgramAnalysisContext
 
     public ISliceManager SliceManager => GetService<ISliceManager>();
 
-    public abstract ILazySlice WholeSlice { get; }
+    public abstract ISlice WholeSlice { get; }
 
     public IProgramTypes ProgramTypes => GetService<IProgramTypes>();
 

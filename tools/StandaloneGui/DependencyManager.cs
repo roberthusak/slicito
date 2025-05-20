@@ -20,7 +20,7 @@ public class DependencyManager
     private DotNetTypes? _dotNetTypes;
     private DotNetExtractor? _dotNetExtractor;
     private DotNetSolutionContext? _dotNetSolutionContext;
-    private ILazySlice? _lazySlice;
+    private ISlice? _lazySlice;
 
     public DependencyManager(string solutionPath)
     {
@@ -49,7 +49,7 @@ public class DependencyManager
             var t when t == typeof(DotNetTypes) => GetDotNetTypes(),
             var t when t == typeof(DotNetExtractor) => GetDotNetExtractor(),
             var t when t == typeof(DotNetSolutionContext) => await TryGetDotNetSolutionContextAsync(),
-            var t when t == typeof(ILazySlice) => await TryLoadLazySliceAsync(),
+            var t when t == typeof(ISlice) => await TryLoadLazySliceAsync(),
             var t when t == typeof(IFlowGraph) => null,
             var t when t == typeof(ICodeNavigator) => null,
             _ => throw new ApplicationException($"Unsupported parameter type {parameterType.Name}.")
@@ -79,7 +79,7 @@ public class DependencyManager
         return _dotNetSolutionContext;
     }
 
-    private async Task<ILazySlice?> TryLoadLazySliceAsync()
+    private async Task<ISlice?> TryLoadLazySliceAsync()
     {
         _lazySlice ??= (await TryGetDotNetSolutionContextAsync())?.LazySlice;
         return _lazySlice;
