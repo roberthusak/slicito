@@ -3,7 +3,6 @@ using FluentAssertions;
 using Slicito.Abstractions;
 using Slicito.Abstractions.Facts;
 using Slicito.Abstractions.Facts.Attributes;
-
 namespace Slicito.Common.Tests;
 
 [TestClass]
@@ -23,6 +22,17 @@ public class TypedSliceFragmentTests
     {
         [RootElement(typeof(IProjectElement))]
         ITestProjectSliceFragmentBuilder AddProject(ElementId id);
+    }
+
+    public interface IGenericSliceFragmentBuilder<TFragment, TBuilder> : ITypedSliceFragmentBuilder<TFragment>
+        where TFragment : ITypedSliceFragment
+    {
+        [RootElement(typeof(IProjectElement))]
+        TBuilder AddProject(ElementId id);
+    }
+
+    public interface INestedTestProjectSliceFragmentBuilder : IGenericSliceFragmentBuilder<ITestProjectSliceFragment, INestedTestProjectSliceFragmentBuilder>
+    {
     }
 
     [TestMethod]
@@ -58,6 +68,24 @@ public class TypedSliceFragmentTests
         schema.ElementAttributes.Should().BeEmpty();
         schema.RootElementTypes.Should().BeEquivalentTo([expectedElementType]);
         schema.HierarchyLinkType.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task Built_INestedTestProjectSliceFragment_Contains_Added_IProjectElement()
+    {
+        // Arrange
+        var typeSystem = new TypeSystem();
+        var sliceManager = new SliceManager(typeSystem);
+
+        // Act
+        var sliceFragment = await sliceManager.CreateTypedBuilder<INestedTestProjectSliceFragmentBuilder>()
+            .AddProject(new ElementId("ProjectA"))
+            .BuildAsync();
+
+        // Assert
+        var projects = await sliceFragment.GetProjectsAsync();
+        projects.Should().HaveCount(1);
+        projects.Should().Contain(p => p.Id == new ElementId("ProjectA"));
     }
 
     public class InvalidSliceFragmentBuilder1 : ITypedSliceFragmentBuilder<ITestProjectSliceFragment>
