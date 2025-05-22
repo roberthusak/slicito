@@ -78,23 +78,7 @@ public partial class SliceFragmentBuilderBase
                     throw new ArgumentException($"Method {method.Name} must not have any parameters.");
                 }
 
-                // Create the method implementation
-                var methodBuilder = typeBuilder.DefineMethod(
-                    method.Name,
-                    MethodAttributes.Public | MethodAttributes.Virtual,
-                    method.ReturnType,
-                    null);
-
-                var methodIlGenerator = methodBuilder.GetILGenerator();
-
-                // Call base BuildAsync<TSliceFragment>
-                methodIlGenerator.Emit(OpCodes.Ldarg_0); // Load this
-                methodIlGenerator.Emit(OpCodes.Call, typeof(SliceFragmentBuilderBase).GetMethod(nameof(BuildAsync), BindingFlags.NonPublic | BindingFlags.Instance)!
-                    .MakeGenericMethod(sliceFragmentInterfaceType));
-                methodIlGenerator.Emit(OpCodes.Ret);
-
-                // Override the interface method
-                typeBuilder.DefineMethodOverride(methodBuilder, method);
+                ImplementBuildAsyncMethod(method, typeBuilder, sliceFragmentInterfaceType);
                 continue;
             }
 
@@ -107,27 +91,7 @@ public partial class SliceFragmentBuilderBase
                     throw new ArgumentException($"Method {method.Name} must take exactly one ElementId parameter.");
                 }
 
-                // Create the method implementation
-                var methodBuilder = typeBuilder.DefineMethod(
-                    method.Name,
-                    MethodAttributes.Public | MethodAttributes.Virtual,
-                    method.ReturnType,
-                    [typeof(ElementId)]);
-
-                var methodIlGenerator = methodBuilder.GetILGenerator();
-
-                // Call base AddRootElement<TElement>
-                methodIlGenerator.Emit(OpCodes.Ldarg_0); // Load this
-                methodIlGenerator.Emit(OpCodes.Ldarg_1); // Load ElementId parameter
-                methodIlGenerator.Emit(OpCodes.Call, typeof(SliceFragmentBuilderBase).GetMethod(nameof(AddRootElement), BindingFlags.NonPublic | BindingFlags.Instance)!
-                    .MakeGenericMethod(rootElementAttr.ElementType));
-                methodIlGenerator.Emit(OpCodes.Ldarg_0); // Load this
-                methodIlGenerator.Emit(OpCodes.Ret);
-
-                elementTypeMap[rootElementAttr.ElementType] = typeSystem.GetElementTypeFromInterface(rootElementAttr.ElementType);
-
-                // Override the interface method
-                typeBuilder.DefineMethodOverride(methodBuilder, method);
+                ImplementRootElementMethod(method, typeBuilder, rootElementAttr, elementTypeMap, typeSystem);
                 continue;
             }
 
@@ -139,5 +103,54 @@ public partial class SliceFragmentBuilderBase
             ?? throw new InvalidOperationException("Failed to create type.");
 
         return () => (SliceFragmentBuilderBase)Activator.CreateInstance(type, elementTypeMap, sliceFragmentFactory)!;
-    }    
+    }
+
+    private static void ImplementBuildAsyncMethod(MethodInfo method, TypeBuilder typeBuilder, Type sliceFragmentInterfaceType)
+    {
+        var methodBuilder = typeBuilder.DefineMethod(
+            method.Name,
+            MethodAttributes.Public | MethodAttributes.Virtual,
+            method.ReturnType,
+            null);
+
+        var methodIlGenerator = methodBuilder.GetILGenerator();
+
+        // Call base BuildAsync<TSliceFragment>
+        methodIlGenerator.Emit(OpCodes.Ldarg_0); // Load this
+        methodIlGenerator.Emit(OpCodes.Call, typeof(SliceFragmentBuilderBase).GetMethod(nameof(BuildAsync), BindingFlags.NonPublic | BindingFlags.Instance)!
+            .MakeGenericMethod(sliceFragmentInterfaceType));
+        methodIlGenerator.Emit(OpCodes.Ret);
+
+        // Override the interface method
+        typeBuilder.DefineMethodOverride(methodBuilder, method);
+    }
+
+    private static void ImplementRootElementMethod(
+        MethodInfo method,
+        TypeBuilder typeBuilder,
+        RootElementAttribute rootElementAttr,
+        Dictionary<Type, ElementType> elementTypeMap,
+        ITypeSystem typeSystem)
+    {
+        var methodBuilder = typeBuilder.DefineMethod(
+            method.Name,
+            MethodAttributes.Public | MethodAttributes.Virtual,
+            method.ReturnType,
+            [typeof(ElementId)]);
+
+        var methodIlGenerator = methodBuilder.GetILGenerator();
+
+        // Call base AddRootElement<TElement>
+        methodIlGenerator.Emit(OpCodes.Ldarg_0); // Load this
+        methodIlGenerator.Emit(OpCodes.Ldarg_1); // Load ElementId parameter
+        methodIlGenerator.Emit(OpCodes.Call, typeof(SliceFragmentBuilderBase).GetMethod(nameof(AddRootElement), BindingFlags.NonPublic | BindingFlags.Instance)!
+            .MakeGenericMethod(rootElementAttr.ElementType));
+        methodIlGenerator.Emit(OpCodes.Ldarg_0); // Load this
+        methodIlGenerator.Emit(OpCodes.Ret);
+
+        elementTypeMap[rootElementAttr.ElementType] = typeSystem.GetElementTypeFromInterface(rootElementAttr.ElementType);
+
+        // Override the interface method
+        typeBuilder.DefineMethodOverride(methodBuilder, method);
+    }
 }

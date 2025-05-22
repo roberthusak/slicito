@@ -90,7 +90,16 @@ public partial class SliceFragmentBase
             throw new ArgumentException($"Member {member.Name} is not a method.");
         }
 
-        // Check if the method matches the pattern: ValueTask<IEnumerable<ISomeElement>> MethodName()
+        ValidateRootElementLoaderMethodSignature(method);
+
+        var elementInterfaceType = method.ReturnType.GenericTypeArguments[0].GenericTypeArguments[0];
+        ImplementAsyncLoaderOfRootElements(elementInterfaceType, method, typeBuilder, elementTypeMap, elementTypeFactory, typeSystem);
+    }
+
+    private static void ValidateRootElementLoaderMethodSignature(MethodInfo method)
+    {
+        // Check the method against the pattern: ValueTask<IEnumerable<ISomeElement>> MethodName()
+
         if (!method.ReturnType.IsGenericType ||
             method.ReturnType.GetGenericTypeDefinition() != typeof(ValueTask<>) ||
             !method.ReturnType.GetGenericArguments()[0].IsGenericType ||
@@ -109,8 +118,6 @@ public partial class SliceFragmentBase
         {
             throw new ArgumentException($"Method {method.Name} must not have any parameters.");
         }
-
-        ImplementAsyncLoaderOfRootElements(elementInterfaceType, method, typeBuilder, elementTypeMap, elementTypeFactory, typeSystem);
     }
 
     private static void ImplementAsyncLoaderOfRootElements(
