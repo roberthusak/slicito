@@ -20,50 +20,12 @@ public partial class SliceFragmentBuilderBase
             throw new ArgumentException("Type must be an interface.", nameof(sliceFragmentBuilderInterfaceType));
         }
 
-        // Create a new assembly and module for the dynamic type
-        var assemblyName = new AssemblyName($"DynamicBuilder_{sliceFragmentBuilderInterfaceType.Name}");
-        var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run);
-        var moduleBuilder = assemblyBuilder.DefineDynamicModule("DynamicModule");
-
-        // Create the type
-        var typeBuilder = moduleBuilder.DefineType(
-            $"DynamicBuilder_{sliceFragmentBuilderInterfaceType.Name}",
-            TypeAttributes.Public | TypeAttributes.Class,
-            typeof(SliceFragmentBuilderBase),
-            [sliceFragmentBuilderInterfaceType]);
-
-        // Create constructor
-        var constructorBuilder = typeBuilder.DefineConstructor(
-            MethodAttributes.Public,
-            CallingConventions.Standard,
-            [typeof(Dictionary<Type, ElementType>), typeof(Func<ISlice, SliceFragmentBase>)]);
-
-        var ilGenerator = constructorBuilder.GetILGenerator();
-
-        // Call base constructor
-        var baseConstructor =
-            typeof(SliceFragmentBuilderBase).GetConstructor(
-                BindingFlags.Instance | BindingFlags.NonPublic,
-                binder: null,
-                [typeof(Dictionary<Type, ElementType>), typeof(Func<ISlice, SliceFragmentBase>)],
-                modifiers: null)
-            ?? throw new InvalidOperationException("No constructor found for SliceFragmentBuilderBase.");
-        ilGenerator.Emit(OpCodes.Ldarg_0); // Load this
-        ilGenerator.Emit(OpCodes.Ldarg_1); // Load Dictionary<Type, ElementType> parameter
-        ilGenerator.Emit(OpCodes.Ldarg_2); // Load Func<ISlice, SliceFragmentBase> parameter
-        ilGenerator.Emit(OpCodes.Call, baseConstructor);
-        ilGenerator.Emit(OpCodes.Ret);
-
-        // Implement members declared in interfaces
-        var members = sliceFragmentBuilderInterfaceType
-            .GetInterfaces()
-            .Concat([sliceFragmentBuilderInterfaceType])
-            .SelectMany(i => i.GetMembers(BindingFlags.Public | BindingFlags.Instance))
-            .Distinct();
+        var typeBuilder = new DynamicTypeBuilder(typeof(SliceFragmentBuilderBase), sliceFragmentBuilderInterfaceType);
+        typeBuilder.CreateConstructor(typeof(Dictionary<Type, ElementType>), typeof(Func<ISlice, SliceFragmentBase>));
 
         var elementTypeMap = new Dictionary<Type, ElementType>();
 
-        foreach (var member in members)
+        foreach (var member in typeBuilder.GetUnimplementedInterfaceMembers())
         {
             if (member is not MethodInfo method)
             {
@@ -98,21 +60,13 @@ public partial class SliceFragmentBuilderBase
             throw new ArgumentException($"Method {method.Name} does not match any expected pattern.");
         }
 
-        // Create the type
-        var type = typeBuilder.CreateTypeInfo()
-            ?? throw new InvalidOperationException("Failed to create type.");
-
+        var type = typeBuilder.CreateType();
         return () => (SliceFragmentBuilderBase)Activator.CreateInstance(type, elementTypeMap, sliceFragmentFactory)!;
     }
 
-    private static void ImplementBuildAsyncMethod(MethodInfo method, TypeBuilder typeBuilder, Type sliceFragmentInterfaceType)
+    private static void ImplementBuildAsyncMethod(MethodInfo method, DynamicTypeBuilder typeBuilder, Type sliceFragmentInterfaceType)
     {
-        var methodBuilder = typeBuilder.DefineMethod(
-            method.Name,
-            MethodAttributes.Public | MethodAttributes.Virtual,
-            method.ReturnType,
-            null);
-
+        var methodBuilder = typeBuilder.CreateMethodImplementation(method);
         var methodIlGenerator = methodBuilder.GetILGenerator();
 
         // Call base BuildAsync<TSliceFragment>
@@ -120,24 +74,16 @@ public partial class SliceFragmentBuilderBase
         methodIlGenerator.Emit(OpCodes.Call, typeof(SliceFragmentBuilderBase).GetMethod(nameof(BuildAsync), BindingFlags.NonPublic | BindingFlags.Instance)!
             .MakeGenericMethod(sliceFragmentInterfaceType));
         methodIlGenerator.Emit(OpCodes.Ret);
-
-        // Override the interface method
-        typeBuilder.DefineMethodOverride(methodBuilder, method);
     }
 
     private static void ImplementRootElementMethod(
         MethodInfo method,
-        TypeBuilder typeBuilder,
+        DynamicTypeBuilder typeBuilder,
         RootElementAttribute rootElementAttr,
         Dictionary<Type, ElementType> elementTypeMap,
         ITypeSystem typeSystem)
     {
-        var methodBuilder = typeBuilder.DefineMethod(
-            method.Name,
-            MethodAttributes.Public | MethodAttributes.Virtual,
-            method.ReturnType,
-            [typeof(ElementId)]);
-
+        var methodBuilder = typeBuilder.CreateMethodImplementation(method);
         var methodIlGenerator = methodBuilder.GetILGenerator();
 
         // Call base AddRootElement<TElement>
@@ -149,8 +95,5 @@ public partial class SliceFragmentBuilderBase
         methodIlGenerator.Emit(OpCodes.Ret);
 
         elementTypeMap[rootElementAttr.ElementType] = typeSystem.GetElementTypeFromInterface(rootElementAttr.ElementType);
-
-        // Override the interface method
-        typeBuilder.DefineMethodOverride(methodBuilder, method);
     }
 }

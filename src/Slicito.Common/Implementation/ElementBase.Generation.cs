@@ -35,40 +35,9 @@ public partial class ElementBase
             }
         }
 
-        // Create a new assembly and module for the dynamic type
-        var assemblyName = new AssemblyName($"DynamicElement_{elementInterfaceType.Name}");
-        var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run);
-        var moduleBuilder = assemblyBuilder.DefineDynamicModule("DynamicModule");
+        var typeBuilder = new DynamicTypeBuilder(typeof(ElementBase), elementInterfaceType);
+        typeBuilder.CreateConstructor(typeof(ElementId));
 
-        // Create the type
-        var typeBuilder = moduleBuilder.DefineType(
-            $"DynamicElement_{elementInterfaceType.Name}",
-            TypeAttributes.Public | TypeAttributes.Class,
-            typeof(ElementBase),
-            [elementInterfaceType]);
-
-        // Create constructor
-        var constructorBuilder = typeBuilder.DefineConstructor(
-            MethodAttributes.Public,
-            CallingConventions.Standard,
-            [typeof(ElementId)]);
-
-        var ilGenerator = constructorBuilder.GetILGenerator();
-
-        // Call base constructor
-        var baseConstructor =
-            typeof(ElementBase).GetConstructor(
-                BindingFlags.Instance | BindingFlags.NonPublic,
-                binder: null,
-                [typeof(ElementId)],
-                modifiers: null)
-            ?? throw new InvalidOperationException("No constructor found for ElementBase.");
-        ilGenerator.Emit(OpCodes.Ldarg_0); // Load this
-        ilGenerator.Emit(OpCodes.Ldarg_1); // Load ElementId parameter
-        ilGenerator.Emit(OpCodes.Call, baseConstructor);
-        ilGenerator.Emit(OpCodes.Ret);
-
-        return typeBuilder.CreateTypeInfo()
-            ?? throw new InvalidOperationException("Failed to create type info.");
+        return typeBuilder.CreateType();
     }    
 }
