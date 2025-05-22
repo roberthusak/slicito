@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Emit;
 
@@ -56,7 +57,7 @@ public partial class SliceFragmentBuilderBase
         }
 
         throw new ArgumentException(
-            $"Method {MemberSignatureFormatter.Format(member)} doesn't match any expected pattern.");
+            $"Member {MemberSignatureFormatter.Format(member)} doesn't match any expected pattern.");
     }
 
     private static bool TryMatchBuildAsyncMethod(
@@ -110,11 +111,25 @@ public partial class SliceFragmentBuilderBase
         
         rootElementAttr = method.GetCustomAttribute<RootElementAttribute>();
         if (rootElementAttr == null || 
-            method.ReturnType != sliceFragmentBuilderInterfaceType ||
-            method.GetParameters().Length != 1 || 
-            method.GetParameters()[0].ParameterType != typeof(ElementId))
+            method.ReturnType != sliceFragmentBuilderInterfaceType)
         {
             return false;
+        }
+
+        // First parameter should be ElementId
+        var parameters = method.GetParameters();
+        if (parameters.Length < 1 || parameters[0].ParameterType != typeof(ElementId))
+        {
+            return false;
+        }
+
+        // Remaining parameters should be string
+        for (var i = 1; i < parameters.Length; i++)
+        {
+            if (parameters[i].ParameterType != typeof(string))
+            {
+                return false;
+            }
         }
 
         matchedMethod = method;
@@ -131,14 +146,62 @@ public partial class SliceFragmentBuilderBase
         var methodBuilder = typeBuilder.CreateMethodImplementation(method);
         var methodIlGenerator = methodBuilder.GetILGenerator();
 
+        // Get the parameters of the method (ElementId plus attribute values)
+        var parameters = method.GetParameters();
+        
+        // Create string array local variable for attribute keys and values
+        var attributeArrayLocal = methodIlGenerator.DeclareLocal(typeof(string[]));
+        
+        // Calculate array size (each attribute needs 2 entries - key and value)
+        var attributeCount = parameters.Length - 1; // Subtract ElementId parameter
+        var arraySize = attributeCount * 2;
+        
+        // Allocate array
+        methodIlGenerator.Emit(OpCodes.Ldc_I4, arraySize); // Array size
+        methodIlGenerator.Emit(OpCodes.Newarr, typeof(string)); // Create array
+        methodIlGenerator.Emit(OpCodes.Stloc, attributeArrayLocal); // Store in local
+        
+        // Fill array with attribute keys and values
+        for (var i = 1; i < parameters.Length; i++)
+        {
+            var parameter = parameters[i];
+            var arrayIndex = (i - 1) * 2;
+            
+            Debug.Assert(parameter.ParameterType == typeof(string));
+
+            // Store attribute name
+            methodIlGenerator.Emit(OpCodes.Ldloc, attributeArrayLocal); // Load array
+            methodIlGenerator.Emit(OpCodes.Ldc_I4, arrayIndex); // Load index
+            
+            // Load attribute name
+            methodIlGenerator.Emit(OpCodes.Ldstr, MakeFirstLetterUppercase(parameter.Name));
+            
+            methodIlGenerator.Emit(OpCodes.Stelem_Ref); // Store in array
+            
+            // Store attribute value
+            methodIlGenerator.Emit(OpCodes.Ldloc, attributeArrayLocal); // Load array
+            methodIlGenerator.Emit(OpCodes.Ldc_I4, arrayIndex + 1); // Load index
+            methodIlGenerator.Emit(OpCodes.Ldarg, i + 1); // Load parameter value (i+1 because 0 is this)
+            
+            methodIlGenerator.Emit(OpCodes.Stelem_Ref); // Store in array
+        }
+
         // Call base AddRootElement<TElement>
         methodIlGenerator.Emit(OpCodes.Ldarg_0); // Load this
         methodIlGenerator.Emit(OpCodes.Ldarg_1); // Load ElementId parameter
+        methodIlGenerator.Emit(OpCodes.Ldloc, attributeArrayLocal); // Load attribute array
         methodIlGenerator.Emit(OpCodes.Call, typeof(SliceFragmentBuilderBase).GetMethod(nameof(AddRootElement), BindingFlags.NonPublic | BindingFlags.Instance)!
             .MakeGenericMethod(rootElementAttr.ElementType));
+        
+        // Return this
         methodIlGenerator.Emit(OpCodes.Ldarg_0); // Load this
         methodIlGenerator.Emit(OpCodes.Ret);
 
         elementTypeMap[rootElementAttr.ElementType] = typeSystem.GetElementTypeFromInterface(rootElementAttr.ElementType);
     }
+
+    private static string MakeFirstLetterUppercase(string name) =>
+        name.Length == 0 || char.IsUpper(name[0])
+            ? name
+            : char.ToUpper(name[0]) + name[1..];
 }

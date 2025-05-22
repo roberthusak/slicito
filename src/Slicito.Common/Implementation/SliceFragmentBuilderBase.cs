@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 using Slicito.Abstractions;
 using Slicito.Abstractions.Facts;
 
@@ -11,22 +13,24 @@ public abstract partial class SliceFragmentBuilderBase(
 
     private readonly Dictionary<ElementType, List<ISliceBuilder.PartialElementInfo>> _elementTypeToRootElements = [];
 
+    private readonly Dictionary<(ElementType, string), Dictionary<ElementId, string>> _elementAttributeToElementIdToAttributeValue = [];
+
     /// <remarks>
     /// Designed to be called by the generated implementation of an interface method such as:
     /// <code>
     /// [RootElement(typeof(IProjectElement))]
-    /// IProjectSliceFragmentBuilder AddProject(ElementId id);
+    /// IProjectSliceFragmentBuilder AddProject(ElementId id, string name);
     /// </code>
     /// The generated implementation is equivalent to:
     /// <code>
-    /// public IProjectSliceFragmentBuilder AddProject(ElementId id)
+    /// public IProjectSliceFragmentBuilder AddProject(ElementId id, string name)
     /// {
-    ///     AddRootElement&lt;IProjectElement&gt;(id);
+    ///     AddRootElement&lt;IProjectElement&gt;(id, ["Name", name]);
     ///     return this;
     /// }
     /// </code>
     /// </remarks>
-    protected void AddRootElement<TElement>(ElementId id)
+    protected void AddRootElement<TElement>(ElementId id, string[] attributeKeysAndValues)
         where TElement : IElement
     {
         var elementType = elementTypeMap[typeof(TElement)];
@@ -41,6 +45,24 @@ public abstract partial class SliceFragmentBuilderBase(
         }
 
         elementIds.Add(new(id));
+
+        Debug.Assert(attributeKeysAndValues.Length % 2 == 0);
+
+        for (var i = 0; i < attributeKeysAndValues.Length; i += 2)
+        {
+            var attributeName = attributeKeysAndValues[i];
+            var attributeValue = attributeKeysAndValues[i + 1];
+
+            if (!_elementAttributeToElementIdToAttributeValue.TryGetValue((elementType, attributeName), out var elementIdToAttributeValue))
+            {
+                elementIdToAttributeValue = [];
+                _elementAttributeToElementIdToAttributeValue[(elementType, attributeName)] = elementIdToAttributeValue;
+
+                _sliceBuilder.AddElementAttribute(elementType, attributeName, id => elementIdToAttributeValue[id]);
+            }
+
+            elementIdToAttributeValue[id] = attributeValue;
+        }
     }
 
     /// <remarks>

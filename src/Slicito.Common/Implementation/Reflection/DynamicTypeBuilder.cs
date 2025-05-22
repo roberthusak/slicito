@@ -7,8 +7,9 @@ internal class DynamicTypeBuilder
 {
     private readonly AssemblyBuilder _assemblyBuilder;
     private readonly ModuleBuilder _moduleBuilder;
-    private readonly TypeBuilder _typeBuilder;
     private static int _typeCounter;
+
+    public TypeBuilder TypeBuilder { get; }
 
     public DynamicTypeBuilder(Type baseType, Type interfaceType)
     {
@@ -21,7 +22,7 @@ internal class DynamicTypeBuilder
         // so that the later call to TypeBuilder.GetInterfaces() returns them.
         var interfaces = interfaceType.GetInterfaces().Concat([interfaceType]).ToArray();
 
-        _typeBuilder = _moduleBuilder.DefineType(
+        TypeBuilder = _moduleBuilder.DefineType(
             typeName,
             TypeAttributes.Public | TypeAttributes.Class,
             baseType,
@@ -30,8 +31,8 @@ internal class DynamicTypeBuilder
 
     public IEnumerable<MemberInfo> GetUnimplementedInterfaceMembers()
     {
-        var baseType = _typeBuilder.BaseType!;
-        var allInterfaces = _typeBuilder.GetInterfaces();
+        var baseType = TypeBuilder.BaseType!;
+        var allInterfaces = TypeBuilder.GetInterfaces();
 
         // Get all members from interfaces
         var interfaceMembers = allInterfaces
@@ -51,7 +52,7 @@ internal class DynamicTypeBuilder
 
     public ConstructorBuilder CreateConstructor(params Type[] parameterTypes)
     {
-        var constructorBuilder = _typeBuilder.DefineConstructor(
+        var constructorBuilder = TypeBuilder.DefineConstructor(
             MethodAttributes.Public,
             CallingConventions.Standard,
             parameterTypes);
@@ -66,12 +67,12 @@ internal class DynamicTypeBuilder
         }
 
         // Call base constructor
-        var baseConstructor = _typeBuilder.BaseType!.GetConstructor(
+        var baseConstructor = TypeBuilder.BaseType!.GetConstructor(
             BindingFlags.Instance | BindingFlags.NonPublic,
             binder: null,
             parameterTypes,
             modifiers: null)
-            ?? throw new InvalidOperationException($"No constructor found for {_typeBuilder.BaseType.Name} with the specified parameters.");
+            ?? throw new InvalidOperationException($"No constructor found for {TypeBuilder.BaseType.Name} with the specified parameters.");
 
         ilGenerator.Emit(OpCodes.Call, baseConstructor);
         ilGenerator.Emit(OpCodes.Ret);
@@ -81,14 +82,14 @@ internal class DynamicTypeBuilder
 
     public MethodBuilder CreateMethodImplementation(MethodInfo methodInfo, MethodAttributes methodAttributes = MethodAttributes.Public | MethodAttributes.Virtual)
     {
-        var methodBuilder = _typeBuilder.DefineMethod(
+        var methodBuilder = TypeBuilder.DefineMethod(
             methodInfo.Name,
             methodAttributes,
             methodInfo.ReturnType,
             methodInfo.GetParameters().Select(p => p.ParameterType).ToArray());
 
         // Override the interface method
-        _typeBuilder.DefineMethodOverride(methodBuilder, methodInfo);
+        TypeBuilder.DefineMethodOverride(methodBuilder, methodInfo);
 
         return methodBuilder;
     }
@@ -99,7 +100,7 @@ internal class DynamicTypeBuilder
         Type returnType,
         params Type[] parameterTypes)
     {
-        return _typeBuilder.DefineMethod(
+        return TypeBuilder.DefineMethod(
             name,
             attributes,
             returnType,
@@ -108,7 +109,7 @@ internal class DynamicTypeBuilder
 
     public TypeInfo CreateType()
     {
-        return _typeBuilder.CreateTypeInfo()
+        return TypeBuilder.CreateTypeInfo()
             ?? throw new InvalidOperationException("Failed to create type info.");
     }
 }

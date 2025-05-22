@@ -10,7 +10,7 @@ namespace Slicito.Common;
 
 public class SliceManager(ITypeSystem typeSystem) : ISliceManager
 {
-    private readonly ConcurrentDictionary<Type, Type> _elementInterfaceToElementType = new();
+    private readonly ConcurrentDictionary<Type, ElementBase.InheritedElementTypeInfo> _elementInterfaceToElementType = new();
     private readonly ConcurrentDictionary<Type, Func<ISlice, SliceFragmentBase>> _sliceFragmentFactories = new();
     private readonly ConcurrentDictionary<Type, Func<SliceFragmentBuilderBase>> _sliceFragmentBuilderFactories = new();
 
@@ -36,16 +36,9 @@ public class SliceManager(ITypeSystem typeSystem) : ISliceManager
 
         Debug.Assert(typeof(ITypedSliceFragment).IsAssignableFrom(fragmentInterfaceType));
 
-        var fragmentFactory = _sliceFragmentFactories.GetOrAdd(
-            fragmentInterfaceType,
-            _ => SliceFragmentBase.GenerateInheritedFragmentFactory(
-                fragmentInterfaceType,
-                typeSystem,
-                elementInterfaceType => _elementInterfaceToElementType.GetOrAdd(elementInterfaceType, ElementBase.GenerateInheritedElementType)));
+        var fragmentFactory = GetOrAddSliceFragmentFactory(fragmentInterfaceType);
 
-        var builderFactory = _sliceFragmentBuilderFactories.GetOrAdd(
-            fragmentBuilderInterfaceType,
-            _ => SliceFragmentBuilderBase.GenerateInheritedFragmentBuilderFactory(fragmentBuilderInterfaceType, fragmentInterfaceType, typeSystem, fragmentFactory));
+        var builderFactory = GetOrAddSliceFragmentBuilderFactory(fragmentBuilderInterfaceType, fragmentInterfaceType, fragmentFactory);
 
         return (TSliceFragmentBuilder)(object)builderFactory();
     }
@@ -71,4 +64,29 @@ public class SliceManager(ITypeSystem typeSystem) : ISliceManager
         fragmentBuilderGenericInterfaceType = foundInterface;
         return foundInterface != null;
     }
+
+    private Func<ISlice, SliceFragmentBase> GetOrAddSliceFragmentFactory(Type fragmentInterfaceType) =>
+        _sliceFragmentFactories.GetOrAdd(
+            fragmentInterfaceType,
+            _ => SliceFragmentBase.GenerateInheritedFragmentFactory(
+                fragmentInterfaceType,
+                typeSystem,
+                GetOrAddElementTypeFromInterface));
+    
+    private Func<SliceFragmentBuilderBase> GetOrAddSliceFragmentBuilderFactory(
+        Type fragmentBuilderInterfaceType,
+        Type fragmentInterfaceType,
+        Func<ISlice, SliceFragmentBase> fragmentFactory)
+    {
+        return _sliceFragmentBuilderFactories.GetOrAdd(
+            fragmentBuilderInterfaceType,
+            _ => SliceFragmentBuilderBase.GenerateInheritedFragmentBuilderFactory(
+                fragmentBuilderInterfaceType,
+                fragmentInterfaceType,
+                typeSystem,
+                fragmentFactory));
+    }
+
+    private ElementBase.InheritedElementTypeInfo GetOrAddElementTypeFromInterface(Type elementInterfaceType) =>
+        _elementInterfaceToElementType.GetOrAdd(elementInterfaceType, ElementBase.GenerateInheritedElementType);
 }
