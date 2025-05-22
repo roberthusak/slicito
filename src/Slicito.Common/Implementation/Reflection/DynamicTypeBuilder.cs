@@ -1,7 +1,7 @@
 using System.Reflection;
 using System.Reflection.Emit;
 
-namespace Slicito.Common.Implementation;
+namespace Slicito.Common.Implementation.Reflection;
 
 internal class DynamicTypeBuilder
 {
@@ -60,7 +60,7 @@ internal class DynamicTypeBuilder
 
         // Load this and all parameters
         ilGenerator.Emit(OpCodes.Ldarg_0); // Load this
-        for (int i = 0; i < parameterTypes.Length; i++)
+        for (var i = 0; i < parameterTypes.Length; i++)
         {
             ilGenerator.Emit(OpCodes.Ldarg, i + 1); // Load parameter i+1 (0 is this)
         }
@@ -111,4 +111,4 @@ internal class DynamicTypeBuilder
         return _typeBuilder.CreateTypeInfo()
             ?? throw new InvalidOperationException("Failed to create type info.");
     }
-} 
+}

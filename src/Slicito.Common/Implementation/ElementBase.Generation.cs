@@ -1,8 +1,8 @@
 using System.Reflection;
-using System.Reflection.Emit;
 
 using Slicito.Abstractions;
 using Slicito.Abstractions.Facts;
+using Slicito.Common.Implementation.Reflection;
 
 namespace Slicito.Common.Implementation;
 
