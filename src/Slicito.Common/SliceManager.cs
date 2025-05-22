@@ -18,41 +18,41 @@ public class SliceManager(ITypeSystem typeSystem) : ISliceManager
 
     public TSliceFragmentBuilder CreateTypedBuilder<TSliceFragmentBuilder>()
     {
-        var fragmentBuilderType = typeof(TSliceFragmentBuilder);
+        var fragmentBuilderInterfaceType = typeof(TSliceFragmentBuilder);
 
-        if (!fragmentBuilderType.IsInterface)
+        if (!fragmentBuilderInterfaceType.IsInterface)
         {
             throw new ArgumentException("Type must be an interface.");
         }
 
-        if (!TryFindFragmentBuilderInterfaceInstantiation(fragmentBuilderType, out var fragmentBuilderInterfaceType))
+        if (!TryFindFragmentBuilderInterfaceInstantiation(fragmentBuilderInterfaceType, out var fragmentBuilderGenericInterfaceType))
         {
             throw new ArgumentException("Type must implement ITypedSliceFragmentBuilder<>.");
         }
 
-        Debug.Assert(fragmentBuilderInterfaceType.GetGenericTypeDefinition() == typeof(ITypedSliceFragmentBuilder<>));
+        Debug.Assert(fragmentBuilderGenericInterfaceType.GetGenericTypeDefinition() == typeof(ITypedSliceFragmentBuilder<>));
 
-        var fragmentType = fragmentBuilderInterfaceType.GetGenericArguments()[0];
+        var fragmentInterfaceType = fragmentBuilderGenericInterfaceType.GetGenericArguments()[0];
 
-        Debug.Assert(typeof(ITypedSliceFragment).IsAssignableFrom(fragmentType));
+        Debug.Assert(typeof(ITypedSliceFragment).IsAssignableFrom(fragmentInterfaceType));
 
         var fragmentFactory = _sliceFragmentFactories.GetOrAdd(
-            fragmentType,
+            fragmentInterfaceType,
             _ => SliceFragmentBase.GenerateInheritedFragmentFactory(
-                fragmentType,
+                fragmentInterfaceType,
                 typeSystem,
-                elementType => _elementInterfaceToElementType.GetOrAdd(elementType, ElementBase.GenerateInheritedElementType)));
+                elementInterfaceType => _elementInterfaceToElementType.GetOrAdd(elementInterfaceType, ElementBase.GenerateInheritedElementType)));
 
         var builderFactory = _sliceFragmentBuilderFactories.GetOrAdd(
-            fragmentBuilderType,
-            _ => SliceFragmentBuilderBase.GenerateInheritedFragmentBuilderFactory(fragmentBuilderType, fragmentType, typeSystem, fragmentFactory));
+            fragmentBuilderInterfaceType,
+            _ => SliceFragmentBuilderBase.GenerateInheritedFragmentBuilderFactory(fragmentBuilderInterfaceType, fragmentInterfaceType, typeSystem, fragmentFactory));
 
         return (TSliceFragmentBuilder)(object)builderFactory();
     }
 
-    private bool TryFindFragmentBuilderInterfaceInstantiation(Type fragmentBuilderType, [NotNullWhen(true)] out Type? fragmentBuilderInterfaceType)
+    private bool TryFindFragmentBuilderInterfaceInstantiation(Type fragmentBuilderInterfaceType, [NotNullWhen(true)] out Type? fragmentBuilderGenericInterfaceType)
     {
-        var interfaces = fragmentBuilderType.GetInterfaces();
+        var interfaces = fragmentBuilderInterfaceType.GetInterfaces();
         Type? foundInterface = null;
 
         foreach (var interfaceType in interfaces)
@@ -61,14 +61,14 @@ public class SliceManager(ITypeSystem typeSystem) : ISliceManager
             {
                 if (foundInterface != null && foundInterface != interfaceType)
                 {
-                    throw new ArgumentException($"Type {fragmentBuilderType.Name} implements multiple instantiations of ITypedSliceFragmentBuilder<>.");
+                    throw new ArgumentException($"Type {fragmentBuilderInterfaceType.Name} implements multiple instantiations of ITypedSliceFragmentBuilder<>.");
                 }
 
                 foundInterface = interfaceType;
             }
         }
 
-        fragmentBuilderInterfaceType = foundInterface;
+        fragmentBuilderGenericInterfaceType = foundInterface;
         return foundInterface != null;
     }
 }

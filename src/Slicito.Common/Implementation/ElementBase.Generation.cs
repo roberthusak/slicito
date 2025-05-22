@@ -8,21 +8,21 @@ namespace Slicito.Common.Implementation;
 
 public partial class ElementBase
 {
-    internal static Type GenerateInheritedElementType(Type elementType)
+    internal static Type GenerateInheritedElementType(Type elementInterfaceType)
     {
-        if (!elementType.IsInterface)
+        if (!elementInterfaceType.IsInterface)
         {
             throw new ArgumentException("Type must be an interface.");
         }
 
-        if (!typeof(IElement).IsAssignableFrom(elementType))
+        if (!typeof(IElement).IsAssignableFrom(elementInterfaceType))
         {
             throw new ArgumentException("Type must inherit from IElement.");
         }
 
         // Check if the interface or any of its inherited interfaces have members we can't implement
-        var allInterfaces = new HashSet<Type> { elementType };
-        allInterfaces.UnionWith(elementType.GetInterfaces());
+        var allInterfaces = new HashSet<Type> { elementInterfaceType };
+        allInterfaces.UnionWith(elementInterfaceType.GetInterfaces());
         allInterfaces.Remove(typeof(IElement)); // IElement is covered by the base class
 
         foreach (var iface in allInterfaces)
@@ -36,16 +36,16 @@ public partial class ElementBase
         }
 
         // Create a new assembly and module for the dynamic type
-        var assemblyName = new AssemblyName($"DynamicElement_{elementType.Name}");
+        var assemblyName = new AssemblyName($"DynamicElement_{elementInterfaceType.Name}");
         var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run);
         var moduleBuilder = assemblyBuilder.DefineDynamicModule("DynamicModule");
 
         // Create the type
         var typeBuilder = moduleBuilder.DefineType(
-            $"DynamicElement_{elementType.Name}",
+            $"DynamicElement_{elementInterfaceType.Name}",
             TypeAttributes.Public | TypeAttributes.Class,
             typeof(ElementBase),
-            [elementType]);
+            [elementInterfaceType]);
 
         // Create constructor
         var constructorBuilder = typeBuilder.DefineConstructor(

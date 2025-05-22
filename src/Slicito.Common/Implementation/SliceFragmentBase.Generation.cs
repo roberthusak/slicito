@@ -9,31 +9,31 @@ namespace Slicito.Common.Implementation;
 public partial class SliceFragmentBase
 {
     internal static Func<ISlice, SliceFragmentBase> GenerateInheritedFragmentFactory(
-        Type sliceFragmentType,
+        Type sliceFragmentInterfaceType,
         ITypeSystem typeSystem,
         Func<Type, Type> elementTypeFactory)
     {
-        if (!sliceFragmentType.IsInterface)
+        if (!sliceFragmentInterfaceType.IsInterface)
         {
-            throw new ArgumentException("Type must be an interface.", nameof(sliceFragmentType));
+            throw new ArgumentException("Type must be an interface.", nameof(sliceFragmentInterfaceType));
         }
 
-        if (!typeof(ITypedSliceFragment).IsAssignableFrom(sliceFragmentType))
+        if (!typeof(ITypedSliceFragment).IsAssignableFrom(sliceFragmentInterfaceType))
         {
-            throw new ArgumentException("Type must inherit from ITypedSliceFragment.", nameof(sliceFragmentType));
+            throw new ArgumentException("Type must inherit from ITypedSliceFragment.", nameof(sliceFragmentInterfaceType));
         }
 
         // Create a new assembly and module for the dynamic type
-        var assemblyName = new AssemblyName($"DynamicElement_{sliceFragmentType.Name}");
+        var assemblyName = new AssemblyName($"DynamicElement_{sliceFragmentInterfaceType.Name}");
         var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run);
         var moduleBuilder = assemblyBuilder.DefineDynamicModule("DynamicModule");
 
         // Create the type
         var typeBuilder = moduleBuilder.DefineType(
-            $"DynamicElement_{sliceFragmentType.Name}",
+            $"DynamicElement_{sliceFragmentInterfaceType.Name}",
             TypeAttributes.Public | TypeAttributes.Class,
             typeof(SliceFragmentBase),
-            [sliceFragmentType]);
+            [sliceFragmentInterfaceType]);
 
         // Create constructor
         var constructorBuilder = typeBuilder.DefineConstructor(
@@ -57,10 +57,10 @@ public partial class SliceFragmentBase
         ilGenerator.Emit(OpCodes.Call, baseConstructor);
         ilGenerator.Emit(OpCodes.Ret);
 
-        var members = sliceFragmentType
+        var members = sliceFragmentInterfaceType
             .GetInterfaces()
             .Where(i => i != typeof(ITypedSliceFragment))   // Already implemented in base class
-            .Concat([sliceFragmentType])
+            .Concat([sliceFragmentInterfaceType])
             .SelectMany(i => i.GetMembers(BindingFlags.Public | BindingFlags.Instance))
             .Distinct();
 
@@ -99,8 +99,8 @@ public partial class SliceFragmentBase
             throw new ArgumentException($"Method {method.Name} does not return ValueTask<IEnumerable<T>>.");
         }
 
-        var elementType = method.ReturnType.GenericTypeArguments[0].GenericTypeArguments[0];
-        if (!typeof(IElement).IsAssignableFrom(elementType))
+        var elementInterfaceType = method.ReturnType.GenericTypeArguments[0].GenericTypeArguments[0];
+        if (!typeof(IElement).IsAssignableFrom(elementInterfaceType))
         {
             throw new ArgumentException($"Method {method.Name} does not return a collection of IElement.");
         }
@@ -110,11 +110,11 @@ public partial class SliceFragmentBase
             throw new ArgumentException($"Method {method.Name} must not have any parameters.");
         }
 
-        ImplementAsyncLoaderOfRootElements(elementType, method, typeBuilder, elementTypeMap, elementTypeFactory, typeSystem);
+        ImplementAsyncLoaderOfRootElements(elementInterfaceType, method, typeBuilder, elementTypeMap, elementTypeFactory, typeSystem);
     }
 
     private static void ImplementAsyncLoaderOfRootElements(
-        Type elementType,
+        Type elementInterfaceType,
         MethodInfo method,
         TypeBuilder typeBuilder,
         Dictionary<Type, ElementType> elementTypeMap,
@@ -122,20 +122,20 @@ public partial class SliceFragmentBase
         ITypeSystem typeSystem)
     {
         // Create the element type if not already in the map
-        if (!elementTypeMap.ContainsKey(elementType))
+        if (!elementTypeMap.ContainsKey(elementInterfaceType))
         {
-            elementTypeMap[elementType] = typeSystem.GetElementTypeFromInterface(elementType);
+            elementTypeMap[elementInterfaceType] = typeSystem.GetElementTypeFromInterface(elementInterfaceType);
         }
 
         // Create the helper method for element construction
         var helperMethodBuilder = typeBuilder.DefineMethod(
-            $"Create_{elementType.Name}",
+            $"Create_{elementInterfaceType.Name}",
             MethodAttributes.Private | MethodAttributes.Static,
-            elementType,
+            elementInterfaceType,
             [typeof(ElementId)]);
 
         var helperIlGenerator = helperMethodBuilder.GetILGenerator();
-        var concreteElementType = elementTypeFactory(elementType);
+        var concreteElementType = elementTypeFactory(elementInterfaceType);
         var elementConstructor = concreteElementType.GetConstructor([typeof(ElementId)])
             ?? throw new InvalidOperationException($"No constructor found for {concreteElementType.Name} that takes ElementId.");
 
@@ -154,19 +154,19 @@ public partial class SliceFragmentBase
         var ilGenerator = methodBuilder.GetILGenerator();
 
         // Create a local variable for the element factory
-        var elementFactoryLocal = ilGenerator.DeclareLocal(typeof(Func<,>).MakeGenericType(typeof(ElementId), elementType));
+        var elementFactoryLocal = ilGenerator.DeclareLocal(typeof(Func<,>).MakeGenericType(typeof(ElementId), elementInterfaceType));
 
         // Create a delegate that calls the helper method
         ilGenerator.Emit(OpCodes.Ldnull); // Load null for the target object (static method)
         ilGenerator.Emit(OpCodes.Ldftn, helperMethodBuilder); // Load helper method pointer
-        ilGenerator.Emit(OpCodes.Newobj, typeof(Func<,>).MakeGenericType(typeof(ElementId), elementType).GetConstructor([typeof(object), typeof(IntPtr)])!);
+        ilGenerator.Emit(OpCodes.Newobj, typeof(Func<,>).MakeGenericType(typeof(ElementId), elementInterfaceType).GetConstructor([typeof(object), typeof(IntPtr)])!);
         ilGenerator.Emit(OpCodes.Stloc, elementFactoryLocal);
 
         // Call GetRootElementsAsync
         ilGenerator.Emit(OpCodes.Ldarg_0); // Load this
         ilGenerator.Emit(OpCodes.Ldloc, elementFactoryLocal); // Load element factory
         ilGenerator.Emit(OpCodes.Call, typeof(SliceFragmentBase).GetMethod(nameof(GetRootElementsAsync), BindingFlags.NonPublic | BindingFlags.Instance)!
-            .MakeGenericMethod(elementType));
+            .MakeGenericMethod(elementInterfaceType));
         ilGenerator.Emit(OpCodes.Ret);
 
         // Override the interface method
