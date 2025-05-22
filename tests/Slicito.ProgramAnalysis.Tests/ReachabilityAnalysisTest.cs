@@ -23,8 +23,9 @@ public class ReachabilityAnalysisTest
         const string solutionPath = @"..\..\..\..\inputs\AnalysisSamples\AnalysisSamples.sln";
         var solution = await MSBuildWorkspace.Create().OpenSolutionAsync(solutionPath);
 
-        _types = new DotNetTypes(new TypeSystem());
-        var sliceManager = new SliceManager();
+        var typeSystem = new TypeSystem();
+        _types = new DotNetTypes(typeSystem);
+        var sliceManager = new SliceManager(typeSystem);
 
         _solutionContext = new DotNetSolutionContext(solution, _types, sliceManager);
     }

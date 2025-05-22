@@ -21,8 +21,9 @@ public class DotNetExtractorTests
         const string solutionPath = @"..\..\..\..\inputs\AnalysisSamples\AnalysisSamples.sln";
         var solution = await MSBuildWorkspace.Create().OpenSolutionAsync(solutionPath);
         
-        _dotNetTypes = new DotNetTypes(new TypeSystem());
-        var sliceManager = new SliceManager();
+        var typeSystem = new TypeSystem();
+        _dotNetTypes = new DotNetTypes(typeSystem);
+        var sliceManager = new SliceManager(typeSystem);
         
         _solutionContext = new DotNetSolutionContext(solution, _dotNetTypes, sliceManager);
         

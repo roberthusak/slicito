@@ -36,7 +36,7 @@ internal class VisualStudioSlicitoContext : ProgramAnalysisContextBase
     public static VisualStudioSlicitoContext Create(VisualStudioWorkspace workspace)
     {
         var typeSystem = new TypeSystem();
-        var sliceManager = new SliceManager();
+        var sliceManager = new SliceManager(typeSystem);
 
         var dotNetTypes = new DotNetTypes(typeSystem);
 

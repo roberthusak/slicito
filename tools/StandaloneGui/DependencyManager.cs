@@ -27,7 +27,7 @@ public class DependencyManager
     {
         _solutionPath = solutionPath;
         _typeSystem = new TypeSystem();
-        _sliceManager = new SliceManager();
+        _sliceManager = new SliceManager(_typeSystem);
     }
 
     public async Task<object?[]> ResolveDependenciesAsync(ConstructorInfo constructor)
