@@ -11,6 +11,21 @@ public abstract partial class SliceFragmentBuilderBase(
 
     private readonly Dictionary<ElementType, List<ISliceBuilder.PartialElementInfo>> _elementTypeToRootElements = [];
 
+    /// <remarks>
+    /// Designed to be called by the generated implementation of an interface method such as:
+    /// <code>
+    /// [RootElement(typeof(IProjectElement))]
+    /// IProjectSliceFragmentBuilder AddProject(ElementId id);
+    /// </code>
+    /// The generated implementation is equivalent to:
+    /// <code>
+    /// public IProjectSliceFragmentBuilder AddProject(ElementId id)
+    /// {
+    ///     AddRootElement&lt;IProjectElement&gt;(id);
+    ///     return this;
+    /// }
+    /// </code>
+    /// </remarks>
     protected void AddRootElement<TElement>(ElementId id)
         where TElement : IElement
     {
@@ -28,6 +43,19 @@ public abstract partial class SliceFragmentBuilderBase(
         elementIds.Add(new(id));
     }
 
+    /// <remarks>
+    /// Designed to be called by the generated implementation of an interface method such as:
+    /// <code>
+    /// ValueTask&lt;ITestProjectSliceFragment&gt; BuildAsync();
+    /// </code>
+    /// The generated implementation is equivalent to:
+    /// <code>
+    /// public ValueTask&lt;ITestProjectSliceFragment&gt; BuildAsync()
+    /// {
+    ///     return BuildAsync&lt;ITestProjectSliceFragment&gt;();
+    /// }
+    /// </code>
+    /// </remarks>
     protected ValueTask<TSliceFragment> BuildAsync<TSliceFragment>()
         where TSliceFragment : ITypedSliceFragment
     {
