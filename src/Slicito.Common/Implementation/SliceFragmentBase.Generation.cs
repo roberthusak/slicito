@@ -3,6 +3,7 @@ using System.Reflection.Emit;
 
 using Slicito.Abstractions;
 using Slicito.Abstractions.Facts;
+using Slicito.Common.Implementation.Reflection;
 
 namespace Slicito.Common.Implementation;
 
@@ -44,39 +45,46 @@ public partial class SliceFragmentBase
         Func<Type, Type> elementTypeFactory,
         ITypeSystem typeSystem)
     {
-        if (member is not MethodInfo method)
+        if (TryMatchRootElementLoaderMethod(member, out var method, out var elementInterfaceType))
         {
-            throw new ArgumentException($"Member {member.Name} is not a method.");
+            ImplementAsyncLoaderOfRootElements(elementInterfaceType, method, typeBuilder, elementTypeMap, elementTypeFactory, typeSystem);
+            return;
         }
 
-        ValidateRootElementLoaderMethodSignature(method);
-
-        var elementInterfaceType = method.ReturnType.GenericTypeArguments[0].GenericTypeArguments[0];
-        ImplementAsyncLoaderOfRootElements(elementInterfaceType, method, typeBuilder, elementTypeMap, elementTypeFactory, typeSystem);
+        throw new ArgumentException(
+            $"Method {MemberSignatureFormatter.Format(member)} doesn't match any expected pattern.");
     }
 
-    private static void ValidateRootElementLoaderMethodSignature(MethodInfo method)
+    private static bool TryMatchRootElementLoaderMethod(
+        MemberInfo member,
+        out MethodInfo matchedMethod,
+        out Type elementInterfaceType)
     {
-        // Check the method against the pattern: ValueTask<IEnumerable<ISomeElement>> MethodName()
+        matchedMethod = null!;
+        elementInterfaceType = null!;
+
+        if (member is not MethodInfo method)
+        {
+            return false;
+        }
 
         if (!method.ReturnType.IsGenericType ||
             method.ReturnType.GetGenericTypeDefinition() != typeof(ValueTask<>) ||
             !method.ReturnType.GetGenericArguments()[0].IsGenericType ||
-            method.ReturnType.GetGenericArguments()[0].GetGenericTypeDefinition() != typeof(IEnumerable<>))
+            method.ReturnType.GetGenericArguments()[0].GetGenericTypeDefinition() != typeof(IEnumerable<>) ||
+            method.GetParameters().Length > 0)
         {
-            throw new ArgumentException($"Method {method.Name} does not return ValueTask<IEnumerable<T>>.");
+            return false;
         }
 
-        var elementInterfaceType = method.ReturnType.GenericTypeArguments[0].GenericTypeArguments[0];
+        elementInterfaceType = method.ReturnType.GenericTypeArguments[0].GenericTypeArguments[0];
         if (!typeof(IElement).IsAssignableFrom(elementInterfaceType))
         {
-            throw new ArgumentException($"Method {method.Name} does not return a collection of IElement.");
+            return false;
         }
 
-        if (method.GetParameters().Length > 0)
-        {
-            throw new ArgumentException($"Method {method.Name} must not have any parameters.");
-        }
+        matchedMethod = method;
+        return true;
     }
 
     private static void ImplementAsyncLoaderOfRootElements(

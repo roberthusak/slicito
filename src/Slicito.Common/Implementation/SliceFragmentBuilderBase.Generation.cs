@@ -4,6 +4,7 @@ using System.Reflection.Emit;
 using Slicito.Abstractions;
 using Slicito.Abstractions.Facts;
 using Slicito.Abstractions.Facts.Attributes;
+using Slicito.Common.Implementation.Reflection;
 
 namespace Slicito.Common.Implementation;
 
@@ -27,43 +28,60 @@ public partial class SliceFragmentBuilderBase
 
         foreach (var member in typeBuilder.GetUnimplementedInterfaceMembers())
         {
-            if (member is not MethodInfo method)
-            {
-                throw new ArgumentException($"Member {member.Name} is not a method.");
-            }
-
-            // Handle BuildAsync method
-            if (method.Name == "BuildAsync" && method.ReturnType == typeof(ValueTask<>).MakeGenericType(sliceFragmentInterfaceType))
-            {
-                if (method.GetParameters().Length > 0)
-                {
-                    throw new ArgumentException($"Method {method.Name} must not have any parameters.");
-                }
-
-                ImplementBuildAsyncMethod(method, typeBuilder, sliceFragmentInterfaceType);
-                continue;
-            }
-
-            // Handle Add*Element methods with [RootElement] attribute
-            var rootElementAttr = method.GetCustomAttribute<RootElementAttribute>();
-            if (rootElementAttr != null && method.ReturnType == sliceFragmentBuilderInterfaceType)
-            {
-                if (method.GetParameters().Length != 1 || method.GetParameters()[0].ParameterType != typeof(ElementId))
-                {
-                    throw new ArgumentException($"Method {method.Name} must take exactly one ElementId parameter.");
-                }
-
-                ImplementRootElementMethod(method, typeBuilder, rootElementAttr, elementTypeMap, typeSystem);
-                continue;
-            }
-
-            throw new ArgumentException($"Method {method.Name} does not match any expected pattern.");
+            ImplementMember(member, typeBuilder, sliceFragmentBuilderInterfaceType, sliceFragmentInterfaceType, elementTypeMap, typeSystem);
         }
 
         var type = typeBuilder.CreateType();
         return () => (SliceFragmentBuilderBase)Activator.CreateInstance(type, elementTypeMap, sliceFragmentFactory)!;
     }
 
+    private static void ImplementMember(
+        MemberInfo member,
+        DynamicTypeBuilder typeBuilder,
+        Type sliceFragmentBuilderInterfaceType,
+        Type sliceFragmentInterfaceType,
+        Dictionary<Type, ElementType> elementTypeMap,
+        ITypeSystem typeSystem)
+    {
+        if (TryMatchBuildAsyncMethod(member, sliceFragmentInterfaceType, out var buildAsyncMethod))
+        {
+            ImplementBuildAsyncMethod(buildAsyncMethod, typeBuilder, sliceFragmentInterfaceType);
+            return;
+        }
+
+        if (TryMatchRootElementMethod(member, sliceFragmentBuilderInterfaceType, out var rootElementMethod, out var rootElementAttr))
+        {
+            ImplementRootElementMethod(rootElementMethod, rootElementAttr, typeBuilder, elementTypeMap, typeSystem);
+            return;
+        }
+
+        throw new ArgumentException(
+            $"Method {MemberSignatureFormatter.Format(member)} doesn't match any expected pattern.");
+    }
+
+    private static bool TryMatchBuildAsyncMethod(
+        MemberInfo member,
+        Type sliceFragmentInterfaceType,
+        out MethodInfo matchedMethod)
+    {
+        matchedMethod = null!;
+        
+        if (member is not MethodInfo method)
+        {
+            return false;
+        }
+        
+        if (method.Name != "BuildAsync" || 
+            method.ReturnType != typeof(ValueTask<>).MakeGenericType(sliceFragmentInterfaceType) ||
+            method.GetParameters().Length > 0)
+        {
+            return false;
+        }
+
+        matchedMethod = method;
+        return true;
+    }
+    
     private static void ImplementBuildAsyncMethod(MethodInfo method, DynamicTypeBuilder typeBuilder, Type sliceFragmentInterfaceType)
     {
         var methodBuilder = typeBuilder.CreateMethodImplementation(method);
@@ -76,10 +94,37 @@ public partial class SliceFragmentBuilderBase
         methodIlGenerator.Emit(OpCodes.Ret);
     }
 
+    private static bool TryMatchRootElementMethod(
+        MemberInfo member,
+        Type sliceFragmentBuilderInterfaceType,
+        out MethodInfo matchedMethod,
+        out RootElementAttribute rootElementAttr)
+    {
+        matchedMethod = null!;
+        rootElementAttr = null!;
+        
+        if (member is not MethodInfo method)
+        {
+            return false;
+        }
+        
+        rootElementAttr = method.GetCustomAttribute<RootElementAttribute>();
+        if (rootElementAttr == null || 
+            method.ReturnType != sliceFragmentBuilderInterfaceType ||
+            method.GetParameters().Length != 1 || 
+            method.GetParameters()[0].ParameterType != typeof(ElementId))
+        {
+            return false;
+        }
+
+        matchedMethod = method;
+        return true;
+    }
+
     private static void ImplementRootElementMethod(
         MethodInfo method,
-        DynamicTypeBuilder typeBuilder,
         RootElementAttribute rootElementAttr,
+        DynamicTypeBuilder typeBuilder,
         Dictionary<Type, ElementType> elementTypeMap,
         ITypeSystem typeSystem)
     {
