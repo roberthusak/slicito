@@ -1,7 +1,14 @@
+using System.Text.Json;
+
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.MSBuild;
+
 using Slicito.Abstractions;
 using Slicito.Abstractions.Models;
+using Slicito.Common;
+using Slicito.Common.Controllers;
+using Slicito.DotNet;
 using Slicito.ProgramAnalysis.Repositories;
-using System.Text.Json;
 
 namespace Controllers;
 
@@ -9,6 +16,8 @@ public class ArchitectureAnalyzer : IController
 {
     private static readonly string _optionsPathEnvironmentVariable = "SLICITO_ARCHITECTURE_ANALYZER_OPTIONS_PATH";
     private static readonly JsonSerializerOptions _jsonSerializerOptions = new() { PropertyNameCaseInsensitive = true };
+
+    private StructureBrowser? _browser;
 
     public async Task<IModel> InitAsync()
     {
@@ -25,8 +34,56 @@ public class ArchitectureAnalyzer : IController
 
         await new GitHubRepositoryDownloader().DownloadAsync(options);
 
-        return new Tree([new("Completed", [])]);
+        var solutionPaths = FindAllSolutionPaths(options);
+
+        var typeSystem = new TypeSystem();
+        var dotNetTypes = new DotNetTypes(typeSystem);
+        var sliceManager = new SliceManager(typeSystem);
+        var dotNetExtractor = new DotNetExtractor(dotNetTypes, sliceManager);
+
+        var workspace = MSBuildWorkspace.Create();
+        var solutions = new List<Solution>();
+        foreach (var solutionPath in solutionPaths)
+        {
+            var solution = await workspace.OpenSolutionAsync(solutionPath);
+            solutions.Add(solution);
+        }
+
+        var slice = dotNetExtractor.Extract([.. solutions]).Slice;
+
+        _browser = new StructureBrowser(slice);
+
+        return await _browser.InitAsync();
     }
 
-    public Task<IModel?> ProcessCommandAsync(Command command) => Task.FromResult((IModel?)null);
+    private static List<string> FindAllSolutionPaths(GitHubRepositoryDownloader.Options options)
+    {
+        var solutions = new List<string>();
+
+        foreach (var organization in options.Organizations)
+        {
+            foreach (var repository in organization.Repositories)
+            {
+                var repositoryPath = Path.Combine(options.BasePath, organization.Name, repository.Name, "tags", repository.Tag);
+
+                if (!Directory.Exists(repositoryPath))
+                {
+                    throw new InvalidOperationException($"Repository {repository.Name} (tag {repository.Tag}) of organization {organization.Name} cannot be found.");
+                }
+
+                // Find the .sln file
+                var solutionFiles = Directory.GetFiles(repositoryPath, "*.sln", SearchOption.AllDirectories);
+                var solutionFile = solutionFiles.SingleOrDefault();
+                
+                if (solutionFile is not null)
+                {
+                    solutions.Add(solutionFile);
+                }
+            }
+        }
+
+        return solutions;
+    }
+
+    public async Task<IModel?> ProcessCommandAsync(Command command) => await _browser!.ProcessCommandAsync(command);
 }
