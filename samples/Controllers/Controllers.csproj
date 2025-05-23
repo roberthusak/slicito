@@ -13,6 +13,11 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+    <PackageReference Include="System.Text.Json" />
+  </ItemGroup>
+
+
   <ItemGroup>
     <ProjectReference Include="..\..\src\Slicito.Abstractions\Slicito.Abstractions.csproj" />
     <ProjectReference Include="..\..\src\Slicito.DotNet\Slicito.DotNet.csproj" />

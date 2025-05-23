@@ -13,6 +13,7 @@
     <PackageVersion Include="Octokit" Version="14.0.0" />
     <PackageVersion Include="PolySharp" Version="1.15.0" />
     <PackageVersion Include="System.Collections.Immutable" Version="8.0.0" />
+    <PackageVersion Include="System.Text.Json" Version="9.0.5" />
     <PackageVersion Include="AutomaticGraphLayout" Version="1.1.12" />
     <PackageVersion Include="AutomaticGraphLayout.Drawing" Version="1.1.12" />
     <PackageVersion Include="coverlet.collector" Version="6.0.0" />
