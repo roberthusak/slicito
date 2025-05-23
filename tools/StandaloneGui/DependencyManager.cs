@@ -74,7 +74,7 @@ public class DependencyManager
         if (_dotNetSolutionContext == null && File.Exists(_solutionPath))
         {
             var solution = await MSBuildWorkspace.Create().OpenSolutionAsync(_solutionPath);
-            _dotNetSolutionContext = GetDotNetExtractor().Extract(solution);
+            _dotNetSolutionContext = GetDotNetExtractor().Extract([solution]);
         }
 
         return _dotNetSolutionContext;

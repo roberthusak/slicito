@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Slicito.Common\Slicito.Common.csproj" />
     <ProjectReference Include="..\Slicito.ProgramAnalysis\Slicito.ProgramAnalysis.csproj" />
   </ItemGroup>
 

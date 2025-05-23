@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Collections.Immutable;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -10,7 +11,7 @@ using Slicito.ProgramAnalysis.Notation;
 namespace Slicito.DotNet.Implementation;
 internal class SliceCreator
 {
-    private readonly Solution _solution;
+    private readonly ImmutableArray<Solution> _solutions;
     private readonly DotNetTypes _types;
     private readonly ISliceManager _sliceManager;
 
@@ -20,9 +21,9 @@ internal class SliceCreator
 
     public ISlice Slice { get; }
 
-    public SliceCreator(Solution solution, DotNetTypes types, ISliceManager sliceManager)
+    public SliceCreator(ImmutableArray<Solution> solutions, DotNetTypes types, ISliceManager sliceManager)
     {
-        _solution = solution;
+        _solutions = solutions;
         _types = types;
         _sliceManager = sliceManager;
 
@@ -42,7 +43,7 @@ internal class SliceCreator
             return null;
         }
 
-        return _flowGraphCache.GetOrAdd(method, _ => FlowGraphCreator.TryCreate(method, _solution, _elementCache));
+        return _flowGraphCache.GetOrAdd(method, _ => FlowGraphCreator.TryCreate(method, _solutions, _elementCache));
     }
 
     public ProcedureSignature GetProcedureSignature(ElementId elementId)
@@ -78,7 +79,8 @@ internal class SliceCreator
     }
 
     private IEnumerable<ISliceBuilder.PartialElementInfo> LoadProjects() =>
-        _solution.Projects
+        _solutions
+            .SelectMany(solution => solution.Projects)
             .Select(project => ToPartialElementInfo(_elementCache.GetElement(project)));
 
     private async ValueTask<IEnumerable<ISliceBuilder.PartialLinkInfo>> LoadProjectNamespacesAsync(ElementId sourceId)

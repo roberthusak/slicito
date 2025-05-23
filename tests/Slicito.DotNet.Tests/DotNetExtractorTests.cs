@@ -25,7 +25,7 @@ public class DotNetExtractorTests
         _dotNetTypes = new DotNetTypes(typeSystem);
         var sliceManager = new SliceManager(typeSystem);
         
-        _solutionContext = new DotNetSolutionContext(solution, _dotNetTypes, sliceManager);
+        _solutionContext = new DotNetSolutionContext([solution], _dotNetTypes, sliceManager);
         
         _methods = await DotNetMethodHelper.GetAllMethodsWithDisplayNamesAsync(
             _solutionContext.Slice, 

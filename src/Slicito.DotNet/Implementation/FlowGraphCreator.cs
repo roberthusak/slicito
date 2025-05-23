@@ -57,9 +57,12 @@ internal class FlowGraphCreator
         _builder = new(parameters, returnValues);
     }
 
-    public static (IFlowGraph FlowGraph, OperationMapping OperationMapping)? TryCreate(IMethodSymbol method, Solution solution, ElementCache elementCache)
+    public static (IFlowGraph FlowGraph, OperationMapping OperationMapping)? TryCreate(
+        IMethodSymbol method,
+        ImmutableArray<Solution> solutions,
+        ElementCache elementCache)
     {
-        var roslynCfg = TryCreateRoslynControlFlowGraph(method, solution);
+        var roslynCfg = TryCreateRoslynControlFlowGraph(method, solutions);
         if (roslynCfg is null)
         {
             return null;
@@ -72,7 +75,7 @@ internal class FlowGraphCreator
         return (flowGraph, operationMapping);
     }
 
-    private static ControlFlowGraph? TryCreateRoslynControlFlowGraph(IMethodSymbol method, Solution solution)
+    private static ControlFlowGraph? TryCreateRoslynControlFlowGraph(IMethodSymbol method, ImmutableArray<Solution> solutions)
     {
         var location = method.Locations.FirstOrDefault();
         if (location is null || !location.IsInSource)
@@ -87,7 +90,8 @@ internal class FlowGraphCreator
             return null;
         }
 
-        var compilation = solution.Projects
+        var compilation = solutions
+            .SelectMany(solution => solution.Projects)
             .Select(p =>
                 p.TryGetCompilation(out var compilation) ? compilation : null)
             .FirstOrDefault(c =>
