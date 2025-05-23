@@ -10,6 +10,7 @@
     <PackageVersion Include="Dotnet.Script.Core" Version="1.6.0" />
     <PackageVersion Include="FluentAssertions" Version="6.12.0" />
     <PackageVersion Include="FluentAssertions.Analyzers" Version="0.31.0" />
+    <PackageVersion Include="Octokit" Version="14.0.0" />
     <PackageVersion Include="PolySharp" Version="1.15.0" />
     <PackageVersion Include="System.Collections.Immutable" Version="8.0.0" />
     <PackageVersion Include="AutomaticGraphLayout" Version="1.1.12" />
