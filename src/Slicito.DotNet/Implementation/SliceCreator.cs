@@ -65,12 +65,14 @@ internal class SliceCreator
         var symbolTypes = _types.Namespace | _types.Type | _types.Property | _types.Field | _types.Method;
 
         return _sliceManager.CreateBuilder()
-            .AddRootElements(_types.Project, LoadProjects)
+            .AddRootElements(_types.Solution, LoadSolutions)
+            .AddHierarchyLinks(_types.Contains, _types.Solution, _types.Project, LoadSolutionProjects)
             .AddHierarchyLinks(_types.Contains, _types.Project, _types.Namespace, LoadProjectNamespacesAsync)
             .AddHierarchyLinks(_types.Contains, _types.Namespace, namespaceMemberTypes, LoadNamespaceMembers)
             .AddHierarchyLinks(_types.Contains, _types.Type, typeMemberTypes, LoadTypeMembers)
             .AddHierarchyLinks(_types.Contains, _types.Method, _types.Operation, LoadMethodOperations)
             .AddLinks(_types.Calls, _types.Operation, _types.Method, LoadCallees)
+            .AddElementAttribute(_types.Solution, DotNetAttributeNames.Name, LoadSolutionName)
             .AddElementAttribute(_types.Project, DotNetAttributeNames.Name, LoadProjectName)
             .AddElementAttribute(symbolTypes, DotNetAttributeNames.Name, LoadSymbolName)
             .AddElementAttribute(_types.Operation, DotNetAttributeNames.Name, LoadOperationName)
@@ -78,10 +80,17 @@ internal class SliceCreator
             .Build();
     }
 
-    private IEnumerable<ISliceBuilder.PartialElementInfo> LoadProjects() =>
+    private IEnumerable<ISliceBuilder.PartialElementInfo> LoadSolutions() =>
         _solutions
-            .SelectMany(solution => solution.Projects)
-            .Select(project => ToPartialElementInfo(_elementCache.GetElement(project)));
+            .Select(solution => ToPartialElementInfo(_elementCache.GetElement(solution)));
+
+    private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadSolutionProjects(ElementId sourceId)
+    {
+        var solution = _elementCache.GetSolution(sourceId);
+
+        return solution.Projects
+            .Select(project => ToPartialLinkInfo(_elementCache.GetElement(project)));
+    }
 
     private async ValueTask<IEnumerable<ISliceBuilder.PartialLinkInfo>> LoadProjectNamespacesAsync(ElementId sourceId)
     {
@@ -156,6 +165,8 @@ internal class SliceCreator
             yield return ToPartialLinkInfo(new(calleeId, _types.Method));
         }
     }
+
+    private string LoadSolutionName(ElementId elementId) => Path.GetFileName(elementId.Value);
 
     private string LoadProjectName(ElementId elementId) => Path.GetFileName(elementId.Value);
 

@@ -24,15 +24,20 @@ public static class DotNetMethodHelper
         var hierarchyExplorer = slice.GetLinkExplorer(slice.Schema.HierarchyLinkType!);
 
         // Get all projects (root elements)
-        var projects = await slice.GetRootElementsAsync();
+        var solutions = await slice.GetRootElementsAsync();
 
-        foreach (var project in projects)
+        foreach (var solution in solutions)
         {
-            // Start processing from top-level namespaces
-            var topLevelNamespaces = await hierarchyExplorer.GetTargetElementsAsync(project.Id);
-            foreach (var ns in topLevelNamespaces)
+            var projectIds = await hierarchyExplorer.GetTargetElementsAsync(solution.Id);
+
+            foreach (var projectId in projectIds)
             {
-                await ProcessNamespaceAsync(ns, "", methods, hierarchyExplorer, nameProvider, dotNetTypes);
+                // Start processing from top-level namespaces
+                var topLevelNamespaces = await hierarchyExplorer.GetTargetElementsAsync(projectId);
+                foreach (var ns in topLevelNamespaces)
+                {
+                    await ProcessNamespaceAsync(ns, "", methods, hierarchyExplorer, nameProvider, dotNetTypes);
+                }
             }
         }
 

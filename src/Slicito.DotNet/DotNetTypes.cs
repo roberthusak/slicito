@@ -9,6 +9,7 @@ public class DotNetTypes(ITypeSystem typeSystem) : IProgramTypes
     public LinkType Contains { get; } = typeSystem.GetLinkType([(DotNetAttributeNames.Kind, "Contains")]);
     public LinkType Calls { get; } = typeSystem.GetLinkType([(DotNetAttributeNames.Kind, "Calls")]);
 
+    public ElementType Solution { get; } = typeSystem.GetElementType([(DotNetAttributeNames.Kind, "Solution")]);
     public ElementType Project { get; } = typeSystem.GetElementType([(DotNetAttributeNames.Kind, "Project")]);
     public ElementType Namespace { get; } = typeSystem.GetElementType([(DotNetAttributeNames.Kind, "Namespace")]);
     public ElementType Type { get; } = typeSystem.GetElementType([(DotNetAttributeNames.Kind, "Type")]);

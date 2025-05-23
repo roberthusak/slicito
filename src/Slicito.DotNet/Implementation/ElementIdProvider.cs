@@ -16,6 +16,8 @@ internal static class ElementIdProvider
             SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers |
             SymbolDisplayMiscellaneousOptions.UseSpecialTypes);
 
+    public static ElementId GetId(Solution solution) => new(solution.FilePath!);
+
     public static ElementId GetId(Project project) => new(project.FilePath!);
 
     public static ElementId GetId(INamespaceSymbol @namespace) => GetSymbolId(@namespace);

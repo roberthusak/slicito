@@ -21,6 +21,7 @@ internal class ElementCache
     {
         return roslynObject switch
         {
+            Solution solution => GetElement(solution),
             Project project => GetElement(project),
             INamespaceSymbol @namespace => GetElement(@namespace),
             ITypeSymbol type => GetElement(type),
@@ -30,6 +31,15 @@ internal class ElementCache
             _ => throw new InvalidOperationException(
                 $"Unexpected type {roslynObject.GetType()} of the Roslyn object {roslynObject}."),
         };
+    }
+
+    public ElementInfo GetElement(Solution solution)
+    {
+        var id = ElementIdProvider.GetId(solution);
+
+        SaveElementIdMapping(id, solution);
+
+        return new(id, _types.Solution);
     }
 
     public ElementInfo GetElement(Project project)
@@ -85,6 +95,8 @@ internal class ElementCache
 
         return new(id, _types.Method);
     }
+
+    public Solution GetSolution(ElementId id) => (Solution) _elementRoslynObjects[id];
 
     public Project GetProject(ElementId id) => (Project) _elementRoslynObjects[id];
 
