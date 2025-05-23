@@ -9,7 +9,7 @@ public class GitHubRepositoryDownloader
 
     public record Organization(string Name, string PatEnvironmentVariable, List<Repository> Repositories);
 
-    public record Options(string BasePath, List<Organization> Organizations, bool DeleteIfExists = false);
+    public record Options(string BasePath, List<Organization> Organizations, bool OverwriteIfExists = false);
 
     public async Task DownloadAsync(Options options)
     {
@@ -32,7 +32,7 @@ public class GitHubRepositoryDownloader
                 
                 if (Directory.Exists(targetPath) && Directory.EnumerateFileSystemEntries(targetPath).Any())
                 {
-                    if (options.DeleteIfExists)
+                    if (options.OverwriteIfExists)
                     {
                         Directory.Delete(targetPath, recursive: true);
                     }
