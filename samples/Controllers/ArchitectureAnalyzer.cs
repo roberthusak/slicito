@@ -71,8 +71,10 @@ public class ArchitectureAnalyzer : IController
                     throw new InvalidOperationException($"Repository {repository.Name} (tag {repository.Tag}) of organization {organization.Name} cannot be found.");
                 }
 
-                // Find the .sln file
-                var solutionFiles = Directory.GetFiles(repositoryPath, "*.sln", SearchOption.AllDirectories);
+                // Find the .sln/.slnx file
+                var solutionFiles = Directory.GetFiles(repositoryPath, "*.sln", SearchOption.AllDirectories)
+                    .Concat(Directory.GetFiles(repositoryPath, "*.slnx", SearchOption.AllDirectories));
+
                 var solutionFile = solutionFiles.SingleOrDefault();
                 
                 if (solutionFile is not null)
