@@ -21,6 +21,8 @@ internal class SliceCreator
 
     public ISlice Slice { get; }
 
+    public IDotNetSliceFragment TypedSliceFragment { get; }
+
     public SliceCreator(ImmutableArray<Solution> solutions, DotNetTypes types, ISliceManager sliceManager)
     {
         _solutions = solutions;
@@ -30,6 +32,7 @@ internal class SliceCreator
         _elementCache = new(types);
 
         Slice = CreateSlice();
+        TypedSliceFragment = new DotNetSliceFragment(Slice, _types);
     }
 
     public IFlowGraph? TryCreateFlowGraph(ElementId elementId) => TryCreateFlowGraphAndMapping(elementId)?.FlowGraph;

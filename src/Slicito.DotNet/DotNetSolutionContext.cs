@@ -17,6 +17,8 @@ public class DotNetSolutionContext(ImmutableArray<Solution> solutions, DotNetTyp
 
     public ISlice Slice => _sliceCreator.Slice;
 
+    public IDotNetSliceFragment TypedSliceFragment => _sliceCreator.TypedSliceFragment;
+
     public IFlowGraph? TryGetFlowGraph(ElementId elementId) => _sliceCreator.TryCreateFlowGraph(elementId);
 
     public ProcedureSignature GetProcedureSignature(ElementId elementId) => _sliceCreator.GetProcedureSignature(elementId);
