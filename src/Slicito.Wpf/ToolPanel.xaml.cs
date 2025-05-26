@@ -50,9 +50,16 @@ public partial class ToolPanel : UserControl
 
             _progressBar.IsIndeterminate = true;
 
-            var model = await _controller.InitAsync();
-
-            ShowModel(model);
+            try
+            {
+                var model = await _controller.InitAsync();
+    
+                ShowModel(model);
+            }
+            catch (Exception ex)
+            {
+                ShowModel(CreateExceptionModel(ex));
+            }
 
             _progressBar.IsIndeterminate = false;
 
@@ -97,15 +104,24 @@ public partial class ToolPanel : UserControl
     {
         _progressBar.IsIndeterminate = true;
 
-        var model = await _controller.ProcessCommandAsync(command);
-
-        if (model is not null)
+        try
         {
-            ShowModel(model);
+            var model = await _controller.ProcessCommandAsync(command);
+    
+            if (model is not null)
+            {
+                ShowModel(model);
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowModel(CreateExceptionModel(ex));
         }
 
         _progressBar.IsIndeterminate = false;
     }
+
+    private IModel CreateExceptionModel(Exception ex) => new Tree([new(ex.ToString(), [])]);
 
     private void ShowModel(IModel model)
     {
