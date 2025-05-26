@@ -4,7 +4,7 @@ using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 
 using Slicito.Abstractions;
-using Slicito.Common.Collections;
+using Slicito.Abstractions.Collections;
 
 namespace Slicito.DotNet;
 
