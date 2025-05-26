@@ -11,6 +11,8 @@ internal class DotNetSliceFragment(ISlice slice, DotNetTypes dotNetTypes) : IDot
 
     private readonly Func<ElementId, ValueTask<string>> _nameProvider = slice.GetElementAttributeProviderAsyncCallback(DotNetAttributeNames.Name);
 
+    private readonly Func<ElementId, ValueTask<string>> _outputKindProvider = slice.GetElementAttributeProviderAsyncCallback(DotNetAttributeNames.OutputKind);
+
     public ISlice Slice { get; } = slice;
 
     public async ValueTask<IEnumerable<ISolutionElement>> GetSolutionsAsync()
@@ -24,7 +26,7 @@ internal class DotNetSliceFragment(ISlice slice, DotNetTypes dotNetTypes) : IDot
     {
         var projects = await _hierarchyExplorer.GetTargetElementsAsync(solution.Id);
 
-        return projects.Select(project => new CSharpProjectElement(project.Id, GetName(project.Id)));
+        return projects.Select(project => new CSharpProjectElement(project.Id, GetName(project.Id), GetOutputKind(project.Id)));
     }
 
     public async ValueTask<IEnumerable<ICSharpNamespaceElement>> GetNamespacesAsync(ICSharpProjectElement project)
@@ -101,9 +103,29 @@ internal class DotNetSliceFragment(ISlice slice, DotNetTypes dotNetTypes) : IDot
     {
         var nameTask = _nameProvider(elementId);
 
-        return nameTask.IsCompletedSuccessfully
-            ? nameTask.Result
-            : throw new InvalidOperationException("Unexpected asynchronous or failed name provider.", nameTask.AsTask().Exception);
+        if (!nameTask.IsCompletedSuccessfully)
+        {
+            throw new InvalidOperationException("Unexpected asynchronous or failed name provider.", nameTask.AsTask().Exception);
+        }
+
+        return nameTask.Result;
+    }
+
+    private ProjectOutputKind GetOutputKind(ElementId id)
+    {
+        var outputKindTask = _outputKindProvider(id);
+
+        if (!outputKindTask.IsCompletedSuccessfully)
+        {
+            throw new InvalidOperationException("Unexpected asynchronous or failed output kind provider.", outputKindTask.AsTask().Exception);
+        }
+
+        if (!Enum.TryParse(outputKindTask.Result, out ProjectOutputKind outputKind))
+        {
+            throw new InvalidOperationException($"Invalid project output kind: {outputKindTask.Result}");
+        }
+
+        return outputKind;
     }
 
     private ICSharpOperationElement CreateOperationElement(ElementInfo element)

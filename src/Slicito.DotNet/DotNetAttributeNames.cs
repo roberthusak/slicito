@@ -8,4 +8,5 @@ public static class DotNetAttributeNames
     public const string OperationKind = "OperationKind";
 
     public const string Name = CommonAttributeNames.Name;
+    public const string OutputKind = "OutputKind";
 }

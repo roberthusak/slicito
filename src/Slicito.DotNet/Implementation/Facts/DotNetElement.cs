@@ -20,9 +20,11 @@ internal class SolutionElement(ElementId id, string name) : CSharpElement(id), I
     public string Name { get; } = name;
 }
 
-internal class CSharpProjectElement(ElementId id, string name) : CSharpElement(id), ICSharpProjectElement
+internal class CSharpProjectElement(ElementId id, string name, ProjectOutputKind outputKind) : CSharpElement(id), ICSharpProjectElement
 {
     public string Name { get; } = name;
+
+    public ProjectOutputKind OutputKind { get; } = outputKind;
 }
 
 internal class CSharpNamespaceElement(ElementId id, string name) : CSharpElement(id), ICSharpNamespaceElement

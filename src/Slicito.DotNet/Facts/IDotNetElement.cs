@@ -22,6 +22,7 @@ public interface ISolutionElement : INamedElement
 [Kind(DotNetAttributeValues.ProjectKind)]
 public interface ICSharpProjectElement : ICSharpElement, INamedElement
 {
+    ProjectOutputKind OutputKind { get; }
 }
 
 [Kind(DotNetAttributeValues.NamespaceKind)]

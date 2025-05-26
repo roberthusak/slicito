@@ -6,6 +6,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 using Slicito.Abstractions;
 using Slicito.Abstractions.Interaction;
+using Slicito.DotNet.Facts;
 using Slicito.ProgramAnalysis.Notation;
 
 namespace Slicito.DotNet.Implementation;
@@ -77,6 +78,7 @@ internal class SliceCreator
             .AddLinks(_types.Calls, _types.Operation, _types.Method, LoadCallees)
             .AddElementAttribute(_types.Solution, DotNetAttributeNames.Name, LoadSolutionName)
             .AddElementAttribute(_types.Project, DotNetAttributeNames.Name, LoadProjectName)
+            .AddElementAttribute(_types.Project, DotNetAttributeNames.OutputKind, LoadProjectOutputKind)
             .AddElementAttribute(symbolTypes, DotNetAttributeNames.Name, LoadSymbolName)
             .AddElementAttribute(_types.Operation, DotNetAttributeNames.Name, LoadOperationName)
             .AddElementAttribute(symbolTypes, CommonAttributeNames.CodeLocation, LoadCodeLocation)
@@ -172,6 +174,29 @@ internal class SliceCreator
     private string LoadSolutionName(ElementId elementId) => Path.GetFileName(elementId.Value);
 
     private string LoadProjectName(ElementId elementId) => Path.GetFileName(elementId.Value);
+
+    private string LoadProjectOutputKind(ElementId elementId)
+    {
+        var project = _elementCache.GetProject(elementId);
+
+        var roslynOutputKind = project.CompilationOptions?.OutputKind
+            ?? throw new InvalidOperationException($"Project '{project.FilePath}' has no compilation options.");
+
+        var outputKind = roslynOutputKind switch
+        {
+            OutputKind.ConsoleApplication or
+            OutputKind.WindowsApplication or
+            OutputKind.WindowsRuntimeApplication => ProjectOutputKind.Executable,
+
+            OutputKind.DynamicallyLinkedLibrary or
+            OutputKind.NetModule or
+            OutputKind.WindowsRuntimeMetadata => ProjectOutputKind.Library,
+
+            _ => throw new InvalidOperationException($"Unsupported project output kind: {roslynOutputKind}"),
+        };
+
+        return outputKind.ToString();
+    }
 
     private string LoadSymbolName(ElementId elementId) =>
         _elementCache.GetSymbol(elementId).Name;
