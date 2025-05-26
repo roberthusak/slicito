@@ -1,4 +1,7 @@
 using Octokit;
+
+using Slicito.Abstractions.Collections;
+
 using System.IO.Compression;
 
 namespace Slicito.ProgramAnalysis.Repositories;
@@ -7,9 +10,9 @@ public class GitHubRepositoryDownloader
 {
     public record Repository(string Name, string Tag);
 
-    public record Organization(string Name, string PatEnvironmentVariable, List<Repository> Repositories);
+    public record Organization(string Name, string PatEnvironmentVariable, ContentEquatableArray<Repository> Repositories);
 
-    public record Options(string BasePath, List<Organization> Organizations, bool OverwriteIfExists = false);
+    public record Options(string BasePath, ContentEquatableArray<Organization> Organizations, bool OverwriteIfExists = false);
 
     public async Task DownloadAsync(Options options)
     {

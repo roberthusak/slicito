@@ -6,24 +6,26 @@ using Microsoft.CodeAnalysis.MSBuild;
 using Slicito.Abstractions;
 using Slicito.Abstractions.Models;
 using Slicito.Common;
-using Slicito.Common.Controllers;
 using Slicito.DotNet;
 using Slicito.ProgramAnalysis.Repositories;
 
 namespace Controllers;
 
-public class ArchitectureAnalyzer : IController
+public class ArchitectureAnalyzer(ICache cache) : IController
 {
-    private static readonly string _optionsPathEnvironmentVariable = "SLICITO_ARCHITECTURE_ANALYZER_OPTIONS_PATH";
-    private static readonly JsonSerializerOptions _jsonSerializerOptions = new() { PropertyNameCaseInsensitive = true };
+    private readonly ICache _cache = cache;
 
-    private StructureBrowser? _browser;
+    private static readonly string _optionsPathEnvironmentVariable = "SLICITO_ARCHITECTURE_ANALYZER_OPTIONS_PATH";
+    private static readonly JsonSerializerOptions _jsonSerializerOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
 
     public async Task<IModel> InitAsync()
     {
         var optionsPath = Environment.GetEnvironmentVariable(_optionsPathEnvironmentVariable)
             ?? throw new InvalidOperationException($"Environment variable {_optionsPathEnvironmentVariable} is not set.");
-            
+
         using var jsonStream = File.OpenRead(optionsPath);
 
         var options = await JsonSerializer.DeserializeAsync<GitHubRepositoryDownloader.Options>(jsonStream, _jsonSerializerOptions)
@@ -32,6 +34,21 @@ public class ArchitectureAnalyzer : IController
         // Replace environment variable in base path
         options = options with { BasePath = options.BasePath.Replace("%LOCALAPPDATA%", Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)) };
 
+        if (!_cache.TryGet(options, out DotNetSolutionContext? solutionContext))
+        {
+            solutionContext = await LoadSolutionContextAsync(options);
+            _cache.Set(options, solutionContext);
+        }
+
+        return new Tree(
+            [.. solutionContext.Solutions.Select(
+                solution => new TreeItem(
+                    Path.GetFileNameWithoutExtension(solution.FilePath),
+                    []))]);
+    }
+
+    private static async Task<DotNetSolutionContext> LoadSolutionContextAsync(GitHubRepositoryDownloader.Options options)
+    {
         await new GitHubRepositoryDownloader().DownloadAsync(options);
 
         var solutionPaths = FindAllSolutionPaths(options);
@@ -49,11 +66,7 @@ public class ArchitectureAnalyzer : IController
             solutions.Add(solution);
         }
 
-        var slice = dotNetExtractor.Extract([.. solutions]).Slice;
-
-        _browser = new StructureBrowser(slice);
-
-        return await _browser.InitAsync();
+        return dotNetExtractor.Extract([.. solutions]);
     }
 
     private static List<string> FindAllSolutionPaths(GitHubRepositoryDownloader.Options options)
@@ -87,5 +100,5 @@ public class ArchitectureAnalyzer : IController
         return solutions;
     }
 
-    public async Task<IModel?> ProcessCommandAsync(Command command) => await _browser!.ProcessCommandAsync(command);
+    public Task<IModel?> ProcessCommandAsync(Command command) => Task.FromResult<IModel?>(null);
 }
