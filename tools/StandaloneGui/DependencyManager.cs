@@ -54,6 +54,7 @@ public class DependencyManager
             var t when t == typeof(DotNetExtractor) => GetDotNetExtractor(),
             var t when t == typeof(DotNetSolutionContext) => await TryGetDotNetSolutionContextAsync(),
             var t when t == typeof(ISlice) => await TryLoadSliceAsync(),
+            var t when t == typeof(ISliceManager) => _sliceManager,
             var t when t == typeof(IFlowGraph) => null,
             var t when t == typeof(ICodeNavigator) => null,
             var t when t == typeof(ICache) => _cache,
