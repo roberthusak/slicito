@@ -11,6 +11,7 @@ internal class ElementCache
     private readonly DotNetTypes _types;
 
     private readonly ConcurrentDictionary<ElementId, object> _elementRoslynObjects = [];
+    private readonly ConcurrentDictionary<IModuleSymbol, Project> _projectByModule = [];
 
     public ElementCache(DotNetTypes types)
     {
@@ -53,7 +54,7 @@ internal class ElementCache
 
     public ElementInfo GetElement(INamespaceSymbol @namespace)
     {
-        var id = ElementIdProvider.GetId(@namespace);
+        var id = ElementIdProvider.GetId(_projectByModule[@namespace.ContainingModule], @namespace);
 
         SaveElementIdMapping(id, @namespace);
 
@@ -62,7 +63,7 @@ internal class ElementCache
 
     public ElementInfo GetElement(ITypeSymbol type)
     {
-        var id = ElementIdProvider.GetId(type);
+        var id = ElementIdProvider.GetId(_projectByModule[type.ContainingModule], type);
 
         SaveElementIdMapping(id, type);
 
@@ -71,7 +72,7 @@ internal class ElementCache
 
     public ElementInfo GetElement(IPropertySymbol property)
     {
-        var id = ElementIdProvider.GetId(property);
+        var id = ElementIdProvider.GetId(_projectByModule[property.ContainingModule], property);
 
         SaveElementIdMapping(id, property);
 
@@ -80,7 +81,7 @@ internal class ElementCache
 
     public ElementInfo GetElement(IFieldSymbol field)
     {
-        var id = ElementIdProvider.GetId(field);
+        var id = ElementIdProvider.GetId(_projectByModule[field.ContainingModule], field);
 
         SaveElementIdMapping(id, field);
 
@@ -89,12 +90,28 @@ internal class ElementCache
 
     public ElementInfo GetElement(IMethodSymbol method)
     {
-        var id = ElementIdProvider.GetId(method);
+        var id = ElementIdProvider.GetId(_projectByModule[method.ContainingModule], method);
 
         SaveElementIdMapping(id, method);
 
         return new(id, _types.Method);
     }
+
+    public void AssociateProjectWithModule(Project project, IModuleSymbol module)
+    {
+        _projectByModule.AddOrUpdate(module, project, (_, existing) =>
+        {
+            if (existing != project)
+            {
+                throw new InvalidOperationException(
+                    $"Module '{module}' is already associated with project '{existing}'.");
+            }
+
+            return existing;
+        });
+    }
+
+    public Project GetContainingProject(IModuleSymbol module) => _projectByModule[module];
 
     public Solution GetSolution(ElementId id) => (Solution) _elementRoslynObjects[id];
 

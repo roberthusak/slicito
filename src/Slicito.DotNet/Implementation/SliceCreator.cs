@@ -106,7 +106,11 @@ internal class SliceCreator
             ?? throw new InvalidOperationException(
                 $"The project '{project.FilePath}' could not be loaded into a Roslyn Compilation.");
 
-        return compilation.SourceModule.GlobalNamespace.GetMembers()
+        var module = compilation.SourceModule;
+
+        _elementCache.AssociateProjectWithModule(project, module);
+
+        return module.GlobalNamespace.GetMembers()
             .OfType<INamespaceSymbol>()
             .Select(namespaceSymbol => ToPartialLinkInfo(_elementCache.GetElement(namespaceSymbol)));
     }

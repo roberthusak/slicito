@@ -9,7 +9,10 @@ internal static class ElementIdProvider
     private static readonly SymbolDisplayFormat _projectUniqueNameFormat = new(
         typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
         genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
-        memberOptions: SymbolDisplayMemberOptions.IncludeParameters | SymbolDisplayMemberOptions.IncludeContainingType,
+        memberOptions: 
+            SymbolDisplayMemberOptions.IncludeParameters |
+            SymbolDisplayMemberOptions.IncludeContainingType |
+            SymbolDisplayMemberOptions.IncludeExplicitInterface,
         parameterOptions: SymbolDisplayParameterOptions.IncludeType,
         extensionMethodStyle: SymbolDisplayExtensionMethodStyle.StaticMethod,
         miscellaneousOptions:
@@ -20,17 +23,17 @@ internal static class ElementIdProvider
 
     public static ElementId GetId(Project project) => new(project.FilePath!);
 
-    public static ElementId GetId(INamespaceSymbol @namespace) => GetSymbolId(@namespace);
+    public static ElementId GetId(Project project, INamespaceSymbol @namespace) => GetSymbolId(project, @namespace);
 
-    public static ElementId GetId(ITypeSymbol type) => GetSymbolId(type);
+    public static ElementId GetId(Project project, ITypeSymbol type) => GetSymbolId(project, type);
 
-    public static ElementId GetId(IPropertySymbol property) => GetSymbolId(property);
+    public static ElementId GetId(Project project, IPropertySymbol property) => GetSymbolId(project, property);
 
-    public static ElementId GetId(IFieldSymbol field) => GetSymbolId(field);
+    public static ElementId GetId(Project project, IFieldSymbol field) => GetSymbolId(project, field);
 
-    public static ElementId GetId(IMethodSymbol method) => GetSymbolId(method);
+    public static ElementId GetId(Project project, IMethodSymbol method) => GetSymbolId(project, method);
     
-    public static string GetOperationIdPrefix(IMethodSymbol method) => $"{GetId(method).Value}.op!";
+    public static string GetOperationIdPrefix(Project project, IMethodSymbol method) => $"{GetId(project, method).Value}.op!";
 
     public static ElementId GetMethodIdFromOperationId(ElementId operationId)
     {
@@ -39,22 +42,43 @@ internal static class ElementIdProvider
         {
             throw new ArgumentException("The operation ID is not valid.", nameof(operationId));
         }
-        return new(operationId.Value.Substring(0, index));
+        return new(operationId.Value[..index]);
     }
 
-    private static ElementId GetSymbolId(ISymbol symbol) =>
-        new($"{GetAssemblyName(symbol)}.{GetUniqueNameWithinProject(symbol)}");
+    private static ElementId GetSymbolId(Project project, ISymbol symbol) =>
+        new($"{GetProjectUniqueName(project)}.{GetUniqueNameWithinProject(symbol)}");
 
-    private static string GetAssemblyName(ISymbol symbol)
+    private static string GetProjectUniqueName(Project project)
     {
-        var name = symbol.ContainingAssembly?.Name;
-        if (string.IsNullOrEmpty(name))
+        if (project.Solution.FilePath is null)
         {
-            throw new InvalidOperationException("The symbol does not belong to a named assembly.");
+            return project.Name;
+        }
+        else
+        {
+            var solutionName = Path.GetFileNameWithoutExtension(project.Solution.FilePath);
+
+            return $"{solutionName}.{project.Name}";
+        }
+    }
+
+    private static string GetUniqueNameWithinProject(ISymbol symbol)
+    {
+        var name = symbol.ToDisplayString(_projectUniqueNameFormat);
+
+        if (symbol is IMethodSymbol method)
+        {
+            // Used to distinguish these two cases
+            if (method.MethodKind == MethodKind.Constructor)
+            {
+                return name + ".ctor";
+            }
+            if (method.MethodKind == MethodKind.StaticConstructor)
+            {
+                return name + ".cctor";
+            }
         }
 
-        return name!;
+        return name;
     }
-
-    private static string GetUniqueNameWithinProject(ISymbol symbol) => symbol.ToDisplayString(_projectUniqueNameFormat);
 }

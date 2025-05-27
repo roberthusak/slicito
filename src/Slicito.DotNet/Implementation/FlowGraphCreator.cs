@@ -31,7 +31,9 @@ internal class FlowGraphCreator
         _roslynCfg = roslynCfg;
         _elementCache = elementCache;
 
-        _operationMappingBuilder = new(ElementIdProvider.GetOperationIdPrefix(methodSymbol));
+        var project = elementCache.GetContainingProject(methodSymbol.ContainingModule);
+        
+        _operationMappingBuilder = new(ElementIdProvider.GetOperationIdPrefix(project, methodSymbol));
 
         IEnumerable<Variable> instanceEnumerable =
             methodSymbol.IsStatic
