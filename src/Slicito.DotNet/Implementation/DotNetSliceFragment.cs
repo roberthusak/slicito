@@ -8,6 +8,7 @@ namespace Slicito.DotNet.Implementation;
 internal class DotNetSliceFragment(ISlice slice, DotNetTypes dotNetTypes) : IDotNetSliceFragment
 {
     private readonly ILazyLinkExplorer _hierarchyExplorer = slice.GetLinkExplorer(dotNetTypes.Contains);
+    private readonly ILazyLinkExplorer _referenceExplorer = slice.GetLinkExplorer(dotNetTypes.References);
 
     private readonly Func<ElementId, ValueTask<string>> _nameProvider = slice.GetElementAttributeProviderAsyncCallback(DotNetAttributeNames.Name);
 
@@ -27,6 +28,13 @@ internal class DotNetSliceFragment(ISlice slice, DotNetTypes dotNetTypes) : IDot
         var projects = await _hierarchyExplorer.GetTargetElementsAsync(solution.Id);
 
         return projects.Select(project => new CSharpProjectElement(project.Id, GetName(project.Id), GetOutputKind(project.Id)));
+    }
+
+    public async ValueTask<IEnumerable<ICSharpProjectElement>> GetReferencedProjectsAsync(ICSharpProjectElement project)
+    {
+        var referencedProjects = await _referenceExplorer.GetTargetElementsAsync(project.Id);
+
+        return referencedProjects.Select(referencedProject => new CSharpProjectElement(referencedProject.Id, GetName(referencedProject.Id), GetOutputKind(referencedProject.Id)));
     }
 
     public async ValueTask<IEnumerable<ICSharpNamespaceElement>> GetNamespacesAsync(ICSharpProjectElement project)

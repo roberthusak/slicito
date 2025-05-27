@@ -12,6 +12,9 @@ public interface IDotNetSliceFragment : ITypedSliceFragment
     [ForwardLinkKind(CommonAttributeNames.Contains)]
     ValueTask<IEnumerable<ICSharpProjectElement>> GetProjectsAsync(ISolutionElement solution);
 
+    [ForwardLinkKind(DotNetAttributeNames.References)]
+    ValueTask<IEnumerable<ICSharpProjectElement>> GetReferencedProjectsAsync(ICSharpProjectElement project);
+
     [ForwardLinkKind(CommonAttributeNames.Contains)]
     ValueTask<IEnumerable<ICSharpNamespaceElement>> GetNamespacesAsync(ICSharpProjectElement project);
 

@@ -75,6 +75,7 @@ internal class SliceCreator
             .AddHierarchyLinks(_types.Contains, _types.Namespace, namespaceMemberTypes, LoadNamespaceMembers)
             .AddHierarchyLinks(_types.Contains, _types.Type, typeMemberTypes, LoadTypeMembers)
             .AddHierarchyLinks(_types.Contains, _types.Method, _types.Operation, LoadMethodOperations)
+            .AddLinks(_types.References, _types.Project, _types.Project, LoadProjectReferences)
             .AddLinks(_types.Calls, _types.Operation, _types.Method, LoadCallees)
             .AddElementAttribute(_types.Solution, DotNetAttributeNames.Name, LoadSolutionName)
             .AddElementAttribute(_types.Project, DotNetAttributeNames.Name, LoadProjectName)
@@ -152,6 +153,20 @@ internal class SliceCreator
             };
 
             yield return ToPartialLinkInfo(new(mapping.GetId(block.Operation), operationType));
+        }
+    }
+
+    private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadProjectReferences(ElementId sourceId)
+    {
+        var project = _elementCache.GetProject(sourceId);
+
+        foreach (var reference in project.ProjectReferences)
+        {
+            var referencedProject = project.Solution.GetProject(reference.ProjectId)
+                ?? throw new InvalidOperationException(
+                    $"Project '{project.FilePath}' references project '{reference.ProjectId}' which could not be found in the solution.");
+
+            yield return ToPartialLinkInfo(_elementCache.GetElement(referencedProject));
         }
     }
 
