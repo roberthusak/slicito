@@ -11,6 +11,4 @@ public static class CommonAttributeNames
     public const string Language = "Language";
 
     public const string CodeLocation = "CodeLocation";
-
-    public const string Contains = "Contains";
 }

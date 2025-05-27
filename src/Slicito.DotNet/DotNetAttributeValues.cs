@@ -2,19 +2,35 @@ namespace Slicito.DotNet;
 
 public static class DotNetAttributeValues
 {
-    public const string DotNetRuntime = "DotNet";
-    public const string CSharpLanguage = "CSharp";
+    public static class Runtime
+    {
+        public const string DotNet = "DotNet";
+    }
 
-    public const string SolutionKind = "Solution";
-    public const string ProjectKind = "Project";
-    public const string NamespaceKind = "Namespace";
-    public const string TypeKind = "Type";
-    public const string PropertyKind = "Property";
-    public const string FieldKind = "Field";
-    public const string MethodKind = "Method";
-    public const string OperationKind = "Operation";
+    public static class Language
+    {
+        public const string CSharp = "CSharp";
+    }
 
-    public const string AssignmentOperationKind = "Assignment";
-    public const string ConditionalJumpOperationKind = "ConditionalJump";
-    public const string CallOperationKind = "Call";
+    public static class Kind
+    {
+        public const string Solution = "Solution";
+        public const string Project = "Project";
+        public const string Namespace = "Namespace";
+        public const string Type = "Type";
+        public const string Property = "Property";
+        public const string Field = "Field";
+        public const string Method = "Method";
+        public const string Operation = "Operation";
+
+        public const string References = "References";
+        public const string Calls = "Calls";
+    }
+
+    public static class OperationKind
+    {
+        public const string Assignment = "Assignment";
+        public const string ConditionalJump = "ConditionalJump";
+        public const string Call = "Call";
+    }
 }

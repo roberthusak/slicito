@@ -5,14 +5,14 @@ namespace Slicito.DotNet.Implementation.Facts;
 
 internal abstract class DotNetElement(ElementId id) : IDotNetElement
 {
-    public string Runtime => DotNetAttributeValues.DotNetRuntime;
+    public string Runtime => DotNetAttributeValues.Runtime.DotNet;
 
     public ElementId Id { get; } = id;
 }
 
 internal abstract class CSharpElement(ElementId id) : DotNetElement(id), ICSharpElement
 {
-    public string Language => DotNetAttributeValues.CSharpLanguage;
+    public string Language => DotNetAttributeValues.Language.CSharp;
 }
 
 internal class SolutionElement(ElementId id, string name) : CSharpElement(id), ISolutionElement

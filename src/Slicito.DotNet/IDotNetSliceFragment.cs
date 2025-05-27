@@ -6,36 +6,36 @@ namespace Slicito.DotNet;
 
 public interface IDotNetSliceFragment : ITypedSliceFragment
 {
-    [ForwardLinkKind(CommonAttributeNames.Contains)]
+    [ForwardLinkKind(CommonAttributeValues.Kind.Contains)]
     ValueTask<IEnumerable<ISolutionElement>> GetSolutionsAsync();
 
-    [ForwardLinkKind(CommonAttributeNames.Contains)]
+    [ForwardLinkKind(CommonAttributeValues.Kind.Contains)]
     ValueTask<IEnumerable<ICSharpProjectElement>> GetProjectsAsync(ISolutionElement solution);
 
-    [ForwardLinkKind(DotNetAttributeNames.References)]
+    [ForwardLinkKind(DotNetAttributeValues.Kind.References)]
     ValueTask<IEnumerable<ICSharpProjectElement>> GetReferencedProjectsAsync(ICSharpProjectElement project);
 
-    [ForwardLinkKind(CommonAttributeNames.Contains)]
+    [ForwardLinkKind(CommonAttributeValues.Kind.Contains)]
     ValueTask<IEnumerable<ICSharpNamespaceElement>> GetNamespacesAsync(ICSharpProjectElement project);
 
-    [ForwardLinkKind(CommonAttributeNames.Contains)]
+    [ForwardLinkKind(CommonAttributeValues.Kind.Contains)]
     ValueTask<IEnumerable<ICSharpNamespaceElement>> GetNamespacesAsync(ICSharpNamespaceElement @namespace);
 
-    [ForwardLinkKind(CommonAttributeNames.Contains)]
+    [ForwardLinkKind(CommonAttributeValues.Kind.Contains)]
     ValueTask<IEnumerable<ICSharpTypeElement>> GetTypesAsync(ICSharpNamespaceElement @namespace);
 
-    [ForwardLinkKind(CommonAttributeNames.Contains)]
+    [ForwardLinkKind(CommonAttributeValues.Kind.Contains)]
     ValueTask<IEnumerable<ICSharpTypeElement>> GetTypesAsync(ICSharpTypeElement type);
 
-    [ForwardLinkKind(CommonAttributeNames.Contains)]
+    [ForwardLinkKind(CommonAttributeValues.Kind.Contains)]
     ValueTask<IEnumerable<ICSharpPropertyElement>> GetPropertiesAsync(ICSharpTypeElement type);
 
-    [ForwardLinkKind(CommonAttributeNames.Contains)]
+    [ForwardLinkKind(CommonAttributeValues.Kind.Contains)]
     ValueTask<IEnumerable<ICSharpPropertyElement>> GetPropertiesAsync(ICSharpPropertyElement property);
 
-    [ForwardLinkKind(CommonAttributeNames.Contains)]
+    [ForwardLinkKind(CommonAttributeValues.Kind.Contains)]
     ValueTask<IEnumerable<ICSharpMethodElement>> GetMethodsAsync(ICSharpTypeElement type);
 
-    [ForwardLinkKind(CommonAttributeNames.Contains)]
+    [ForwardLinkKind(CommonAttributeValues.Kind.Contains)]
     ValueTask<IEnumerable<ICSharpOperationElement>> GetOperationsAsync(ICSharpMethodElement method);
 }
