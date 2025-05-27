@@ -1,0 +1,34 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# No Default XML Comments
+
+When generating or modifying code, do not automatically add XML documentation comments unless explicitly requested by the user.
+
+## Examples
+
+❌ Don't do this by default:
+```csharp
+/// <summary>
+/// Gets or sets the name.
+/// </summary>
+public string Name { get; set; }
+```
+
+✅ Do this instead:
+```csharp
+public string Name { get; set; }
+```
+
+## When to Add XML Comments
+
+Only add XML documentation comments when:
+1. The user explicitly requests them
+2. The user asks for documentation
+3. The user specifically mentions wanting XML comments
+
+## Note
+
+This rule applies to all code generation and modification tasks. XML comments should be treated as an opt-in feature rather than a default behavior.
