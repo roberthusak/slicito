@@ -1,13 +1,12 @@
 using Slicito.Abstractions;
+using Slicito.Common.Implementation;
 using Slicito.DotNet.Facts;
 
 namespace Slicito.DotNet.Implementation.Facts;
 
-internal abstract class DotNetElement(ElementId id) : IDotNetElement
+internal abstract class DotNetElement(ElementId id) : ElementBase(id), IDotNetElement
 {
     public string Runtime => DotNetAttributeValues.Runtime.DotNet;
-
-    public ElementId Id { get; } = id;
 }
 
 internal abstract class CSharpElement(ElementId id) : DotNetElement(id), ICSharpElement
