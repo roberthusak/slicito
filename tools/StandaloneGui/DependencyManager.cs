@@ -17,6 +17,7 @@ public class DependencyManager
     private readonly string _solutionPath;
     private readonly ITypeSystem _typeSystem;
     private readonly ISliceManager _sliceManager;
+    private readonly ICodeNavigator _codeNavigator;
 
     private DotNetTypes? _dotNetTypes;
     private DotNetExtractor? _dotNetExtractor;
@@ -30,6 +31,7 @@ public class DependencyManager
         _solutionPath = solutionPath;
         _typeSystem = new TypeSystem();
         _sliceManager = new SliceManager(_typeSystem);
+        _codeNavigator = new ExternalVisualStudioCodeNavigator();
         _cache = new Cache();
     }
 
@@ -56,7 +58,7 @@ public class DependencyManager
             var t when t == typeof(ISlice) => await TryLoadSliceAsync(),
             var t when t == typeof(ISliceManager) => _sliceManager,
             var t when t == typeof(IFlowGraph) => null,
-            var t when t == typeof(ICodeNavigator) => null,
+            var t when t == typeof(ICodeNavigator) => _codeNavigator,
             var t when t == typeof(ICache) => _cache,
             _ => throw new ApplicationException($"Unsupported parameter type {parameterType.Name}.")
         };
