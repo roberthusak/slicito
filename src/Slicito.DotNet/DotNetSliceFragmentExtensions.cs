@@ -4,6 +4,19 @@ namespace Slicito.DotNet;
 
 public static class DotNetSliceFragmentExtensions
 {
+    public static async ValueTask<IEnumerable<ICSharpProjectElement>> GetRecursivelyReferencedProjectsAsync(
+        this IDotNetSliceFragment fragment,
+        ICSharpProjectElement project)
+    {
+        var referencedProjects = await fragment.GetReferencedProjectsAsync(project);
+        var nestedReferencedProjects = await Task.WhenAll(
+            referencedProjects.Select(p => GetRecursivelyReferencedProjectsAsync(fragment, p).AsTask()));
+
+        return referencedProjects
+            .Concat(nestedReferencedProjects.SelectMany(ps => ps))
+            .Distinct();
+    }
+
     public static async ValueTask<IEnumerable<ICSharpNamespaceElement>> GetAllContainedNamespacesAsync(
         this IDotNetSliceFragment fragment,
         ICSharpProjectElement project)
