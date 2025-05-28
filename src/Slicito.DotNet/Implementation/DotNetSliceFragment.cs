@@ -1,5 +1,6 @@
 using Slicito.Abstractions;
 using Slicito.Abstractions.Facts;
+using Slicito.Abstractions.Interaction;
 using Slicito.DotNet.Facts;
 using Slicito.DotNet.Implementation.Facts;
 
@@ -11,8 +12,8 @@ internal class DotNetSliceFragment(ISlice slice, DotNetTypes dotNetTypes) : IDot
     private readonly ILazyLinkExplorer _referenceExplorer = slice.GetLinkExplorer(dotNetTypes.References);
 
     private readonly Func<ElementId, ValueTask<string>> _nameProvider = slice.GetElementAttributeProviderAsyncCallback(DotNetAttributeNames.Name);
-
     private readonly Func<ElementId, ValueTask<string>> _outputKindProvider = slice.GetElementAttributeProviderAsyncCallback(DotNetAttributeNames.OutputKind);
+    private readonly Func<ElementId, ValueTask<string>> _codeLocationProvider = slice.GetElementAttributeProviderAsyncCallback(CommonAttributeNames.CodeLocation);
 
     public ISlice Slice { get; } = slice;
 
@@ -154,5 +155,21 @@ internal class DotNetSliceFragment(ISlice slice, DotNetTypes dotNetTypes) : IDot
         }
 
         throw new InvalidOperationException($"Unsupported operation type: {element.Type.Value}");
+    }
+
+    public async ValueTask<CodeLocation> GetCodeLocationAsync(ICSharpTypeElement type) => await GetCodeLocationCommonAsync(type.Id);
+
+    public async ValueTask<CodeLocation> GetCodeLocationAsync(ICSharpPropertyElement property) => await GetCodeLocationCommonAsync(property.Id);
+
+    public async ValueTask<CodeLocation> GetCodeLocationAsync(ICSharpFieldElement field) => await GetCodeLocationCommonAsync(field.Id);
+
+    public async ValueTask<CodeLocation> GetCodeLocationAsync(ICSharpMethodElement method) => await GetCodeLocationCommonAsync(method.Id);
+
+    private async ValueTask<CodeLocation> GetCodeLocationCommonAsync(ElementId elementId)
+    {
+        var codeLocationTask = await _codeLocationProvider(elementId);
+
+        return CodeLocation.Parse(codeLocationTask)
+            ?? throw new InvalidOperationException($"Invalid code location format: '{codeLocationTask}'");
     }
 }

@@ -1,5 +1,6 @@
 using Slicito.Abstractions;
 using Slicito.Abstractions.Facts.Attributes;
+using Slicito.Abstractions.Interaction;
 using Slicito.DotNet.Facts;
 
 namespace Slicito.DotNet;
@@ -38,4 +39,16 @@ public interface IDotNetSliceFragment : ITypedSliceFragment
 
     [ForwardLinkKind(CommonAttributeValues.Kind.Contains)]
     ValueTask<IEnumerable<ICSharpOperationElement>> GetOperationsAsync(ICSharpMethodElement method);
+
+    [return: Attribute(CommonAttributeNames.CodeLocation)]
+    ValueTask<CodeLocation> GetCodeLocationAsync(ICSharpTypeElement type);
+
+    [return: Attribute(CommonAttributeNames.CodeLocation)]
+    ValueTask<CodeLocation> GetCodeLocationAsync(ICSharpPropertyElement property);
+
+    [return: Attribute(CommonAttributeNames.CodeLocation)]
+    ValueTask<CodeLocation> GetCodeLocationAsync(ICSharpFieldElement field);
+
+    [return: Attribute(CommonAttributeNames.CodeLocation)]
+    ValueTask<CodeLocation> GetCodeLocationAsync(ICSharpMethodElement method);
 }
