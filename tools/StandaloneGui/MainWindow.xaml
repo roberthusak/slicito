@@ -7,7 +7,8 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800" Loaded="Window_LoadedAsync">
     <DockPanel>
-        <Button DockPanel.Dock="Top" Click="ReloadButton_Click">Reload</Button>
-        <ContentControl x:Name="_contentControl" />
+        <Button DockPanel.Dock="Top" Click="ReloadButton_ClickAsync">Reload</Button>
+        <Button DockPanel.Dock="Bottom" Click="CloseTabButton_Click">Close tab</Button>
+        <TabControl x:Name="_tabControl" />
     </DockPanel>
 </Window>

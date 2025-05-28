@@ -14,6 +14,7 @@ using System.Windows.Shapes;
 using Microsoft.CodeAnalysis.MSBuild;
 
 using Slicito.Abstractions;
+using Slicito.Abstractions.Interaction;
 using Slicito.Wpf;
 
 namespace StandaloneGui;
@@ -35,22 +36,34 @@ public partial class MainWindow : Window
         _solutionPath = args[1];
         _controllersPath = args[2];
         _controllerType = args[3];
-        
-        _dependencyManager = new DependencyManager(_solutionPath);
+
+        _dependencyManager = new DependencyManager(_solutionPath, new TabOpener(this));
     }
 
     private async void Window_LoadedAsync(object sender, RoutedEventArgs e)
     {
         var controller = await LoadController();
 
-        _contentControl.Content = new ToolPanel(controller);
+        AddAndSelectTab("Start", controller);
     }
 
-    private async void ReloadButton_Click(object sender, RoutedEventArgs e)
+    private async void ReloadButton_ClickAsync(object sender, RoutedEventArgs e)
     {
         var controller = await LoadController();
 
-        _contentControl.Content = new ToolPanel(controller);
+        _tabControl.Items.Clear();
+        AddAndSelectTab("Start", controller);
+    }
+
+    private void AddAndSelectTab(string header, IController controller)
+    {
+        _tabControl.Items.Add(new TabItem
+        {
+            Header = header,
+            Content = new ToolPanel(controller)
+        });
+
+        _tabControl.SelectedItem = _tabControl.Items[^1]; // Select the last added tab
     }
 
     private async Task<IController> LoadController()
@@ -69,5 +82,24 @@ public partial class MainWindow : Window
             ?? throw new ApplicationException($"Unable to create an instance of the type {type.Name}.");
 
         return (IController)controller;
+    }
+
+    private void CloseTabButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_tabControl.SelectedItem is TabItem selectedTab)
+        {
+            _tabControl.Items.Remove(selectedTab);
+        }
+    }
+
+    private class TabOpener(MainWindow window) : IWindowOpener
+    {
+        public async Task OpenInNewWindowAsync(IController controller)
+        {
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                window.AddAndSelectTab(controller.GetType().Name, controller);
+            });
+        }
     }
 }

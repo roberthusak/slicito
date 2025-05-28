@@ -25,14 +25,16 @@ public class DependencyManager
     private ISlice? _slice;
 
     private readonly ICache _cache;
+    private readonly IWindowOpener _windowOpener;
 
-    public DependencyManager(string solutionPath)
+    public DependencyManager(string solutionPath, IWindowOpener windowOpener)
     {
         _solutionPath = solutionPath;
         _typeSystem = new TypeSystem();
         _sliceManager = new SliceManager(_typeSystem);
         _codeNavigator = new ExternalVisualStudioCodeNavigator();
         _cache = new Cache();
+        _windowOpener = windowOpener;
     }
 
     public async Task<object?[]> ResolveDependenciesAsync(ConstructorInfo constructor)
@@ -60,6 +62,7 @@ public class DependencyManager
             var t when t == typeof(IFlowGraph) => null,
             var t when t == typeof(ICodeNavigator) => _codeNavigator,
             var t when t == typeof(ICache) => _cache,
+            var t when t == typeof(IWindowOpener) => _windowOpener,
             _ => throw new ApplicationException($"Unsupported parameter type {parameterType.Name}.")
         };
     }
