@@ -80,6 +80,19 @@ public partial class ToolPanel : UserControl
         }
     }
 
+    private async void TreeView_KeyDownAsync(object sender, KeyEventArgs e)
+    {
+        if ((sender as TreeView)?.SelectedItem is not TreeItem item)
+        {
+            return;
+        }
+
+        if (e.Key == Key.Enter && item.DoubleClickCommand is not null)
+        {
+            await ProcessCommand(item.DoubleClickCommand);
+        }
+    }
+
     private async void GraphViewer_MouseDownAsync(object? sender, Microsoft.Msagl.Drawing.MsaglMouseEventArgs e)
     {
         switch (_graphViewer.ObjectUnderMouseCursor)
