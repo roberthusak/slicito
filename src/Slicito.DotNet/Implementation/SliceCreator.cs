@@ -102,17 +102,37 @@ internal class SliceCreator
     {
         var project = _elementCache.GetProject(sourceId);
 
-        var compilation = await project.GetCompilationAsync()
-            ?? throw new InvalidOperationException(
-                $"The project '{project.FilePath}' could not be loaded into a Roslyn Compilation.");
-
-        var module = compilation.SourceModule;
-
-        _elementCache.AssociateProjectWithModule(project, module);
+        // The modules of the referenced projects must be associated as well in order so that loading referenced symbols
+        // defined in referenced projects works correctly (e.g., when inspecting callees of a method).
+        var module = await AssociateProjectsWithModulesRecursivelyAsync(project);
 
         return module.GlobalNamespace.GetMembers()
             .OfType<INamespaceSymbol>()
             .Select(namespaceSymbol => ToPartialLinkInfo(_elementCache.GetElement(namespaceSymbol)));
+    }
+
+    private async Task<IModuleSymbol> AssociateProjectsWithModulesRecursivelyAsync(Project rootProject)
+    {
+        var compilation = await rootProject.GetCompilationAsync()
+            ?? throw new InvalidOperationException(
+                $"The project '{rootProject.FilePath}' could not be loaded into a Roslyn Compilation.");
+
+        var module = compilation.SourceModule;
+
+        // Lazily associate also the referenced projects with their modules.
+        if (!_elementCache.AssociateProjectWithModule(rootProject, module))
+        {
+            foreach (var projectReference in rootProject.ProjectReferences)
+            {
+                var referencedProject = rootProject.Solution.GetProject(projectReference.ProjectId)
+                    ?? throw new InvalidOperationException(
+                        $"Project '{rootProject.FilePath}' references project '{projectReference.ProjectId}' which could not be found in the solution.");
+
+                await AssociateProjectsWithModulesRecursivelyAsync(referencedProject);
+            }
+        }
+
+        return module;
     }
 
     private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadNamespaceMembers(ElementId sourceId)

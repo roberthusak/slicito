@@ -97,8 +97,13 @@ internal class ElementCache
         return new(id, _types.Method);
     }
 
-    public void AssociateProjectWithModule(Project project, IModuleSymbol module)
+    /// <returns>
+    /// <c>true</c> if the project was newly associated with the module, <c>false</c> if it was already associated before.
+    /// </returns>
+    public bool AssociateProjectWithModule(Project project, IModuleSymbol module)
     {
+        var added = true;
+
         _projectByModule.AddOrUpdate(module, project, (_, existing) =>
         {
             if (existing != project)
@@ -107,8 +112,11 @@ internal class ElementCache
                     $"Module '{module}' is already associated with project '{existing}'.");
             }
 
+            added = false;
             return existing;
         });
+
+        return added;
     }
 
     public Project GetContainingProject(IModuleSymbol module) => _projectByModule[module];
