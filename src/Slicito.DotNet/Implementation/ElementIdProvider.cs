@@ -23,16 +23,9 @@ internal static class ElementIdProvider
 
     public static ElementId GetId(Project project) => new(project.FilePath!);
 
-    public static ElementId GetId(Project project, INamespaceSymbol @namespace) => GetSymbolId(project, @namespace);
+    public static ElementId GetId(Project project, ISymbol symbol) =>
+        new($"{GetProjectUniqueName(project)}.{GetUniqueNameWithinProject(symbol)}");
 
-    public static ElementId GetId(Project project, ITypeSymbol type) => GetSymbolId(project, type);
-
-    public static ElementId GetId(Project project, IPropertySymbol property) => GetSymbolId(project, property);
-
-    public static ElementId GetId(Project project, IFieldSymbol field) => GetSymbolId(project, field);
-
-    public static ElementId GetId(Project project, IMethodSymbol method) => GetSymbolId(project, method);
-    
     public static string GetOperationIdPrefix(Project project, IMethodSymbol method) => $"{GetId(project, method).Value}.op!";
 
     public static ElementId GetMethodIdFromOperationId(ElementId operationId)
@@ -44,9 +37,6 @@ internal static class ElementIdProvider
         }
         return new(operationId.Value[..index]);
     }
-
-    private static ElementId GetSymbolId(Project project, ISymbol symbol) =>
-        new($"{GetProjectUniqueName(project)}.{GetUniqueNameWithinProject(symbol)}");
 
     private static string GetProjectUniqueName(Project project)
     {

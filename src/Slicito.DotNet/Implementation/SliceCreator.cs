@@ -40,14 +40,15 @@ internal class SliceCreator
 
     private (IFlowGraph FlowGraph, OperationMapping OperationMapping)? TryCreateFlowGraphAndMapping(ElementId elementId)
     {
-        var element = _elementCache.TryGetSymbol(elementId);
+        var symbol = _elementCache.TryGetSymbol(elementId);
+        var project = _elementCache.TryGetProject(elementId);
 
-        if (element is not IMethodSymbol method)
+        if (symbol is not IMethodSymbol method || project is null)
         {
             return null;
         }
 
-        return _flowGraphCache.GetOrAdd(method, _ => FlowGraphCreator.TryCreate(method, _solutions, _elementCache));
+        return _flowGraphCache.GetOrAdd(method, _ => FlowGraphCreator.TryCreate(method, project, _elementCache));
     }
 
     public ProcedureSignature GetProcedureSignature(ElementId elementId)
@@ -72,8 +73,8 @@ internal class SliceCreator
             .AddRootElements(_types.Solution, LoadSolutions)
             .AddHierarchyLinks(_types.Contains, _types.Solution, _types.Project, LoadSolutionProjects)
             .AddHierarchyLinks(_types.Contains, _types.Project, _types.Namespace, LoadProjectNamespacesAsync)
-            .AddHierarchyLinks(_types.Contains, _types.Namespace, namespaceMemberTypes, LoadNamespaceMembers)
-            .AddHierarchyLinks(_types.Contains, _types.Type, typeMemberTypes, LoadTypeMembers)
+            .AddHierarchyLinks(_types.Contains, _types.Namespace, namespaceMemberTypes, LoadNamespaceMembersAsync)
+            .AddHierarchyLinks(_types.Contains, _types.Type, typeMemberTypes, LoadTypeMembersAsync)
             .AddHierarchyLinks(_types.Contains, _types.Method, _types.Operation, LoadMethodOperations)
             .AddLinks(_types.References, _types.Project, _types.Project, LoadProjectReferences)
             .AddLinks(_types.Calls, _types.Operation, _types.Method, LoadCallees)
@@ -102,53 +103,46 @@ internal class SliceCreator
     {
         var project = _elementCache.GetProject(sourceId);
 
-        // The modules of the referenced projects must be associated as well in order so that loading referenced symbols
-        // defined in referenced projects works correctly (e.g., when inspecting callees of a method).
-        var module = await AssociateProjectsWithModulesRecursivelyAsync(project);
-
-        return module.GlobalNamespace.GetMembers()
-            .OfType<INamespaceSymbol>()
-            .Select(namespaceSymbol => ToPartialLinkInfo(_elementCache.GetElement(namespaceSymbol)));
-    }
-
-    private async Task<IModuleSymbol> AssociateProjectsWithModulesRecursivelyAsync(Project rootProject)
-    {
-        var compilation = await rootProject.GetCompilationAsync()
+        var compilation = await project.GetCompilationAsync()
             ?? throw new InvalidOperationException(
-                $"The project '{rootProject.FilePath}' could not be loaded into a Roslyn Compilation.");
+                $"The project '{project.FilePath}' could not be loaded into a Roslyn Compilation.");
 
         var module = compilation.SourceModule;
 
-        // Lazily associate also the referenced projects with their modules.
-        if (!_elementCache.AssociateProjectWithModule(rootProject, module))
-        {
-            foreach (var projectReference in rootProject.ProjectReferences)
-            {
-                var referencedProject = rootProject.Solution.GetProject(projectReference.ProjectId)
-                    ?? throw new InvalidOperationException(
-                        $"Project '{rootProject.FilePath}' references project '{projectReference.ProjectId}' which could not be found in the solution.");
-
-                await AssociateProjectsWithModulesRecursivelyAsync(referencedProject);
-            }
-        }
-
-        return module;
+        return await Task.WhenAll(
+            module.GlobalNamespace.GetMembers()
+                .OfType<INamespaceSymbol>()
+                .Select(async namespaceSymbol =>
+                {
+                    var element = await _elementCache.GetElementAsync(project, namespaceSymbol);
+                    return ToPartialLinkInfo(element);
+                }));
     }
 
-    private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadNamespaceMembers(ElementId sourceId)
+    private async ValueTask<IEnumerable<ISliceBuilder.PartialLinkInfo>> LoadNamespaceMembersAsync(ElementId sourceId)
     {
-        var @namespace = _elementCache.GetNamespace(sourceId);
+        var @namespace = _elementCache.GetNamespaceAndProject(sourceId, out var project);
 
-        return @namespace.GetMembers()
-            .Select(member => ToPartialLinkInfo(_elementCache.GetElement(member)));
+        return await Task.WhenAll(
+            @namespace.GetMembers()
+                .Select(async member =>
+                {
+                    var element = await _elementCache.GetElementAsync(project, member);
+                    return ToPartialLinkInfo(element);
+                }));
     }
 
-    private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadTypeMembers(ElementId sourceId)
+    private async ValueTask<IEnumerable<ISliceBuilder.PartialLinkInfo>> LoadTypeMembersAsync(ElementId sourceId)
     {
-        var type = _elementCache.GetType(sourceId);
+        var type = _elementCache.GetTypeAndProject(sourceId, out var project);
 
-        return type.GetMembers()
-            .Select(member => ToPartialLinkInfo(_elementCache.GetElement(member)));
+        return await Task.WhenAll(
+            type.GetMembers()
+                .Select(async member =>
+                {
+                    var element = await _elementCache.GetElementAsync(project, member);
+                    return ToPartialLinkInfo(element);
+                }));
     }
 
     private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadMethodOperations(ElementId sourceId)

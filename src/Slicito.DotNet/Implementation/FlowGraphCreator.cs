@@ -17,6 +17,7 @@ namespace Slicito.DotNet.Implementation;
 internal class FlowGraphCreator
 {
     private readonly ControlFlowGraph _roslynCfg;
+    private readonly Project _project;
     private readonly ElementCache _elementCache;
 
     private readonly Dictionary<RoslynBasicBlock, (SlicitoBasicBlock First, SlicitoBasicBlock Last)> _roslynToSlicitoBasicBlocksMap = [];
@@ -26,12 +27,11 @@ internal class FlowGraphCreator
     private readonly OperationMapping.Builder _operationMappingBuilder;
     private readonly Variable? _returnVariable;
 
-    private FlowGraphCreator(IMethodSymbol methodSymbol, ControlFlowGraph roslynCfg, ElementCache elementCache)
+    private FlowGraphCreator(IMethodSymbol methodSymbol, ControlFlowGraph roslynCfg, Project project, ElementCache elementCache)
     {
         _roslynCfg = roslynCfg;
+        _project = project;
         _elementCache = elementCache;
-
-        var project = elementCache.GetContainingProject(methodSymbol.ContainingModule);
         
         _operationMappingBuilder = new(ElementIdProvider.GetOperationIdPrefix(project, methodSymbol));
 
@@ -61,23 +61,23 @@ internal class FlowGraphCreator
 
     public static (IFlowGraph FlowGraph, OperationMapping OperationMapping)? TryCreate(
         IMethodSymbol method,
-        ImmutableArray<Solution> solutions,
+        Project project,
         ElementCache elementCache)
     {
-        var roslynCfg = TryCreateRoslynControlFlowGraph(method, solutions);
+        var roslynCfg = TryCreateRoslynControlFlowGraph(method, project);
         if (roslynCfg is null)
         {
             return null;
         }
 
-        var creator = new FlowGraphCreator(method, roslynCfg, elementCache);
+        var creator = new FlowGraphCreator(method, roslynCfg, project, elementCache);
         var flowGraph = creator.CreateFlowGraph();
         var operationMapping = creator._operationMappingBuilder.Build();
 
         return (flowGraph, operationMapping);
     }
 
-    private static ControlFlowGraph? TryCreateRoslynControlFlowGraph(IMethodSymbol method, ImmutableArray<Solution> solutions)
+    private static ControlFlowGraph? TryCreateRoslynControlFlowGraph(IMethodSymbol method, Project project)
     {
         var location = method.Locations.FirstOrDefault();
         if (location is null || !location.IsInSource)
@@ -92,14 +92,7 @@ internal class FlowGraphCreator
             return null;
         }
 
-        var compilation = solutions
-            .SelectMany(solution => solution.Projects)
-            .Select(p =>
-                p.TryGetCompilation(out var compilation) ? compilation : null)
-            .FirstOrDefault(c =>
-                method.ContainingAssembly.Equals(c?.Assembly, SymbolEqualityComparer.Default));
-
-        if (compilation is null)
+        if (!project.TryGetCompilation(out var compilation))
         {
             return null;
         }
@@ -305,6 +298,8 @@ internal class FlowGraphCreator
 
         public Variable CreateTemporaryVariable(DataType type) => creator.CreateTemporaryVariable(type);
 
-        public ElementInfo GetElement(ISymbol symbol) => creator._elementCache.GetElement(symbol);
+        // FIXME: The blocking call is bad, bud turning the whole creator into async would be a large change.
+        //        A reasonable solution would be to pre-compute all contained elements in the first step which would be async.
+        public ElementInfo GetElement(ISymbol symbol) => creator._elementCache.GetElementAsync(creator._project, symbol).Result;
     }
 }

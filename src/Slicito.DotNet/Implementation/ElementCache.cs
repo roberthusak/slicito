@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.FindSymbols;
 
 using Slicito.Abstractions;
 
@@ -8,37 +9,34 @@ namespace Slicito.DotNet.Implementation;
 
 internal class ElementCache
 {
+    public record struct SymbolInfo(Project Project, ISymbol Symbol);
+
     private readonly DotNetTypes _types;
 
-    private readonly ConcurrentDictionary<ElementId, object> _elementRoslynObjects = [];
-    private readonly ConcurrentDictionary<IModuleSymbol, Project> _projectByModule = [];
+    private readonly ConcurrentDictionary<ElementId, Solution> _solutionById = [];
+    private readonly ConcurrentDictionary<ElementId, Project> _projectById = [];
+    private readonly ConcurrentDictionary<ElementId, SymbolInfo> _symbolInfoById = [];
+
+    private readonly ConcurrentDictionary<ISymbol, SymbolInfo> _translatedSymbolsCache = [];
 
     public ElementCache(DotNetTypes types)
     {
         _types = types;
     }
 
-    public ElementInfo GetElement(object roslynObject)
-    {
-        return roslynObject switch
-        {
-            Solution solution => GetElement(solution),
-            Project project => GetElement(project),
-            INamespaceSymbol @namespace => GetElement(@namespace),
-            ITypeSymbol type => GetElement(type),
-            IPropertySymbol property => GetElement(property),
-            IFieldSymbol field => GetElement(field),
-            IMethodSymbol method => GetElement(method),
-            _ => throw new InvalidOperationException(
-                $"Unexpected type {roslynObject.GetType()} of the Roslyn object {roslynObject}."),
-        };
-    }
-
     public ElementInfo GetElement(Solution solution)
     {
         var id = ElementIdProvider.GetId(solution);
 
-        SaveElementIdMapping(id, solution);
+        _solutionById.AddOrUpdate(id, solution, (_, existing) =>
+        {
+            if (existing != solution)
+            {
+                throw new InvalidOperationException($"Solution ID '{id}' is already mapped to a different solution ({existing}).");
+            }
+
+            return existing;
+        });
 
         return new(id, _types.Solution);
     }
@@ -47,113 +45,123 @@ internal class ElementCache
     {
         var id = ElementIdProvider.GetId(project);
 
-        SaveElementIdMapping(id, project);
+        _projectById.AddOrUpdate(id, project, (_, existing) =>
+        {
+            if (existing != project)
+            {
+                throw new InvalidOperationException($"Project ID '{id}' is already mapped to a different project ({existing}).");
+            }
+
+            return existing;
+        });
 
         return new(id, _types.Project);
     }
 
-    public ElementInfo GetElement(INamespaceSymbol @namespace)
+    public async ValueTask<ElementInfo> GetElementAsync(Project projectHint, ISymbol symbol)
     {
-        var id = ElementIdProvider.GetId(_projectByModule[@namespace.ContainingModule], @namespace);
+        var info = await TranslateToSourceSymbolAsync(projectHint, symbol);
 
-        SaveElementIdMapping(id, @namespace);
+        var id = ElementIdProvider.GetId(info.Project, info.Symbol);
 
-        return new(id, _types.Namespace);
-    }
-
-    public ElementInfo GetElement(ITypeSymbol type)
-    {
-        var id = ElementIdProvider.GetId(_projectByModule[type.ContainingModule], type);
-
-        SaveElementIdMapping(id, type);
-
-        return new(id, _types.Type);
-    }
-
-    public ElementInfo GetElement(IPropertySymbol property)
-    {
-        var id = ElementIdProvider.GetId(_projectByModule[property.ContainingModule], property);
-
-        SaveElementIdMapping(id, property);
-
-        return new(id, _types.Property);
-    }
-
-    public ElementInfo GetElement(IFieldSymbol field)
-    {
-        var id = ElementIdProvider.GetId(_projectByModule[field.ContainingModule], field);
-
-        SaveElementIdMapping(id, field);
-
-        return new(id, _types.Field);
-    }
-
-    public ElementInfo GetElement(IMethodSymbol method)
-    {
-        var id = ElementIdProvider.GetId(_projectByModule[method.ContainingModule], method);
-
-        SaveElementIdMapping(id, method);
-
-        return new(id, _types.Method);
-    }
-
-    /// <returns>
-    /// <c>true</c> if the project was newly associated with the module, <c>false</c> if it was already associated before.
-    /// </returns>
-    public bool AssociateProjectWithModule(Project project, IModuleSymbol module)
-    {
-        var added = true;
-
-        _projectByModule.AddOrUpdate(module, project, (_, existing) =>
+        _symbolInfoById.AddOrUpdate(id, info, (_, existing) =>
         {
-            if (existing != project)
+            if (existing != info)
             {
-                throw new InvalidOperationException(
-                    $"Module '{module}' is already associated with project '{existing}'.");
+                throw new InvalidOperationException($"Symbol ID '{id}' is already mapped to a different symbol ({existing}).");
             }
 
-            added = false;
             return existing;
         });
 
-        return added;
+        return new(id, GetSymbolElementType(info.Symbol));
     }
 
-    public Project GetContainingProject(IModuleSymbol module) => _projectByModule[module];
+    private async ValueTask<SymbolInfo> TranslateToSourceSymbolAsync(Project projectHint, ISymbol symbol)
+    {
+        if (_translatedSymbolsCache.TryGetValue(symbol, out var info))
+        {
+            return info;
+        }
 
-    public Solution GetSolution(ElementId id) => (Solution) _elementRoslynObjects[id];
+        var sourceSymbol = await SymbolFinder.FindSourceDefinitionAsync(symbol, projectHint.Solution)
+            ?? throw new InvalidOperationException($"Symbol '{symbol}' has no source definition.");
 
-    public Project GetProject(ElementId id) => (Project) _elementRoslynObjects[id];
+        Project project;
+        if (projectHint.TryGetCompilation(out var compilation) &&
+            compilation.Assembly.Equals(sourceSymbol.ContainingAssembly, SymbolEqualityComparer.Default))
+        {
+            project = projectHint;
+        }
+        else
+        {
+            project = projectHint.Solution.GetProject(sourceSymbol.ContainingAssembly)
+                ?? throw new InvalidOperationException($"Project for symbol '{symbol}' not found.");
+        }
 
-    public ISymbol GetSymbol(ElementId id) => (ISymbol) _elementRoslynObjects[id];
+        var result = new SymbolInfo(project, sourceSymbol);
+
+        _translatedSymbolsCache.AddOrUpdate(symbol, result, (_, existing) =>
+        {
+            if (existing != result)
+            {
+                throw new InvalidOperationException($"Symbol ID '{symbol}' is already mapped to a different symbol ({existing}).");
+            }
+
+            return existing;
+        });
+
+        return result;
+    }
+
+    private ElementType GetSymbolElementType(ISymbol symbol)
+    {
+        return symbol switch
+        {
+            INamespaceSymbol @namespace => _types.Namespace,
+            ITypeSymbol type => _types.Type,
+            IPropertySymbol property => _types.Property,
+            IFieldSymbol field => _types.Field,
+            IMethodSymbol method => _types.Method,
+            _ => throw new InvalidOperationException($"Unexpected symbol kind: {symbol.Kind}."),
+        };
+    }
+
+    public Solution GetSolution(ElementId id) => _solutionById[id];
+
+    public Project GetProject(ElementId id) => _projectById[id];
+
+    public ISymbol GetSymbol(ElementId id) => _symbolInfoById[id].Symbol;
+
+    public ISymbol GetSymbolAndProject(ElementId id, out Project project) => GetSymbolAndProject<ISymbol>(id, out project);
 
     public ISymbol? TryGetSymbol(ElementId id) =>
-        _elementRoslynObjects.TryGetValue(id, out var value) ? value as ISymbol : null;
+        _symbolInfoById.TryGetValue(id, out var value) ? value.Symbol : null;
 
-    public INamespaceSymbol GetNamespace(ElementId id) => (INamespaceSymbol) _elementRoslynObjects[id];
+    public Project? TryGetProject(ElementId id) =>
+        _symbolInfoById.TryGetValue(id, out var value) ? value.Project : null;
 
-    public ITypeSymbol GetType(ElementId id) => (ITypeSymbol) _elementRoslynObjects[id];
+    public INamespaceSymbol GetNamespace(ElementId id) => (INamespaceSymbol) _symbolInfoById[id].Symbol;
 
-    public IMethodSymbol GetMethod(ElementId id) => (IMethodSymbol) _elementRoslynObjects[id];
+    public INamespaceSymbol GetNamespaceAndProject(ElementId id, out Project project) => GetSymbolAndProject<INamespaceSymbol>(id, out project);
 
-    private void SaveElementIdMapping(ElementId id, object roslynObject)
+    public ITypeSymbol GetType(ElementId id) => (ITypeSymbol) _symbolInfoById[id].Symbol;
+
+    public ITypeSymbol GetTypeAndProject(ElementId id, out Project project) => GetSymbolAndProject<ITypeSymbol>(id, out project);
+
+    public IPropertySymbol GetProperty(ElementId id) => (IPropertySymbol) _symbolInfoById[id].Symbol;
+
+    public IPropertySymbol GetPropertyAndProject(ElementId id, out Project project) => GetSymbolAndProject<IPropertySymbol>(id, out project);
+
+    public IMethodSymbol GetMethod(ElementId id) => (IMethodSymbol) _symbolInfoById[id].Symbol;
+
+    public IMethodSymbol GetMethodAndProject(ElementId id, out Project project) => GetSymbolAndProject<IMethodSymbol>(id, out project);
+
+    private TSymbol GetSymbolAndProject<TSymbol>(ElementId id, out Project project)
+        where TSymbol : ISymbol
     {
-        _elementRoslynObjects.AddOrUpdate(id, roslynObject, (_, existing) =>
-        {
-            if (!existing.Equals(roslynObject))
-            {
-                if (existing is ISymbol existingSymbol && roslynObject is ISymbol newSymbol &&
-                    existingSymbol.Locations.SequenceEqual(newSymbol.Locations))
-                {
-                    // Same symbol represented by different objects (there's probably "retargeting" going on)
-                    return existing;
-                }
-
-                throw new InvalidOperationException(
-                    $"Element ID '{id}' is already mapped to a different object ({existing}) than the one to store ({roslynObject}).");
-            }
-
-            return existing;
-        });
+        var info = _symbolInfoById[id];
+        project = info.Project;
+        return (TSymbol) info.Symbol;
     }
 }
