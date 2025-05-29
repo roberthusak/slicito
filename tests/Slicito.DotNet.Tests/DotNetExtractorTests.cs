@@ -85,7 +85,7 @@ public class DotNetExtractorTests
 
         // Assert
 
-        signature.Name.Should().Be("AnalysisSamples.AnalysisSamples.Samples.BasicSymbolicExecutionSample(int, int)");
+        signature.Name.Should().Be("AnalysisSamples.AnalysisSamples.AnalysisSamples.Samples.BasicSymbolicExecutionSample(int, int)");
 
         signature.ParameterTypes.Should().BeEquivalentTo([
             new DataType.Integer(Signed: true, 32),
