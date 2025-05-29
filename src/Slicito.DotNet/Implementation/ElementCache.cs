@@ -9,7 +9,12 @@ namespace Slicito.DotNet.Implementation;
 
 internal class ElementCache
 {
-    public record struct SymbolInfo(Project Project, ISymbol Symbol);
+    /// <remarks>
+    /// If <see cref="AssemblyReferencePath"/> is <see langword="null"/>, the symbol is defined in the <see cref="RelatedProject"/>.
+    /// Otherwise, the symbol is defined in an assembly referenced by the <see cref="RelatedProject"/>, and the <see cref="AssemblyReferencePath"/>
+    /// is the path to the assembly file.
+    /// </remarks>
+    public record struct SymbolInfo(Project RelatedProject, string? AssemblyReferencePath, ISymbol Symbol);
 
     private readonly DotNetTypes _types;
 
@@ -17,7 +22,7 @@ internal class ElementCache
     private readonly ConcurrentDictionary<ElementId, Project> _projectById = [];
     private readonly ConcurrentDictionary<ElementId, SymbolInfo> _symbolInfoById = [];
 
-    private readonly ConcurrentDictionary<ISymbol, SymbolInfo> _translatedSymbolsCache = [];
+    private readonly ConcurrentDictionary<ISymbol, SymbolInfo> _symbolInfoCache = [];
 
     public ElementCache(DotNetTypes types)
     {
@@ -58,11 +63,11 @@ internal class ElementCache
         return new(id, _types.Project);
     }
 
-    public async ValueTask<ElementInfo> GetElementAsync(Project projectHint, ISymbol symbol)
+    public async ValueTask<ElementInfo> GetElementAsync(Project relatedProject, ISymbol symbol)
     {
-        var info = await TranslateToSourceSymbolAsync(projectHint, symbol);
+        var info = await GenerateSymbolInfoAsync(relatedProject, symbol);
 
-        var id = ElementIdProvider.GetId(info.Project, info.Symbol);
+        var id = ElementIdProvider.GetId(info.RelatedProject, info.AssemblyReferencePath, info.Symbol);
 
         _symbolInfoById.AddOrUpdate(id, info, (_, existing) =>
         {
@@ -77,35 +82,49 @@ internal class ElementCache
         return new(id, GetSymbolElementType(info.Symbol));
     }
 
-    private async ValueTask<SymbolInfo> TranslateToSourceSymbolAsync(Project projectHint, ISymbol symbol)
+    private async ValueTask<SymbolInfo> GenerateSymbolInfoAsync(Project relatedProject, ISymbol symbol)
     {
-        if (_translatedSymbolsCache.TryGetValue(symbol, out var info))
+        if (_symbolInfoCache.TryGetValue(symbol, out var info))
         {
             return info;
         }
 
-        var sourceSymbol = await SymbolFinder.FindSourceDefinitionAsync(symbol, projectHint.Solution)
-            ?? throw new InvalidOperationException($"Symbol '{symbol}' has no source definition.");
+        var compilation = await relatedProject.GetCompilationAsync()
+            ?? throw new InvalidOperationException($"Project '{relatedProject}' has no compilation.");
 
-        Project project;
-        if (projectHint.TryGetCompilation(out var compilation) &&
-            compilation.Assembly.Equals(sourceSymbol.ContainingAssembly, SymbolEqualityComparer.Default))
+        string? assemblyReferencePath = null;
+        ISymbol resultSymbol;
+
+        var sourceSymbol = await SymbolFinder.FindSourceDefinitionAsync(symbol, relatedProject.Solution);
+        if (sourceSymbol is not null)
         {
-            project = projectHint;
+            if (!compilation.Assembly.Equals(sourceSymbol.ContainingAssembly, SymbolEqualityComparer.Default))
+            {
+                relatedProject = relatedProject.Solution.GetProject(sourceSymbol.ContainingAssembly)
+                    ?? throw new InvalidOperationException($"Project for symbol '{symbol}' not found.");
+            }
+
+            resultSymbol = sourceSymbol;
         }
         else
         {
-            project = projectHint.Solution.GetProject(sourceSymbol.ContainingAssembly)
-                ?? throw new InvalidOperationException($"Project for symbol '{symbol}' not found.");
+            var metadataReference = compilation.GetMetadataReference(symbol.ContainingAssembly)
+                ?? throw new InvalidOperationException($"Metadata reference for symbol '{symbol}' not found.");
+
+            var peReference = metadataReference as PortableExecutableReference
+                ?? throw new InvalidOperationException($"Metadata reference for symbol '{symbol}' is not a portable executable reference.");
+
+            assemblyReferencePath = peReference.FilePath;
+            resultSymbol = symbol;
         }
 
-        var result = new SymbolInfo(project, sourceSymbol);
+        var result = new SymbolInfo(relatedProject, assemblyReferencePath, resultSymbol);
 
-        _translatedSymbolsCache.AddOrUpdate(symbol, result, (_, existing) =>
+        _symbolInfoCache.AddOrUpdate(symbol, result, (_, existing) =>
         {
             if (existing != result)
             {
-                throw new InvalidOperationException($"Symbol ID '{symbol}' is already mapped to a different symbol ({existing}).");
+                throw new InvalidOperationException($"Symbol ID '{symbol}' is already mapped to a different symbol information ({existing}).");
             }
 
             return existing;
@@ -133,35 +152,35 @@ internal class ElementCache
 
     public ISymbol GetSymbol(ElementId id) => _symbolInfoById[id].Symbol;
 
-    public ISymbol GetSymbolAndProject(ElementId id, out Project project) => GetSymbolAndProject<ISymbol>(id, out project);
+    public ISymbol GetSymbolAndRelatedProject(ElementId id, out Project relatedProject) => GetSymbolAndRelatedProject<ISymbol>(id, out relatedProject);
 
     public ISymbol? TryGetSymbol(ElementId id) =>
         _symbolInfoById.TryGetValue(id, out var value) ? value.Symbol : null;
 
     public Project? TryGetProject(ElementId id) =>
-        _symbolInfoById.TryGetValue(id, out var value) ? value.Project : null;
+        _symbolInfoById.TryGetValue(id, out var value) ? value.RelatedProject : null;
 
     public INamespaceSymbol GetNamespace(ElementId id) => (INamespaceSymbol) _symbolInfoById[id].Symbol;
 
-    public INamespaceSymbol GetNamespaceAndProject(ElementId id, out Project project) => GetSymbolAndProject<INamespaceSymbol>(id, out project);
+    public INamespaceSymbol GetNamespaceAndRelatedProject(ElementId id, out Project relatedProject) => GetSymbolAndRelatedProject<INamespaceSymbol>(id, out relatedProject);
 
     public ITypeSymbol GetType(ElementId id) => (ITypeSymbol) _symbolInfoById[id].Symbol;
 
-    public ITypeSymbol GetTypeAndProject(ElementId id, out Project project) => GetSymbolAndProject<ITypeSymbol>(id, out project);
+    public ITypeSymbol GetTypeAndRelatedProject(ElementId id, out Project relatedProject) => GetSymbolAndRelatedProject<ITypeSymbol>(id, out relatedProject);
 
     public IPropertySymbol GetProperty(ElementId id) => (IPropertySymbol) _symbolInfoById[id].Symbol;
 
-    public IPropertySymbol GetPropertyAndProject(ElementId id, out Project project) => GetSymbolAndProject<IPropertySymbol>(id, out project);
+    public IPropertySymbol GetPropertyAndRelatedProject(ElementId id, out Project relatedProject) => GetSymbolAndRelatedProject<IPropertySymbol>(id, out relatedProject);
 
     public IMethodSymbol GetMethod(ElementId id) => (IMethodSymbol) _symbolInfoById[id].Symbol;
 
-    public IMethodSymbol GetMethodAndProject(ElementId id, out Project project) => GetSymbolAndProject<IMethodSymbol>(id, out project);
+    public IMethodSymbol GetMethodAndRelatedProject(ElementId id, out Project relatedProject) => GetSymbolAndRelatedProject<IMethodSymbol>(id, out relatedProject);
 
-    private TSymbol GetSymbolAndProject<TSymbol>(ElementId id, out Project project)
+    private TSymbol GetSymbolAndRelatedProject<TSymbol>(ElementId id, out Project project)
         where TSymbol : ISymbol
     {
         var info = _symbolInfoById[id];
-        project = info.Project;
+        project = info.RelatedProject;
         return (TSymbol) info.Symbol;
     }
 }

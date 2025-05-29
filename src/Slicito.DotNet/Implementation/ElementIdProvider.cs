@@ -23,10 +23,10 @@ internal static class ElementIdProvider
 
     public static ElementId GetId(Project project) => new(project.FilePath!);
 
-    public static ElementId GetId(Project project, ISymbol symbol) =>
-        new($"{GetProjectUniqueName(project)}.{GetUniqueNameWithinProject(symbol)}");
+    public static ElementId GetId(Project? project, string? assemblyReferencePath, ISymbol symbol) =>
+        new($"{GetUniqueContextPrefix(project, assemblyReferencePath)}.{GetUniqueNameWithinProject(symbol)}");
 
-    public static string GetOperationIdPrefix(Project project, IMethodSymbol method) => $"{GetId(project, method).Value}.op!";
+    public static string GetOperationIdPrefix(Project project, IMethodSymbol method) => $"{GetId(project, null, method).Value}.op!";
 
     public static ElementId GetMethodIdFromOperationId(ElementId operationId)
     {
@@ -38,17 +38,28 @@ internal static class ElementIdProvider
         return new(operationId.Value[..index]);
     }
 
-    private static string GetProjectUniqueName(Project project)
+    private static string GetUniqueContextPrefix(Project? project, string? assemblyReferencePath)
     {
-        if (project.Solution.FilePath is null)
+        if (project is not null)
         {
-            return project.Name;
+            if (project.Solution.FilePath is null)
+            {
+                return project.Name;
+            }
+            else
+            {
+                var solutionName = Path.GetFileNameWithoutExtension(project.Solution.FilePath);
+    
+                return $"{solutionName}.{project.Name}";
+            }
+        }
+        else if (assemblyReferencePath is not null)
+        {
+            return assemblyReferencePath;
         }
         else
         {
-            var solutionName = Path.GetFileNameWithoutExtension(project.Solution.FilePath);
-
-            return $"{solutionName}.{project.Name}";
+            throw new InvalidOperationException("Either a project or an assembly reference path must be provided.");
         }
     }
 

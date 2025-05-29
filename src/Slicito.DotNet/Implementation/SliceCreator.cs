@@ -121,7 +121,7 @@ internal class SliceCreator
 
     private async ValueTask<IEnumerable<ISliceBuilder.PartialLinkInfo>> LoadNamespaceMembersAsync(ElementId sourceId)
     {
-        var @namespace = _elementCache.GetNamespaceAndProject(sourceId, out var project);
+        var @namespace = _elementCache.GetNamespaceAndRelatedProject(sourceId, out var project);
 
         return await Task.WhenAll(
             @namespace.GetMembers()
@@ -134,7 +134,7 @@ internal class SliceCreator
 
     private async ValueTask<IEnumerable<ISliceBuilder.PartialLinkInfo>> LoadTypeMembersAsync(ElementId sourceId)
     {
-        var type = _elementCache.GetTypeAndProject(sourceId, out var project);
+        var type = _elementCache.GetTypeAndRelatedProject(sourceId, out var project);
 
         return await Task.WhenAll(
             type.GetMembers()
