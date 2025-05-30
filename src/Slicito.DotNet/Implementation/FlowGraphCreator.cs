@@ -27,13 +27,17 @@ internal class FlowGraphCreator
     private readonly OperationMapping.Builder _operationMappingBuilder;
     private readonly Variable? _returnVariable;
 
-    private FlowGraphCreator(IMethodSymbol methodSymbol, ControlFlowGraph roslynCfg, Project project, ElementCache elementCache)
+    private FlowGraphCreator(
+        IMethodSymbol methodSymbol,
+        ControlFlowGraph roslynCfg,
+        Project project,
+        ElementCache elementCache,
+        OperationMapping.Builder operationMappingBuilder)
     {
         _roslynCfg = roslynCfg;
         _project = project;
         _elementCache = elementCache;
-        
-        _operationMappingBuilder = new(ElementIdProvider.GetOperationIdPrefix(project, methodSymbol));
+        _operationMappingBuilder = operationMappingBuilder;
 
         IEnumerable<Variable> instanceEnumerable =
             methodSymbol.IsStatic
@@ -59,7 +63,7 @@ internal class FlowGraphCreator
         _builder = new(parameters, returnValues);
     }
 
-    public static (IFlowGraph FlowGraph, OperationMapping OperationMapping)? TryCreate(
+    public static (FlowGraphGroup FlowGraphGroup, OperationMapping OperationMapping)? TryCreate(
         IMethodSymbol method,
         Project project,
         ElementCache elementCache)
@@ -70,11 +74,46 @@ internal class FlowGraphCreator
             return null;
         }
 
-        var creator = new FlowGraphCreator(method, roslynCfg, project, elementCache);
-        var flowGraph = creator.CreateFlowGraph();
-        var operationMapping = creator._operationMappingBuilder.Build();
+        var operationMappingBuilder = new OperationMapping.Builder(ElementIdProvider.GetOperationIdPrefix(project, method));
 
-        return (flowGraph, operationMapping);
+        var rootFlowGraph = new FlowGraphCreator(method, roslynCfg, project, elementCache, operationMappingBuilder)
+            .CreateFlowGraph();
+
+        var elementIdToNestedFlowGraphBuilder = ImmutableDictionary.CreateBuilder<ElementId, IFlowGraph>();
+
+        CreateNestedFlowGraphsRecursively(roslynCfg, project, elementCache, operationMappingBuilder, elementIdToNestedFlowGraphBuilder);
+
+        return (new(rootFlowGraph, elementIdToNestedFlowGraphBuilder.ToImmutable()), operationMappingBuilder.Build());
+    }
+
+    private static void CreateNestedFlowGraphsRecursively(
+        ControlFlowGraph roslynCfg,
+        Project project,
+        ElementCache elementCache,
+        OperationMapping.Builder operationMappingBuilder,
+        ImmutableDictionary<ElementId, IFlowGraph>.Builder elementIdToNestedFlowGraphBuilder)
+    {
+        var localFunctionsWithCfgs = roslynCfg.LocalFunctions
+            .Select(localFunction => (localFunction, roslynCfg.GetLocalFunctionControlFlowGraph(localFunction)));
+
+        var lambdasWithCfgs = LambdaFinder.FindLambdas(roslynCfg)
+            .Select(lambda => (lambda.Symbol, roslynCfg.GetAnonymousFunctionControlFlowGraph(lambda)));
+
+        foreach (var (nestedProcedure, nestedRoslynCfg) in localFunctionsWithCfgs.Concat(lambdasWithCfgs))
+        {
+            var flowGraph = new FlowGraphCreator(nestedProcedure, nestedRoslynCfg, project, elementCache, operationMappingBuilder)
+                .CreateFlowGraph();
+
+            var nestedProcedureElementTask = elementCache.GetElementAsync(project, nestedProcedure);
+            if (!nestedProcedureElementTask.IsCompleted)
+            {
+                throw new InvalidOperationException($"Storing nested procedure '{nestedProcedure.Name}' in cache was unexpectedly asynchronous.");
+            }
+
+            elementIdToNestedFlowGraphBuilder[nestedProcedureElementTask.Result.Id] = flowGraph;
+
+            CreateNestedFlowGraphsRecursively(nestedRoslynCfg, project, elementCache, operationMappingBuilder, elementIdToNestedFlowGraphBuilder);
+        }
     }
 
     private static ControlFlowGraph? TryCreateRoslynControlFlowGraph(IMethodSymbol method, Project project)
@@ -298,7 +337,7 @@ internal class FlowGraphCreator
 
         public Variable CreateTemporaryVariable(DataType type) => creator.CreateTemporaryVariable(type);
 
-        // FIXME: The blocking call is bad, bud turning the whole creator into async would be a large change.
+        // FIXME: The blocking call is bad, but turning the whole creator into async would be a large change.
         //        A reasonable solution would be to pre-compute all contained elements in the first step which would be async.
         public ElementInfo GetElement(ISymbol symbol) => creator._elementCache.GetElementAsync(creator._project, symbol).Result;
     }

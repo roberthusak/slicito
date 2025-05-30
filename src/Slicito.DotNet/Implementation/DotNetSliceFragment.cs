@@ -99,9 +99,27 @@ internal class DotNetSliceFragment(ISlice slice, DotNetTypes dotNetTypes) : IDot
             .Select(method => new CSharpMethodElement(method.Id, GetName(method.Id)));
     }
 
-    public async ValueTask<IEnumerable<ICSharpOperationElement>> GetOperationsAsync(ICSharpMethodElement method)
+    public async ValueTask<IEnumerable<ICSharpLocalFunctionElement>> GetLocalFunctionsAsync(ICSharpMethodElement method)
     {
-        var operations = await _hierarchyExplorer.GetTargetElementsAsync(method.Id);
+        var localFunctions = await _hierarchyExplorer.GetTargetElementsAsync(method.Id);
+
+        return localFunctions
+            .Where(localFunction => localFunction.Type.Value.IsSubsetOfOrEquals(dotNetTypes.LocalFunction.Value))
+            .Select(localFunction => new CSharpLocalFunctionElement(localFunction.Id, GetName(localFunction.Id)));
+    }
+
+    public async ValueTask<IEnumerable<ICSharpLambdaElement>> GetLambdasAsync(ICSharpMethodElement method)
+    {
+        var lambdas = await _hierarchyExplorer.GetTargetElementsAsync(method.Id);
+
+        return lambdas
+            .Where(lambda => lambda.Type.Value.IsSubsetOfOrEquals(dotNetTypes.Lambda.Value))
+            .Select(lambda => new CSharpLambdaElement(lambda.Id));
+    }
+    
+    public async ValueTask<IEnumerable<ICSharpOperationElement>> GetOperationsAsync(ICSharpProcedureElement function)
+    {
+        var operations = await _hierarchyExplorer.GetTargetElementsAsync(function.Id);
 
         return operations
             .Where(operation => operation.Type.Value.IsSubsetOfOrEquals(dotNetTypes.Operation.Value))

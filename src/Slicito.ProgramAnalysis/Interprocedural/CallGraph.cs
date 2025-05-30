@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using Slicito.Abstractions;
+using Slicito.Abstractions.Facts;
 
 namespace Slicito.ProgramAnalysis.Interprocedural;
 
@@ -72,12 +73,24 @@ public sealed class CallGraph
 
                 var procedureElement = new ElementInfo(procedureId, types.Procedure);
                 
-                // Find all calls within this procedure
+                // Find all calls within this procedure and its nested functions (local functions, lambdas)
+                
                 var containsExplorer = slice.GetLinkExplorer(types.Contains);
-                var callElements = await containsExplorer.GetTargetElementsAsync(procedureId);
+                var containedElements = (await containsExplorer.GetTargetElementsAsync(procedureId)).ToList();
+
+                var callElements = containedElements.Where(e => e.Type == types.Call).ToList();
+
+                var nestedProcedureElements = containedElements.Where(e => e.Type.Value.IsSubsetOfOrEquals(types.NestedProcedures.Value));
+                foreach (var nestedProcedureElement in nestedProcedureElements)
+                {
+                    var nestedContainedElements = await containsExplorer.GetTargetElementsAsync(nestedProcedureElement.Id);
+                    var nestedCallElements = nestedContainedElements.Where(e => e.Type == types.Call);
+                    callElements.AddRange(nestedCallElements);
+                }
+
                 var callSites = new List<CallSite>();
 
-                foreach (var callElement in callElements.Where(e => e.Type == types.Call))
+                foreach (var callElement in callElements)
                 {
                     var callSite = new CallSite(procedureElement, callElement);
                     callSites.Add(callSite);

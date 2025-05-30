@@ -8,6 +8,7 @@ public interface IProgramTypes
     LinkType Calls { get; }
         
     ElementType Procedure { get; }
+    ElementType NestedProcedures { get; }
 
     ElementType Call { get; }
 

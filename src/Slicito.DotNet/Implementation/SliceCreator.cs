@@ -17,7 +17,7 @@ internal class SliceCreator
     private readonly ISliceManager _sliceManager;
 
     private readonly ElementCache _elementCache;
-    private readonly ConcurrentDictionary<IMethodSymbol, (IFlowGraph FlowGraph, OperationMapping OperationMapping)?> _flowGraphCache = [];
+    private readonly ConcurrentDictionary<IMethodSymbol, (FlowGraphGroup FlowGraphGroup, OperationMapping OperationMapping)?> _flowGraphCache = [];
     private readonly ConcurrentDictionary<IMethodSymbol, ProcedureSignature> _procedureSignatureCache = [];
 
     public ISlice Slice { get; }
@@ -36,9 +36,9 @@ internal class SliceCreator
         TypedSliceFragment = new DotNetSliceFragment(Slice, _types);
     }
 
-    public IFlowGraph? TryCreateFlowGraph(ElementId elementId) => TryCreateFlowGraphAndMapping(elementId)?.FlowGraph;
+    public IFlowGraph? TryCreateFlowGraph(ElementId elementId) => TryCreateFlowGraphsAndMapping(elementId)?.FlowGraphGroup.RootFlowGraph;
 
-    private (IFlowGraph FlowGraph, OperationMapping OperationMapping)? TryCreateFlowGraphAndMapping(ElementId elementId)
+    private (FlowGraphGroup FlowGraphGroup, OperationMapping OperationMapping)? TryCreateFlowGraphsAndMapping(ElementId elementId)
     {
         var symbol = _elementCache.TryGetSymbol(elementId);
         var project = _elementCache.TryGetProject(elementId);
@@ -75,7 +75,10 @@ internal class SliceCreator
             .AddHierarchyLinks(_types.Contains, _types.Project, _types.Namespace, LoadProjectNamespacesAsync)
             .AddHierarchyLinks(_types.Contains, _types.Namespace, namespaceMemberTypes, LoadNamespaceMembersAsync)
             .AddHierarchyLinks(_types.Contains, _types.Type, typeMemberTypes, LoadTypeMembersAsync)
+            .AddHierarchyLinks(_types.Contains, _types.Method, _types.LocalFunction, LoadMethodLocalFunctions)
+            .AddHierarchyLinks(_types.Contains, _types.Method, _types.Lambda, LoadMethodLambdas)
             .AddHierarchyLinks(_types.Contains, _types.Method, _types.Operation, LoadMethodOperations)
+            .AddHierarchyLinks(_types.Contains, _types.NestedProcedures, _types.Operation, LoadNestedProcedureOperations)
             .AddLinks(_types.References, _types.Project, _types.Project, LoadProjectReferences)
             .AddLinks(_types.Calls, _types.Operation, _types.Method, LoadCallees)
             .AddElementAttribute(_types.Solution, DotNetAttributeNames.Name, LoadSolutionName)
@@ -145,16 +148,78 @@ internal class SliceCreator
                 }));
     }
 
-    private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadMethodOperations(ElementId sourceId)
+    private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadMethodLocalFunctions(ElementId sourceId)
     {
-        var result = TryCreateFlowGraphAndMapping(sourceId);
+        return LoadMethodNestedProcedures(sourceId, MethodKind.LocalFunction);
+    }
+
+    private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadMethodLambdas(ElementId sourceId)
+    {
+        return LoadMethodNestedProcedures(sourceId, MethodKind.AnonymousFunction);
+    }
+
+    private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadMethodNestedProcedures(ElementId sourceId, MethodKind methodKind)
+    {
+        var result = TryCreateFlowGraphsAndMapping(sourceId);
         if (result is null)
         {
             yield break;
         }
 
-        var (flowGraph, mapping) = result.Value;
+        var flowGraphGroup = result.Value.FlowGraphGroup;
 
+        foreach (var nestedId in flowGraphGroup.ElementIdToNestedFlowGraph.Keys)
+        {
+            var nestedSymbol = _elementCache.GetMethod(nestedId);
+
+            if (nestedSymbol.MethodKind == methodKind)
+            {
+                yield return ToPartialLinkInfo(new(nestedId, _types.LocalFunction));
+            }
+        }
+    }
+
+    private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadMethodOperations(ElementId sourceId)
+    {
+        var result = TryCreateFlowGraphsAndMapping(sourceId);
+        if (result is null)
+        {
+            return [];
+        }
+
+        var (flowGraphGroup, mapping) = result.Value;
+
+        return LoadFlowGraphOperations(flowGraphGroup.RootFlowGraph, mapping);
+    }
+
+    private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadNestedProcedureOperations(ElementId sourceId)
+    {
+        var method = _elementCache.GetMethodAndRelatedProject(sourceId, out var project);
+
+        var rootMethod = RoslynHelper.GetContainingMethodOrSelf(method);
+
+        var rootMethodIdTask = _elementCache.GetElementAsync(project, rootMethod);
+        if (!rootMethodIdTask.IsCompleted)
+        {
+            throw new InvalidOperationException(
+                $"The containing method '{rootMethod.Name}' of '{method.Name}' was unexpectedly not present in the cache and was restored asynchronously.");
+        }
+
+        var rootMethodId = rootMethodIdTask.Result.Id;
+
+        var result = TryCreateFlowGraphsAndMapping(rootMethodId);
+        if (result is null)
+        {
+            return [];
+        }
+
+        var (flowGraphGroup, mapping) = result.Value;
+
+        return LoadFlowGraphOperations(flowGraphGroup.ElementIdToNestedFlowGraph[sourceId], mapping);
+    }
+
+    private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadFlowGraphOperations(IFlowGraph flowGraph, OperationMapping mapping)
+    {
         foreach (var block in flowGraph.Blocks.OfType<BasicBlock.Inner>())
         {
             if (block.Operation is null)

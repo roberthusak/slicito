@@ -9,4 +9,15 @@ internal static class RoslynHelper
     );
 
     public static string GetFullName(ISymbol symbol) => symbol.ToDisplayString(_fullNameFormat);
+
+    public static IMethodSymbol GetContainingMethodOrSelf(IMethodSymbol method)
+    {
+        while (method.MethodKind == MethodKind.LocalFunction || method.MethodKind == MethodKind.AnonymousFunction)
+        {
+            method = method.ContainingSymbol as IMethodSymbol
+                ?? throw new InvalidOperationException($"Method '{method.Name}' is a nested function but is not contained in a method.");
+        }
+
+        return method;
+    }
 }

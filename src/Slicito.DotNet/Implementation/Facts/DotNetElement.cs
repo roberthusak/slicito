@@ -51,6 +51,15 @@ internal class CSharpMethodElement(ElementId id, string name) : CSharpElement(id
     public string Name { get; } = name;
 }
 
+internal class CSharpLocalFunctionElement(ElementId id, string name) : CSharpElement(id), ICSharpLocalFunctionElement
+{
+    public string Name { get; } = name;
+}
+
+internal class CSharpLambdaElement(ElementId id) : CSharpElement(id), ICSharpLambdaElement
+{
+}
+
 internal abstract class CSharpOperationElement(ElementId id) : CSharpElement(id), ICSharpOperationElement
 {
 }

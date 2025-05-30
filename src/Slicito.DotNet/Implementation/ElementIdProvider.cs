@@ -69,14 +69,17 @@ internal static class ElementIdProvider
 
         if (symbol is IMethodSymbol method)
         {
-            // Used to distinguish these two cases
-            if (method.MethodKind == MethodKind.Constructor)
+            // These cases are not distinguishable by name
+            switch (method.MethodKind)
             {
-                return name + ".ctor";
-            }
-            if (method.MethodKind == MethodKind.StaticConstructor)
-            {
-                return name + ".cctor";
+                case MethodKind.Constructor:
+                    return name + ".ctor";
+                case MethodKind.StaticConstructor:
+                    return name + ".cctor";
+                case MethodKind.AnonymousFunction:
+                    var containingMethod = RoslynHelper.GetContainingMethodOrSelf(method);
+                    var location = method.Locations.First().SourceSpan;
+                    return $"{GetUniqueNameWithinProject(containingMethod)}.lambda_{location.Start}-{location.End}";
             }
         }
 

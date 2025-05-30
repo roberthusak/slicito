@@ -17,6 +17,8 @@ public class DotNetTypes(ITypeSystem typeSystem) : IProgramTypes
     public ElementType Property { get; } = typeSystem.GetElementType([(DotNetAttributeNames.Kind, DotNetAttributeValues.Kind.Property)]);
     public ElementType Field { get; } = typeSystem.GetElementType([(DotNetAttributeNames.Kind, DotNetAttributeValues.Kind.Field)]);
     public ElementType Method { get; } = typeSystem.GetElementType([(DotNetAttributeNames.Kind, DotNetAttributeValues.Kind.Method)]);
+    public ElementType LocalFunction { get; } = typeSystem.GetElementType([(DotNetAttributeNames.Kind, DotNetAttributeValues.Kind.LocalFunction)]);
+    public ElementType Lambda { get; } = typeSystem.GetElementType([(DotNetAttributeNames.Kind, DotNetAttributeValues.Kind.Lambda)]);
     public ElementType Operation { get; } = typeSystem.GetElementType([(DotNetAttributeNames.Kind, DotNetAttributeValues.Kind.Operation)]);
 
     internal ElementType SymbolTypes { get; } =
@@ -36,6 +38,7 @@ public class DotNetTypes(ITypeSystem typeSystem) : IProgramTypes
     public ElementType Call { get; } = GetOperationType(typeSystem, DotNetAttributeValues.OperationKind.Call);
 
     ElementType IProgramTypes.Procedure => Method;
+    public ElementType NestedProcedures => LocalFunction | Lambda;
 
     bool IProgramTypes.HasName(ElementType elementType) => true;
 

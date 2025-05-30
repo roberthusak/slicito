@@ -38,7 +38,13 @@ public interface IDotNetSliceFragment : ITypedSliceFragment
     ValueTask<IEnumerable<ICSharpMethodElement>> GetMethodsAsync(ICSharpTypeElement type);
 
     [ForwardLinkKind(CommonAttributeValues.Kind.Contains)]
-    ValueTask<IEnumerable<ICSharpOperationElement>> GetOperationsAsync(ICSharpMethodElement method);
+    ValueTask<IEnumerable<ICSharpLocalFunctionElement>> GetLocalFunctionsAsync(ICSharpMethodElement method);
+
+    [ForwardLinkKind(CommonAttributeValues.Kind.Contains)]
+    ValueTask<IEnumerable<ICSharpLambdaElement>> GetLambdasAsync(ICSharpMethodElement method);
+    
+    [ForwardLinkKind(CommonAttributeValues.Kind.Contains)]
+    ValueTask<IEnumerable<ICSharpOperationElement>> GetOperationsAsync(ICSharpProcedureElement function);
 
     [return: Attribute(CommonAttributeNames.CodeLocation)]
     ValueTask<CodeLocation> GetCodeLocationAsync(ICSharpTypeElement type);

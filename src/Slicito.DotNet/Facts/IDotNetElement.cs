@@ -61,12 +61,26 @@ public interface ICSharpFieldElement : IDotNetFieldElement, ICSharpElement
 {
 }
 
+public interface ICSharpProcedureElement : ICSharpElement
+{
+}
+
 [Kind(DotNetAttributeValues.Kind.Method)]
 public interface IDotNetMethodElement : IDotNetElement, INamedElement
 {
 }
 
-public interface ICSharpMethodElement : IDotNetMethodElement, ICSharpElement
+public interface ICSharpMethodElement : IDotNetMethodElement, ICSharpProcedureElement
+{
+}
+
+[Kind(DotNetAttributeValues.Kind.LocalFunction)]
+public interface ICSharpLocalFunctionElement : ICSharpProcedureElement, INamedElement
+{
+}
+
+[Kind(DotNetAttributeValues.Kind.Lambda)]
+public interface ICSharpLambdaElement : ICSharpProcedureElement
 {
 }
 

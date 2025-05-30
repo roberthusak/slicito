@@ -21,6 +21,8 @@ public static class DotNetAttributeValues
         public const string Property = "Property";
         public const string Field = "Field";
         public const string Method = "Method";
+        public const string LocalFunction = "LocalFunction";
+        public const string Lambda = "Lambda";
         public const string Operation = "Operation";
 
         public const string References = "References";
