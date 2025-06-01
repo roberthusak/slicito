@@ -18,12 +18,16 @@ namespace Slicito.DotNet.Implementation;
 
 internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context) : OperationVisitor<Empty, Expression>
 {
+    private readonly AdditionalLinkFinder _additionalLinkFinder = new(context);
+
     public override Expression? DefaultVisit(IOperation operation, Empty _)
     {
         if (operation.ConstantValue.HasValue)
         {
             return TranslateConstantValue(operation.ConstantValue.Value);
         }
+
+        _additionalLinkFinder.Visit(operation);
 
         return new Expression.Unsupported($"Operation: {operation.Kind} (type: {operation.GetType().Name})");
     }
@@ -65,6 +69,8 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
 
         if (variable is null)
         {
+            _additionalLinkFinder.Visit(operation.Target);
+
             return new Expression.Unsupported($"Assignment target: {operation.Target.Kind} (type: {operation.Target.GetType().Name})");
         }
 

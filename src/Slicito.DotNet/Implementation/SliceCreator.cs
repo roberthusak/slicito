@@ -259,13 +259,22 @@ internal class SliceCreator
 
         var method = _elementCache.GetMethod(methodId);
 
-        var operation = _flowGraphCache[method]!.Value.OperationMapping.GetOperation(sourceId);
+        var operationMapping = _flowGraphCache[method]!.Value.OperationMapping;
 
+        var operation = operationMapping.GetOperation(sourceId);
         if (operation is Operation.Call call)
         {
             var calleeId = new ElementId(call.Signature.Name);
 
             yield return ToPartialLinkInfo(new(calleeId, _types.Method));
+        }
+
+        if (operationMapping.TryGetAdditionalLinks(sourceId, out var additionalLinks))
+        {
+            foreach (var callTarget in additionalLinks.CallTargets)
+            {
+                yield return ToPartialLinkInfo(callTarget);
+            }
         }
     }
 

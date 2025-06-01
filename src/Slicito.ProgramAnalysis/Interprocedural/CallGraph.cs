@@ -7,9 +7,9 @@ namespace Slicito.ProgramAnalysis.Interprocedural;
 public sealed class CallGraph
 {
     private readonly Dictionary<ElementId, Procedure> _proceduresById;
-    private readonly Dictionary<ElementId, ElementId> _callTargets; // Maps call site ID to target procedure ID
+    private readonly Dictionary<(ElementId, int), ElementId> _callTargets; // Maps call site ID and ordinal to target procedure ID
 
-    public record CallSite(ElementInfo ProcedureElement, ElementInfo CallElement);
+    public record CallSite(ElementInfo ProcedureElement, ElementInfo CallElement, int Ordinal);
     public record Procedure(ElementInfo ProcedureElement, ImmutableArray<CallSite> CallSites);
 
     public ImmutableArray<Procedure> RootProcedures { get; }
@@ -21,7 +21,7 @@ public sealed class CallGraph
         ImmutableArray<Procedure> rootProcedures,
         ImmutableArray<Procedure> allProcedures,
         Dictionary<ElementId, Procedure> proceduresById,
-        Dictionary<ElementId, ElementId> callTargets,
+        Dictionary<(ElementId, int), ElementId> callTargets,
         ISlice originalSlice)
     {
         RootProcedures = rootProcedures;
@@ -33,7 +33,7 @@ public sealed class CallGraph
 
     public Procedure GetTarget(CallSite callSite)
     {
-        var targetProcedureId = _callTargets[callSite.CallElement.Id];
+        var targetProcedureId = _callTargets[(callSite.CallElement.Id, callSite.Ordinal)];
         return _proceduresById[targetProcedureId];
     }
 
@@ -41,7 +41,7 @@ public sealed class CallGraph
     {
         return AllProcedures
             .SelectMany(p => p.CallSites)
-            .Where(cs => _callTargets[cs.CallElement.Id] == callee.ProcedureElement.Id);
+            .Where(cs => _callTargets[(cs.CallElement.Id, cs.Ordinal)] == callee.ProcedureElement.Id);
     }
 
     public class Builder(ISlice slice, IProgramTypes types)
@@ -57,9 +57,12 @@ public sealed class CallGraph
         public async Task<CallGraph> BuildAsync()
         {
             var proceduresById = new Dictionary<ElementId, Procedure>();
-            var callTargets = new Dictionary<ElementId, ElementId>();
+            var callTargets = new Dictionary<(ElementId, int), ElementId>();
             var proceduresToProcess = new Queue<ElementId>(_rootProcedureIds);
             
+            var containsExplorer = slice.GetLinkExplorer(types.Contains);
+            var callsExplorer = slice.GetLinkExplorer(types.Calls);
+
             // Process procedures breadth-first to discover the complete call graph
             while (proceduresToProcess.Count > 0)
             {
@@ -75,36 +78,33 @@ public sealed class CallGraph
                 
                 // Find all calls within this procedure and its nested functions (local functions, lambdas)
                 
-                var containsExplorer = slice.GetLinkExplorer(types.Contains);
                 var containedElements = (await containsExplorer.GetTargetElementsAsync(procedureId)).ToList();
 
-                var callElements = containedElements.Where(e => e.Type == types.Call).ToList();
+                var operationElements = containedElements.Where(e => e.Type.Value.IsSubsetOfOrEquals(types.Operation.Value)).ToList();
 
                 var nestedProcedureElements = containedElements.Where(e => e.Type.Value.IsSubsetOfOrEquals(types.NestedProcedures.Value));
                 foreach (var nestedProcedureElement in nestedProcedureElements)
                 {
                     var nestedContainedElements = await containsExplorer.GetTargetElementsAsync(nestedProcedureElement.Id);
-                    var nestedCallElements = nestedContainedElements.Where(e => e.Type == types.Call);
-                    callElements.AddRange(nestedCallElements);
+                    var nestedOperationElements = nestedContainedElements.Where(e => e.Type.Value.IsSubsetOfOrEquals(types.Operation.Value));
+                    operationElements.AddRange(nestedOperationElements);
                 }
 
                 var callSites = new List<CallSite>();
 
-                foreach (var callElement in callElements)
+                foreach (var callElement in operationElements)
                 {
-                    var callSite = new CallSite(procedureElement, callElement);
-                    callSites.Add(callSite);
-
-                    // Find target procedure of this call
-                    var callsExplorer = slice.GetLinkExplorer(types.Calls);
                     var targetElements = await callsExplorer.GetTargetElementsAsync(callElement.Id);
-                    var targetElement = targetElements.Single();
                     
-                    callTargets[callElement.Id] = targetElement.Id;
-                    proceduresToProcess.Enqueue(targetElement.Id);
+                    foreach (var (targetElement, ordinal) in targetElements.Select((e, i) => (e, i)))
+                    {
+                        callSites.Add(new(procedureElement, callElement, ordinal));
+                        callTargets[(callElement.Id, ordinal)] = targetElement.Id;
+                        proceduresToProcess.Enqueue(targetElement.Id);
+                    }
                 }
 
-                var procedure = new Procedure(procedureElement, callSites.ToImmutableArray());
+                var procedure = new Procedure(procedureElement, [.. callSites]);
                 proceduresById[procedureId] = procedure;
             }
 

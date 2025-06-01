@@ -20,4 +20,21 @@ internal static class RoslynHelper
 
         return method;
     }
+
+    public static bool TryGetPropertyBackingField(IPropertySymbol property, out IFieldSymbol? backingField)
+    {
+        foreach (var field in property.ContainingType.GetMembers().OfType<IFieldSymbol>())
+        {
+            if (SymbolEqualityComparer.Default.Equals(field.AssociatedSymbol, property))
+            {
+                backingField = field;
+                return true;
+            }
+        }
+
+        backingField = null;
+        return false;
+    }
+
+    public static bool IsPropertyAutoImplemented(IPropertySymbol property) => TryGetPropertyBackingField(property, out _);
 }

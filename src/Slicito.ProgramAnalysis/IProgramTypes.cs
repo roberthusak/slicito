@@ -10,6 +10,7 @@ public interface IProgramTypes
     ElementType Procedure { get; }
     ElementType NestedProcedures { get; }
 
+    ElementType Operation { get; }
     ElementType Call { get; }
 
     bool HasName(ElementType elementType);

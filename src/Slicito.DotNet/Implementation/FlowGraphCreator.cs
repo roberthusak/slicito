@@ -191,30 +191,30 @@ internal class FlowGraphCreator
 
             additionalOperation = new Operation.ConditionalJump(condition);
 
-            _operationMappingBuilder.AddOperation(additionalOperation, conditionOperation.Syntax);
+            _operationMappingBuilder.AddOperation(additionalOperation, conditionOperation.Syntax, context.ExtractAdditionalLinks());
         }
         else if (roslynBlock.FallThroughSuccessor?.Semantics == ControlFlowBranchSemantics.Return)
         {
-            var returnValue = creator.Visit(roslynBlock.BranchValue, default);
-
             if (_returnVariable is not null)
             {
-                if (returnValue is null)
-                {
-                    throw new InvalidOperationException("Unexpectedly produced empty return value.");
-                }
+                var returnValue = creator.Visit(roslynBlock.BranchValue, default)
+                    ?? throw new InvalidOperationException("Unexpectedly produced empty return value.");
 
                 additionalOperation = new Operation.Assignment(
                     new SlicitoLocation.VariableReference(_returnVariable),
                     returnValue);
 
-                _operationMappingBuilder.AddOperation(additionalOperation, roslynBlock.BranchValue!.Syntax);
+                _operationMappingBuilder.AddOperation(additionalOperation, roslynBlock.BranchValue!.Syntax, context.ExtractAdditionalLinks());
+            }
+            else if (roslynBlock.BranchValue is not null)
+            {
+                throw new InvalidOperationException("Unexpected return value in a void method.");
             }
         }
 
-        foreach (var (operation, syntax) in context.InnerOperations)
+        foreach (var (operation, syntax, additionalLinks) in context.InnerOperations)
         {
-            _operationMappingBuilder.AddOperation(operation, syntax);
+            _operationMappingBuilder.AddOperation(operation, syntax, additionalLinks);
         }
 
         SlicitoBasicBlock.Inner? firstBlock = null;
@@ -321,14 +321,33 @@ internal class FlowGraphCreator
 
     public class BlockTranslationContext(FlowGraphCreator creator)
     {
-        private List<(Operation, SyntaxNode)>? _innerOperations;
+        private record PendingAdditionalLinks(List<ElementInfo> CallTargets)
+        {
+            public OperationMapping.AdditionalLinks ToAdditionalLinks() => new([.. CallTargets]);
+        }
 
-        public IReadOnlyList<(Operation Operation, SyntaxNode Syntax)> InnerOperations => _innerOperations ?? [];
+        private List<(Operation, SyntaxNode, OperationMapping.AdditionalLinks?)>? _innerOperations;
+        private PendingAdditionalLinks? _pendingAdditionalLinks;
+
+        public IReadOnlyList<(Operation Operation, SyntaxNode Syntax, OperationMapping.AdditionalLinks?)> InnerOperations => _innerOperations ?? [];
+
+        public void AddCallTarget(ElementInfo callTarget)
+        {
+            _pendingAdditionalLinks ??= new([]);
+            _pendingAdditionalLinks.CallTargets.Add(callTarget);
+        }
 
         public void AddInnerOperation(Operation operation, SyntaxNode syntax)
         {
             _innerOperations ??= [];
-            _innerOperations.Add((operation, syntax));
+            _innerOperations.Add((operation, syntax, ExtractAdditionalLinks()));
+        }
+
+        public OperationMapping.AdditionalLinks? ExtractAdditionalLinks()
+        {
+            var additionalLinks = _pendingAdditionalLinks;
+            _pendingAdditionalLinks = null;
+            return additionalLinks?.ToAdditionalLinks();
         }
 
         public Variable GetOrCreateVariable(ILocalSymbol local) => creator.GetOrCreateVariable(local);
