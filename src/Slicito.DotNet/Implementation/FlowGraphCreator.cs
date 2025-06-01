@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.FlowAnalysis;
 
 using Slicito.Abstractions;
@@ -129,6 +130,19 @@ internal class FlowGraphCreator
         if (syntaxTree is null || syntaxNode is null)
         {
             return null;
+        }
+
+        while (syntaxNode.Parent is not null &&
+            syntaxNode is not (
+                MethodDeclarationSyntax or
+                ConstructorDeclarationSyntax or
+                DestructorDeclarationSyntax or
+                ConversionOperatorDeclarationSyntax or
+                OperatorDeclarationSyntax or
+                BlockSyntax or
+                ArrowExpressionClauseSyntax))
+        {
+            syntaxNode = syntaxNode.Parent;
         }
 
         if (!project.TryGetCompilation(out var compilation))
