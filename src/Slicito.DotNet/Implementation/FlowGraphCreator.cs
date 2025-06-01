@@ -281,22 +281,38 @@ internal class FlowGraphCreator
 
             var conditionalSuccessor = _roslynToSlicitoBasicBlocksMap[roslynConditionalSuccessor].First;
 
-            var roslynFallThroughSuccessor = roslynBlock.FallThroughSuccessor?.Destination
-                ?? throw new InvalidOperationException("Block with a conditional jump must have a fall-through successor.");
+            var roslynFallThroughSuccessor = roslynBlock.FallThroughSuccessor?.Destination;
+            if (roslynFallThroughSuccessor is null && 
+                roslynBlock.FallThroughSuccessor?.Semantics != ControlFlowBranchSemantics.StructuredExceptionHandling)
+            {
+                throw new InvalidOperationException(
+                    "Block with a conditional jump must have a fall-through successor unless it's the last block of finally or filter region.");
+            }
 
-            var fallThroughSuccessor = _roslynToSlicitoBasicBlocksMap[roslynFallThroughSuccessor].First;
+            var fallThroughSuccessor =
+                roslynFallThroughSuccessor is not null
+                ? _roslynToSlicitoBasicBlocksMap[roslynFallThroughSuccessor].First
+                : null;
 
             if (roslynBlock.ConditionKind == ControlFlowConditionKind.WhenTrue)
             {
                 _builder.AddTrueEdge(lastBlock, conditionalSuccessor);
-                _builder.AddFalseEdge(lastBlock, fallThroughSuccessor);
+
+                if (fallThroughSuccessor is not null)
+                {
+                    _builder.AddFalseEdge(lastBlock, fallThroughSuccessor);
+                }
             }
             else
             {
                 Debug.Assert(roslynBlock.ConditionKind == ControlFlowConditionKind.WhenFalse);
 
                 _builder.AddFalseEdge(lastBlock, conditionalSuccessor);
-                _builder.AddTrueEdge(lastBlock, fallThroughSuccessor);
+
+                if (fallThroughSuccessor is not null)
+                {
+                    _builder.AddTrueEdge(lastBlock, fallThroughSuccessor);
+                }
             }
         }
         else
