@@ -9,6 +9,7 @@ namespace Slicito.DotNet.Implementation;
 internal class DotNetSliceFragment(ISlice slice, DotNetTypes dotNetTypes) : IDotNetSliceFragment
 {
     private readonly ILazyLinkExplorer _hierarchyExplorer = slice.GetLinkExplorer(dotNetTypes.Contains);
+    private readonly ILazyLinkExplorer _overridesExplorer = slice.GetLinkExplorer(dotNetTypes.Overrides);
     private readonly ILazyLinkExplorer _referenceExplorer = slice.GetLinkExplorer(dotNetTypes.References);
 
     private readonly Func<ElementId, ValueTask<string>> _nameProvider = slice.GetElementAttributeProviderAsyncCallback(DotNetAttributeNames.Name);
@@ -116,7 +117,7 @@ internal class DotNetSliceFragment(ISlice slice, DotNetTypes dotNetTypes) : IDot
             .Where(lambda => lambda.Type.Value.IsSubsetOfOrEquals(dotNetTypes.Lambda.Value))
             .Select(lambda => new CSharpLambdaElement(lambda.Id));
     }
-    
+
     public async ValueTask<IEnumerable<ICSharpOperationElement>> GetOperationsAsync(ICSharpProcedureElement function)
     {
         var operations = await _hierarchyExplorer.GetTargetElementsAsync(function.Id);
@@ -124,6 +125,14 @@ internal class DotNetSliceFragment(ISlice slice, DotNetTypes dotNetTypes) : IDot
         return operations
             .Where(operation => operation.Type.Value.IsSubsetOfOrEquals(dotNetTypes.Operation.Value))
             .Select(operation => CreateOperationElement(operation));
+    }
+
+    public async ValueTask<IEnumerable<IDotNetMethodElement>> GetOverridenMethodsAsync(IDotNetMethodElement method)
+    {
+        var overridenMethods = await _overridesExplorer.GetTargetElementsAsync(method.Id);
+
+        return overridenMethods
+            .Select(overridenMethod => new CSharpMethodElement(overridenMethod.Id, GetName(overridenMethod.Id)));
     }
 
     private string GetName(ElementId elementId)

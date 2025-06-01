@@ -80,6 +80,7 @@ internal class SliceCreator
             .AddHierarchyLinks(_types.Contains, _types.Method, _types.Operation, LoadMethodOperations)
             .AddHierarchyLinks(_types.Contains, _types.NestedProcedures, _types.Operation, LoadNestedProcedureOperations)
             .AddLinks(_types.References, _types.Project, _types.Project, LoadProjectReferences)
+            .AddLinks(_types.Overrides, _types.Method, _types.Method, LoadMethodOverridesAsync)
             .AddLinks(_types.Calls, _types.Operation, _types.Method, LoadCallees)
             .AddElementAttribute(_types.Solution, DotNetAttributeNames.Name, LoadSolutionName)
             .AddElementAttribute(_types.Project, DotNetAttributeNames.Name, LoadProjectName)
@@ -251,6 +252,40 @@ internal class SliceCreator
 
             yield return ToPartialLinkInfo(_elementCache.GetElement(referencedProject));
         }
+    }
+
+    private async ValueTask<IEnumerable<ISliceBuilder.PartialLinkInfo>> LoadMethodOverridesAsync(ElementId sourceId)
+    {
+        var method = _elementCache.GetMethodAndRelatedProject(sourceId, out var project);
+
+        if (method.ContainingType is not ITypeSymbol type)
+        {
+            return [];
+        }
+
+        var interfaceMemberQuery =
+            from iface in type.AllInterfaces
+            from interfaceMember in iface.GetMembers()
+            let impl = type.FindImplementationForInterfaceMember(interfaceMember)
+            where method.Equals(impl, SymbolEqualityComparer.Default)
+            select interfaceMember;
+
+        var interfaceMembers = await Task.WhenAll(interfaceMemberQuery.Select(async interfaceMember =>
+        {
+            var element = await _elementCache.GetElementAsync(project, interfaceMember);
+            return ToPartialLinkInfo(element);
+        }));
+
+        var result = interfaceMembers.ToList();
+
+        if (method.OverriddenMethod is not null)
+        {
+            var overriddenMethodElement = await _elementCache.GetElementAsync(project, method.OverriddenMethod);
+
+            result.Add(ToPartialLinkInfo(overriddenMethodElement));
+        }
+
+        return result;
     }
 
     private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadCallees(ElementId sourceId)

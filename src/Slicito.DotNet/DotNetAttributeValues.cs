@@ -26,6 +26,7 @@ public static class DotNetAttributeValues
         public const string Operation = "Operation";
 
         public const string References = "References";
+        public const string Overrides = "Overrides";
         public const string Calls = "Calls";
     }
 

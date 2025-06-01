@@ -8,6 +8,7 @@ public class DotNetTypes(ITypeSystem typeSystem) : IProgramTypes
 {
     public LinkType Contains { get; } = typeSystem.GetLinkType([(CommonAttributeNames.Kind, CommonAttributeValues.Kind.Contains)]);
     public LinkType References { get; } = typeSystem.GetLinkType([(DotNetAttributeNames.Kind, DotNetAttributeValues.Kind.References)]);
+    public LinkType Overrides { get; } = typeSystem.GetLinkType([(DotNetAttributeNames.Kind, DotNetAttributeValues.Kind.Overrides)]);
     public LinkType Calls { get; } = typeSystem.GetLinkType([(DotNetAttributeNames.Kind, DotNetAttributeValues.Kind.Calls)]);
 
     public ElementType Solution { get; } = typeSystem.GetElementType([(DotNetAttributeNames.Kind, DotNetAttributeValues.Kind.Solution)]);

@@ -46,6 +46,9 @@ public interface IDotNetSliceFragment : ITypedSliceFragment
     [ForwardLinkKind(CommonAttributeValues.Kind.Contains)]
     ValueTask<IEnumerable<ICSharpOperationElement>> GetOperationsAsync(ICSharpProcedureElement function);
 
+    [ForwardLinkKind(DotNetAttributeValues.Kind.Overrides)]
+    ValueTask<IEnumerable<IDotNetMethodElement>> GetOverridenMethodsAsync(IDotNetMethodElement method);
+
     [return: Attribute(CommonAttributeNames.CodeLocation)]
     ValueTask<CodeLocation> GetCodeLocationAsync(ICSharpTypeElement type);
 

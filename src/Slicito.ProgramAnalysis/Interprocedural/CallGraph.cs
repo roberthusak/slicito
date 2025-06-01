@@ -8,9 +8,14 @@ public sealed class CallGraph
 {
     private readonly Dictionary<ElementId, Procedure> _proceduresById;
     private readonly Dictionary<(ElementId, int), ElementId> _callTargets; // Maps call site ID and ordinal to target procedure ID
+    private readonly IReadOnlyDictionary<ElementId, ImmutableArray<ElementId>>? _overrides;
 
     public record CallSite(ElementInfo ProcedureElement, ElementInfo CallElement, int Ordinal);
     public record Procedure(ElementInfo ProcedureElement, ImmutableArray<CallSite> CallSites);
+    public record CallTarget(Procedure Original, ImmutableArray<Procedure> Overrides)
+    {
+        public IEnumerable<Procedure> All => Overrides.Concat([Original]);
+    }
 
     public ImmutableArray<Procedure> RootProcedures { get; }
     public ImmutableArray<Procedure> AllProcedures { get; }
@@ -22,35 +27,49 @@ public sealed class CallGraph
         ImmutableArray<Procedure> allProcedures,
         Dictionary<ElementId, Procedure> proceduresById,
         Dictionary<(ElementId, int), ElementId> callTargets,
+        IReadOnlyDictionary<ElementId, ImmutableArray<ElementId>>? overrides,
         ISlice originalSlice)
     {
         RootProcedures = rootProcedures;
         AllProcedures = allProcedures;
         _proceduresById = proceduresById;
         _callTargets = callTargets;
+        _overrides = overrides;
         OriginalSlice = originalSlice;
     }
 
-    public Procedure GetTarget(CallSite callSite)
+    public CallTarget GetTarget(CallSite callSite)
     {
         var targetProcedureId = _callTargets[(callSite.CallElement.Id, callSite.Ordinal)];
-        return _proceduresById[targetProcedureId];
-    }
-
-    public IEnumerable<CallSite> GetCallers(Procedure callee)
-    {
-        return AllProcedures
-            .SelectMany(p => p.CallSites)
-            .Where(cs => _callTargets[(cs.CallElement.Id, cs.Ordinal)] == callee.ProcedureElement.Id);
+        var originalProcedure = _proceduresById[targetProcedureId];
+        
+        // Get overrides if they exist
+        var overrides = _overrides?.TryGetValue(targetProcedureId, out var overrideIds) == true
+            ? overrideIds.Select(id => _proceduresById[id]).ToImmutableArray()
+            : [];
+            
+        return new CallTarget(originalProcedure, overrides);
     }
 
     public class Builder(ISlice slice, IProgramTypes types)
     {
         private readonly HashSet<ElementId> _rootProcedureIds = [];
+        private IReadOnlyDictionary<ElementId, ImmutableArray<ElementId>>? _overrides;
 
         public Builder AddCallerRoot(ElementId callerRoot)
         {
             _rootProcedureIds.Add(callerRoot);
+            return this;
+        }
+
+        public Builder AddOverrides(IReadOnlyDictionary<ElementId, ImmutableArray<ElementId>> overrides)
+        {
+            if (_overrides is not null)
+            {
+                throw new InvalidOperationException("Overrides already set.");
+            }
+
+            _overrides = overrides;
             return this;
         }
 
@@ -101,6 +120,15 @@ public sealed class CallGraph
                         callSites.Add(new(procedureElement, callElement, ordinal));
                         callTargets[(callElement.Id, ordinal)] = targetElement.Id;
                         proceduresToProcess.Enqueue(targetElement.Id);
+
+                        // Add overrides of the target procedure if they exist
+                        if (_overrides?.TryGetValue(targetElement.Id, out var overrideIds) == true)
+                        {
+                            foreach (var overrideId in overrideIds)
+                            {
+                                proceduresToProcess.Enqueue(overrideId);
+                            }
+                        }
                     }
                 }
 
@@ -117,6 +145,7 @@ public sealed class CallGraph
                 proceduresById.Values.ToImmutableArray(),
                 proceduresById,
                 callTargets,
+                _overrides,
                 slice);
         }
     }

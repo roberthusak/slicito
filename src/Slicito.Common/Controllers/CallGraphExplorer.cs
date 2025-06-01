@@ -81,7 +81,10 @@ public class CallGraphExplorer : IController
             var elementId = new ElementId(id);
             var caller = _callGraph.AllProcedures.Single(p => p.ProcedureElement.Id == elementId);
 
-            _visibleProcedures.UnionWith(caller.CallSites.Select(_callGraph.GetTarget));
+            _visibleProcedures.UnionWith(
+                caller.CallSites
+                .Select(_callGraph.GetTarget)
+                .SelectMany(ct => ct.All));
 
             await TryNavigateToAsync(caller.ProcedureElement);
 
@@ -127,20 +130,21 @@ public class CallGraphExplorer : IController
 
             var callerId = caller.ProcedureElement.Id.Value;
 
-            bool expanded = true;
+            var expanded = true;
 
             foreach (var callSite in caller.CallSites)
             {
-                var callee = _callGraph.GetTarget(callSite);
-
-                if (!_visibleProcedures.Contains(callee))
+                foreach (var callee in _callGraph.GetTarget(callSite).All)
                 {
-                    expanded = false;
-                    continue;
-                }
+                    if (!_visibleProcedures.Contains(callee))
+                    {
+                        expanded = false;
+                        break;
+                    }
 
-                var edge = new Edge(caller.ProcedureElement.Id.Value, callee.ProcedureElement.Id.Value);
-                edges.Add(edge);
+                    var edge = new Edge(caller.ProcedureElement.Id.Value, callee.ProcedureElement.Id.Value);
+                    edges.Add(edge);
+                }
             }
 
             if (!expanded)
@@ -165,6 +169,8 @@ public class CallGraphExplorer : IController
     public bool IsVisible(CallGraph.Procedure procedure) => _visibleProcedures.Contains(procedure);
 
     public bool IsExpanded(CallGraph.Procedure procedure) =>
-        procedure.CallSites.All(callSite =>
-            _visibleProcedures.Contains(_callGraph.GetTarget(callSite)));
+        procedure.CallSites
+            .Select(_callGraph.GetTarget)
+            .SelectMany(ct => ct.All)
+            .All(_visibleProcedures.Contains);
 }
