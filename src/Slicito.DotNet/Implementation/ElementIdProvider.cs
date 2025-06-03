@@ -1,3 +1,6 @@
+using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
+
 using Microsoft.CodeAnalysis;
 
 using Slicito.Abstractions;
@@ -73,16 +76,87 @@ internal static class ElementIdProvider
             switch (method.MethodKind)
             {
                 case MethodKind.Constructor:
-                    return name + ".ctor";
+                    name += ".ctor";
+                    break;
                 case MethodKind.StaticConstructor:
-                    return name + ".cctor";
+                    name += ".cctor";
+                    break;
                 case MethodKind.AnonymousFunction:
                     var containingMethod = RoslynHelper.GetContainingMethodOrSelf(method);
                     var location = method.Locations.First().SourceSpan;
-                    return $"{GetUniqueNameWithinProject(containingMethod)}.lambda_{location.Start}-{location.End}";
+                    name = $"{GetUniqueNameWithinProject(containingMethod)}.lambda_{location.Start}-{location.End}";
+                    break;
             }
         }
 
+        if (TryGetTypeArgumentsThatAreTypeParametersFromOutside(symbol, out var typeParameters))
+        {
+            // Ensures that A<B.T> and A<C.T> are distinguishable
+            var typeParametersString = string.Join(
+                ",",
+                typeParameters.Select(t =>
+                    $"{t.ContainingSymbol.ToDisplayString(_projectUniqueNameFormat)}.{t.Name}"));
+
+            name += $"[{typeParametersString}]";
+        }
+
         return name;
+    }
+
+    private static bool TryGetTypeArgumentsThatAreTypeParametersFromOutside(
+        ISymbol symbol,
+        [NotNullWhen(true)] out IReadOnlyList<ITypeParameterSymbol>? typeParameters)
+    {
+        List<ITypeParameterSymbol>? typeParametersList = null;
+        
+        for (var current = symbol; current is not null or INamespaceSymbol; current = current.ContainingSymbol)
+        {
+            ImmutableArray<ITypeParameterSymbol> currentTypeParameters;
+            ImmutableArray<ITypeSymbol> currentTypeArguments;
+            if (current is IMethodSymbol method)
+            {
+                currentTypeParameters = method.TypeParameters;
+                currentTypeArguments = method.TypeArguments;
+            }
+            else if (current is INamedTypeSymbol type)
+            {
+                currentTypeParameters = type.TypeParameters;
+                currentTypeArguments = type.TypeArguments;
+            }
+            else
+            {
+                continue;
+            }
+
+            for (var i = 0; i < currentTypeParameters.Length; i++)
+            {
+                var typeParameter = currentTypeParameters[i];
+                var typeArgument = currentTypeArguments[i];
+
+                // We are interested in type arguments that are type parameters from outside
+                // (typeArgument is equal to the matching typeParameter when unspecified)
+                if (!SymbolEqualityComparer.Default.Equals(typeParameter, typeArgument))
+                {
+                    if (typeArgument is ITypeParameterSymbol outsideTypeParameter)
+                    {
+                        typeParametersList ??= [];
+                        typeParametersList.Add(outsideTypeParameter);
+                    }
+                    else if (typeArgument is INamedTypeSymbol namedType && namedType.IsGenericType)
+                    {
+                        if (TryGetTypeArgumentsThatAreTypeParametersFromOutside(namedType, out var nestedTypeParameters))
+                        {
+                            typeParametersList ??= [];
+                            typeParametersList.AddRange(nestedTypeParameters);
+                        }
+                    }
+                }
+            }
+
+            symbol = symbol.ContainingSymbol;
+        }
+
+        typeParameters = typeParametersList;
+        return typeParametersList is not null;
     }
 }
