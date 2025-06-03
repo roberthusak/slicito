@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Operations;
 
 using Slicito.ProgramAnalysis.Notation;
@@ -248,6 +249,12 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
         IOperation operation,
         [CallerMemberName] string? callerName = null)
     {
+        // Would return null and it's not possible to override it
+        if (operation.Kind == OperationKind.None)
+        {
+            return new Expression.Unsupported($"Operation not supported by Roslyn (syntax kind: {operation.Syntax.Kind()}).");
+        }
+
         return operation.Accept(this, default)
             ?? throw new InvalidOperationException(
                 $"Visiting operation {operation.Kind} (type: {operation.GetType().Name}) in {callerName} returned null.");
