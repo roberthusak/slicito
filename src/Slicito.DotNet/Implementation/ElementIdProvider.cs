@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 
 using Microsoft.CodeAnalysis;
 
@@ -26,8 +27,16 @@ internal static class ElementIdProvider
 
     public static ElementId GetId(Project project) => new(project.FilePath!);
 
-    public static ElementId GetId(Project? project, string? assemblyReferencePath, ISymbol symbol) =>
-        new($"{GetUniqueContextPrefix(project, assemblyReferencePath)}.{GetUniqueNameWithinProject(symbol)}");
+    public static ElementId GetId(Project project, string? assemblyReferencePath, ISymbol symbol)
+    {
+        var idBuilder = new StringBuilder();
+
+        AppendUniqueContextPrefix(idBuilder, project, assemblyReferencePath);
+        idBuilder.Append(".");
+        AppendUniqueNameWithinProject(idBuilder, symbol);
+
+        return new(idBuilder.ToString());
+    }
 
     public static string GetOperationIdPrefix(Project project, IMethodSymbol method) => $"{GetId(project, null, method).Value}.op!";
 
@@ -41,34 +50,26 @@ internal static class ElementIdProvider
         return new(operationId.Value[..index]);
     }
 
-    private static string GetUniqueContextPrefix(Project? project, string? assemblyReferencePath)
+    private static void AppendUniqueContextPrefix(StringBuilder prefixBuilder, Project project, string? assemblyReferencePath)
     {
-        if (project is not null)
+        if (assemblyReferencePath is not null)
         {
-            if (project.Solution.FilePath is null)
-            {
-                return project.Name;
-            }
-            else
-            {
-                var solutionName = Path.GetFileNameWithoutExtension(project.Solution.FilePath);
-    
-                return $"{solutionName}.{project.Name}";
-            }
+            prefixBuilder.Append(assemblyReferencePath);
+            prefixBuilder.Append(":");
         }
-        else if (assemblyReferencePath is not null)
+
+        if (project.Solution.FilePath is not null)
         {
-            return assemblyReferencePath;
+            prefixBuilder.Append(Path.GetFileNameWithoutExtension(project.Solution.FilePath));
+            prefixBuilder.Append(".");
         }
-        else
-        {
-            throw new InvalidOperationException("Either a project or an assembly reference path must be provided.");
-        }
+
+        prefixBuilder.Append(project.Name);
     }
 
-    private static string GetUniqueNameWithinProject(ISymbol symbol)
+    private static void AppendUniqueNameWithinProject(StringBuilder nameBuilder, ISymbol symbol)
     {
-        var name = symbol.ToDisplayString(_projectUniqueNameFormat);
+        nameBuilder.Append(symbol.ToDisplayString(_projectUniqueNameFormat));
 
         if (symbol is IMethodSymbol method)
         {
@@ -76,15 +77,17 @@ internal static class ElementIdProvider
             switch (method.MethodKind)
             {
                 case MethodKind.Constructor:
-                    name += ".ctor";
+                    nameBuilder.Append(".ctor");
                     break;
                 case MethodKind.StaticConstructor:
-                    name += ".cctor";
+                    nameBuilder.Append(".cctor");
                     break;
                 case MethodKind.AnonymousFunction:
                     var containingMethod = RoslynHelper.GetContainingMethodOrSelf(method);
                     var location = method.Locations.First().SourceSpan;
-                    name = $"{GetUniqueNameWithinProject(containingMethod)}.lambda_{location.Start}-{location.End}";
+
+                    AppendUniqueNameWithinProject(nameBuilder, containingMethod);
+                    nameBuilder.Append($".lambda_{location.Start}-{location.End}");
                     break;
             }
         }
@@ -97,10 +100,8 @@ internal static class ElementIdProvider
                 typeParameters.Select(t =>
                     $"{t.ContainingSymbol.ToDisplayString(_projectUniqueNameFormat)}.{t.Name}"));
 
-            name += $"[{typeParametersString}]";
+            nameBuilder.Append($"[{typeParametersString}]");
         }
-
-        return name;
     }
 
     private static bool TryGetTypeArgumentsThatAreTypeParametersFromOutside(
