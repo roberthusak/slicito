@@ -1,5 +1,6 @@
 using System.IO;
 using System.Reflection;
+using System.Runtime.Loader;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -26,7 +27,10 @@ public partial class MainWindow : Window
     private readonly string _solutionPath;
     private readonly string _controllersPath;
     private readonly string _controllerType;
+    private readonly string[] _additionalAssemblies;
     private readonly DependencyManager _dependencyManager;
+
+    private AssemblyLoadContext? _assemblyLoadContext;
 
     public MainWindow()
     {
@@ -36,6 +40,7 @@ public partial class MainWindow : Window
         _solutionPath = args[1];
         _controllersPath = args[2];
         _controllerType = args[3];
+        _additionalAssemblies = [.. args.Skip(4)];
 
         _dependencyManager = new DependencyManager(_solutionPath, new TabOpener(this));
     }
@@ -68,10 +73,17 @@ public partial class MainWindow : Window
 
     private async Task<IController> LoadController()
     {
-        var assemblyBinary = await File.ReadAllBytesAsync(_controllersPath);
-        var assembly = Assembly.Load(assemblyBinary);
+        _assemblyLoadContext?.Unload();
+        _assemblyLoadContext = new AssemblyLoadContext("ControllerLoadContext", isCollectible: true);
 
-        var type = assembly.GetTypes()
+        foreach (var assemblyPath in _additionalAssemblies)
+        {
+            LoadAssemblyWithoutLockingFile(_assemblyLoadContext, assemblyPath);
+        }
+
+        var controllersAssembly = LoadAssemblyWithoutLockingFile(_assemblyLoadContext, _controllersPath);
+
+        var type = controllersAssembly.GetTypes()
             .Where(t => typeof(IController).IsAssignableFrom(t) && t.Name == _controllerType)
             .Single();
 
@@ -82,6 +94,13 @@ public partial class MainWindow : Window
             ?? throw new ApplicationException($"Unable to create an instance of the type {type.Name}.");
 
         return (IController)controller;
+    }
+
+    private static Assembly LoadAssemblyWithoutLockingFile(AssemblyLoadContext context, string assemblyPath)
+    {
+        using var stream = new FileStream(assemblyPath, FileMode.Open, FileAccess.Read);
+        
+        return context.LoadFromStream(stream);
     }
 
     private void CloseTabButton_Click(object sender, RoutedEventArgs e)
