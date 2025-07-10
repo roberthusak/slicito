@@ -7,7 +7,6 @@ namespace Slicito.DotNet;
 
 public interface IDotNetSliceFragment : ITypedSliceFragment
 {
-    [ForwardLinkKind(CommonAttributeValues.Kind.Contains)]
     ValueTask<IEnumerable<ISolutionElement>> GetSolutionsAsync();
 
     [ForwardLinkKind(CommonAttributeValues.Kind.Contains)]
