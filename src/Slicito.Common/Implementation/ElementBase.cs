@@ -7,12 +7,12 @@ public abstract partial class ElementBase(ElementId id) : IElement
 {
     public ElementId Id { get; } = id;
 
-    public bool Equals(IElement other)
+    public bool Equals(IElement? other)
     {
-        return Id == other.Id;
+        return other is not null && Id == other.Id;
     }
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         return obj is IElement element && Equals(element);
     }
