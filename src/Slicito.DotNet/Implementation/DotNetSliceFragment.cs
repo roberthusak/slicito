@@ -82,13 +82,13 @@ internal class DotNetSliceFragment(ISlice slice, DotNetTypes dotNetTypes) : IDot
             .Select(property => new CSharpPropertyElement(property.Id, GetName(property.Id)));
     }
 
-    public async ValueTask<IEnumerable<ICSharpPropertyElement>> GetPropertiesAsync(ICSharpPropertyElement property)
+    public async ValueTask<IEnumerable<ICSharpFieldElement>> GetFieldsAsync(ICSharpTypeElement type)
     {
-        var properties = await _hierarchyExplorer.GetTargetElementsAsync(property.Id);
+        var fields = await _hierarchyExplorer.GetTargetElementsAsync(type.Id);
 
-        return properties
-            .Where(property => property.Type.Value.IsSubsetOfOrEquals(dotNetTypes.Property.Value))
-            .Select(property => new CSharpPropertyElement(property.Id, GetName(property.Id)));
+        return fields
+            .Where(field => field.Type.Value.IsSubsetOfOrEquals(dotNetTypes.Field.Value))
+            .Select(field => new CSharpFieldElement(field.Id, GetName(field.Id)));
     }
 
     public async ValueTask<IEnumerable<ICSharpMethodElement>> GetMethodsAsync(ICSharpTypeElement type)
