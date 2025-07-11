@@ -1,12 +1,10 @@
-using Slicito.ProgramAnalysis;
 using Slicito.ProgramAnalysis.DataFlow;
 using Slicito.ProgramAnalysis.DataFlow.Analyses;
-using Slicito.ProgramAnalysis.Interprocedural;
 using Slicito.ProgramAnalysis.Notation;
 
-namespace Slicito.Common.Controllers.Implementation;
+namespace Slicito.ProgramAnalysis.Interprocedural;
 
-public static class InterproceduralDataFlowAnalyzer
+public static class CallGraphForwardDataFlowAnalyzer
 {
     public record ProcedureParameter(CallGraph.Procedure Procedure, Variable Parameter);
 

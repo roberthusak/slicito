@@ -4,7 +4,6 @@ using System.Collections.Immutable;
 using Slicito.Abstractions;
 using Slicito.Abstractions.Interaction;
 using Slicito.Abstractions.Models;
-using Slicito.Common.Controllers.Implementation;
 using Slicito.ProgramAnalysis;
 using Slicito.ProgramAnalysis.Interprocedural;
 
@@ -59,12 +58,12 @@ public class CallGraphExplorer : IController
                 (flowGraphProvider.TryGetFlowGraph(procedure.ProcedureElement)?.Entry.Parameters ?? [])
                 .Where(parameter => options.EmphasizedParameterNames.Contains(parameter.Name))
                 .Select(parameter =>
-                    new InterproceduralDataFlowAnalyzer.ProcedureParameter(procedure, parameter)))
+                    new CallGraphForwardDataFlowAnalyzer.ProcedureParameter(procedure, parameter)))
             .ToArray();
 
         if (initialParameters.Length > 0)
         {
-            var reachableParameters = InterproceduralDataFlowAnalyzer.FindReachableProcedureParameters(callGraph, flowGraphProvider, initialParameters);
+            var reachableParameters = CallGraphForwardDataFlowAnalyzer.FindReachableProcedureParameters(callGraph, flowGraphProvider, initialParameters);
             visibleProcedures.UnionWith(reachableParameters.Select(p => p.Procedure));
         }
 
