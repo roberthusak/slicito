@@ -45,6 +45,16 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
         return TranslateConstantValue(operation.ConstantValue.Value);
     }
 
+    public override Expression? VisitConversion(IConversionOperation operation, Empty _)
+    {
+        if (operation.Type?.Equals(operation.Operand.Type, SymbolEqualityComparer.IncludeNullability) == true)
+        {
+            return VisitEnsureNonNull(operation.Operand);
+        }
+
+        return DefaultVisit(operation, default);
+    }
+
     public override Expression? VisitParameterReference(IParameterReferenceOperation operation, Empty _)
     {
         var variable = context.GetOrCreateVariable(operation.Parameter);
