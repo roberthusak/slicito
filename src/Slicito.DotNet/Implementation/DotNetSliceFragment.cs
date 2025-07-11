@@ -9,6 +9,7 @@ namespace Slicito.DotNet.Implementation;
 internal class DotNetSliceFragment(ISlice slice, DotNetTypes dotNetTypes) : IDotNetSliceFragment
 {
     private readonly ILazyLinkExplorer _hierarchyExplorer = slice.GetLinkExplorer(dotNetTypes.Contains);
+    private readonly ILazyLinkExplorer _callExplorer = slice.GetLinkExplorer(dotNetTypes.Calls);
     private readonly ILazyLinkExplorer _overridesExplorer = slice.GetLinkExplorer(dotNetTypes.Overrides);
     private readonly ILazyLinkExplorer _referenceExplorer = slice.GetLinkExplorer(dotNetTypes.References);
 
@@ -125,6 +126,16 @@ internal class DotNetSliceFragment(ISlice slice, DotNetTypes dotNetTypes) : IDot
         return operations
             .Where(operation => operation.Type.Value.IsSubsetOfOrEquals(dotNetTypes.Operation.Value))
             .Select(operation => CreateOperationElement(operation));
+    }
+
+    public async ValueTask<ICSharpMethodElement> GetCallTargetAsync(ICSharpCallElement call)
+    {
+        var callTargets = await _callExplorer.GetTargetElementsAsync(call.Id);
+
+        // The remaining call targets are only helper ones because of unsupported inner operations
+        var callTarget = callTargets.First();
+
+        return new CSharpMethodElement(callTarget.Id, GetName(callTarget.Id));
     }
 
     public async ValueTask<IEnumerable<IDotNetMethodElement>> GetOverridenMethodsAsync(IDotNetMethodElement method)
