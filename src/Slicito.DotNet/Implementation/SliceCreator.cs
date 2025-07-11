@@ -88,7 +88,8 @@ internal class SliceCreator
             .AddElementAttribute(_types.Project, DotNetAttributeNames.OutputKind, LoadProjectOutputKind)
             .AddElementAttribute(namedSymbolTypes, DotNetAttributeNames.Name, LoadSymbolName)
             .AddElementAttribute(_types.Operation, DotNetAttributeNames.Name, LoadOperationName)
-            .AddElementAttribute(symbolTypes, CommonAttributeNames.CodeLocation, LoadCodeLocation)
+            .AddElementAttribute(symbolTypes, CommonAttributeNames.CodeLocation, LoadSymbolCodeLocation)
+            .AddElementAttribute(_types.Operation, CommonAttributeNames.CodeLocation, LoadOperationCodeLocation)
             .Build();
     }
 
@@ -352,16 +353,12 @@ internal class SliceCreator
 
     private string LoadOperationName(ElementId elementId)
     {
-        var methodId = ElementIdProvider.GetMethodIdFromOperationId(elementId);
-
-        var method = _elementCache.GetMethod(methodId);
-
-        var syntax = _flowGraphCache[method]!.Value.OperationMapping.GetSyntax(elementId);
+        var syntax = GetOperationSyntax(elementId);
 
         return syntax.ToString();
     }
 
-    private string LoadCodeLocation(ElementId elementId)
+    private string LoadSymbolCodeLocation(ElementId elementId)
     {
         var symbol = _elementCache.GetSymbol(elementId);
 
@@ -378,7 +375,28 @@ internal class SliceCreator
             return "";
         }
 
-        var lineSpan = syntax?.SyntaxTree.GetLocation(span.Value).GetLineSpan();
+        return ConvertSyntaxToCodeLocation(syntax, span.Value);
+    }
+
+    private string LoadOperationCodeLocation(ElementId elementId)
+    {
+        var syntax = GetOperationSyntax(elementId);
+
+        return ConvertSyntaxToCodeLocation(syntax, syntax.Span);
+    }
+
+    private SyntaxNode GetOperationSyntax(ElementId elementId)
+    {
+        var methodId = ElementIdProvider.GetMethodIdFromOperationId(elementId);
+
+        var method = _elementCache.GetMethod(methodId);
+
+        return _flowGraphCache[method]!.Value.OperationMapping.GetSyntax(elementId);
+    }
+
+    private static string ConvertSyntaxToCodeLocation(SyntaxNode? syntax, Microsoft.CodeAnalysis.Text.TextSpan span)
+    {
+        var lineSpan = syntax?.SyntaxTree.GetLocation(span).GetLineSpan();
         if (lineSpan is null)
         {
             return "";

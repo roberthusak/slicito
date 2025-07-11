@@ -203,6 +203,8 @@ internal class DotNetSliceFragment(ISlice slice, DotNetTypes dotNetTypes) : IDot
 
     public async ValueTask<CodeLocation> GetCodeLocationAsync(ICSharpMethodElement method) => await GetCodeLocationCommonAsync(method.Id);
 
+    public async ValueTask<CodeLocation> GetCodeLocationAsync(ICSharpOperationElement operation) => await GetCodeLocationCommonAsync(operation.Id);
+
     private async ValueTask<CodeLocation> GetCodeLocationCommonAsync(ElementId elementId)
     {
         var codeLocationTask = await _codeLocationProvider(elementId);

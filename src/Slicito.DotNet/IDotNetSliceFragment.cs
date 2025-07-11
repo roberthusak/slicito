@@ -62,4 +62,7 @@ public interface IDotNetSliceFragment : ITypedSliceFragment
 
     [return: Attribute(CommonAttributeNames.CodeLocation)]
     ValueTask<CodeLocation> GetCodeLocationAsync(ICSharpMethodElement method);
+
+    [return: Attribute(CommonAttributeNames.CodeLocation)]
+    ValueTask<CodeLocation> GetCodeLocationAsync(ICSharpOperationElement operation);
 }
