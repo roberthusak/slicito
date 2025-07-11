@@ -67,7 +67,8 @@ internal class SliceCreator
         var namespaceMemberTypes = _types.Namespace | _types.Type;
         var typeMemberTypes = _types.Type | _types.Property | _types.Field | _types.Method;
 
-        var symbolTypes = _types.Namespace | _types.Type | _types.Property | _types.Field | _types.Method;
+        var namedSymbolTypes = _types.Namespace | _types.Type | _types.Property | _types.Field | _types.Method | _types.LocalFunction;
+        var symbolTypes = namedSymbolTypes | _types.Lambda;
 
         return _sliceManager.CreateBuilder()
             .AddRootElements(_types.Solution, LoadSolutions)
@@ -85,7 +86,7 @@ internal class SliceCreator
             .AddElementAttribute(_types.Solution, DotNetAttributeNames.Name, LoadSolutionName)
             .AddElementAttribute(_types.Project, DotNetAttributeNames.Name, LoadProjectName)
             .AddElementAttribute(_types.Project, DotNetAttributeNames.OutputKind, LoadProjectOutputKind)
-            .AddElementAttribute(symbolTypes, DotNetAttributeNames.Name, LoadSymbolName)
+            .AddElementAttribute(namedSymbolTypes, DotNetAttributeNames.Name, LoadSymbolName)
             .AddElementAttribute(_types.Operation, DotNetAttributeNames.Name, LoadOperationName)
             .AddElementAttribute(symbolTypes, CommonAttributeNames.CodeLocation, LoadCodeLocation)
             .Build();
