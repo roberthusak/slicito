@@ -276,27 +276,16 @@ internal class FlowGraphCreator
 
         if (lastBlock is SlicitoBasicBlock.Inner { Operation: Operation.ConditionalJump })
         {
-            var roslynConditionalSuccessor = roslynBlock.ConditionalSuccessor?.Destination
-                ?? throw new InvalidOperationException("Block with a conditional jump must have a conditional successor.");
+            var conditionalSuccessor = TranslateRoslynSuccessor(roslynBlock.ConditionalSuccessor);
 
-            var conditionalSuccessor = _roslynToSlicitoBasicBlocksMap[roslynConditionalSuccessor].First;
-
-            var roslynFallThroughSuccessor = roslynBlock.FallThroughSuccessor?.Destination;
-            if (roslynFallThroughSuccessor is null && 
-                roslynBlock.FallThroughSuccessor?.Semantics != ControlFlowBranchSemantics.StructuredExceptionHandling)
-            {
-                throw new InvalidOperationException(
-                    "Block with a conditional jump must have a fall-through successor unless it's the last block of finally or filter region.");
-            }
-
-            var fallThroughSuccessor =
-                roslynFallThroughSuccessor is not null
-                ? _roslynToSlicitoBasicBlocksMap[roslynFallThroughSuccessor].First
-                : null;
+            var fallThroughSuccessor = TranslateRoslynSuccessor(roslynBlock.FallThroughSuccessor);
 
             if (roslynBlock.ConditionKind == ControlFlowConditionKind.WhenTrue)
             {
-                _builder.AddTrueEdge(lastBlock, conditionalSuccessor);
+                if (conditionalSuccessor is not null)
+                {
+                    _builder.AddTrueEdge(lastBlock, conditionalSuccessor);
+                }
 
                 if (fallThroughSuccessor is not null)
                 {
@@ -307,7 +296,10 @@ internal class FlowGraphCreator
             {
                 Debug.Assert(roslynBlock.ConditionKind == ControlFlowConditionKind.WhenFalse);
 
-                _builder.AddFalseEdge(lastBlock, conditionalSuccessor);
+                if (conditionalSuccessor is not null)
+                {
+                    _builder.AddFalseEdge(lastBlock, conditionalSuccessor);
+                }
 
                 if (fallThroughSuccessor is not null)
                 {
@@ -323,6 +315,24 @@ internal class FlowGraphCreator
                 _builder.AddUnconditionalEdge(lastBlock, _roslynToSlicitoBasicBlocksMap[fallThroughSuccessor].First);
             }
         }
+    }
+
+    private SlicitoBasicBlock? TranslateRoslynSuccessor(ControlFlowBranch? roslynSuccessor)
+    {
+        var roslynDestination = roslynSuccessor?.Destination;
+        if (roslynDestination is null
+            && roslynSuccessor?.Semantics != ControlFlowBranchSemantics.StructuredExceptionHandling
+            && roslynSuccessor?.Semantics != ControlFlowBranchSemantics.Throw
+            && roslynSuccessor?.Semantics != ControlFlowBranchSemantics.Rethrow)
+        {
+            throw new InvalidOperationException(
+                "Roslyn successor must have a destination unless it's the last block of finally or filter region, throw, or rethrow.");
+        }
+
+        return
+            roslynDestination is not null
+            ? _roslynToSlicitoBasicBlocksMap[roslynDestination].First
+            : null;
     }
 
     private Variable GetOrCreateVariable(ILocalSymbol local) => GetOrCreateVariable(local, local.Type);
