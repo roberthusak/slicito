@@ -79,15 +79,24 @@ internal static class ElementIdProvider
                 case MethodKind.Constructor:
                     nameBuilder.Append(".ctor");
                     break;
+
                 case MethodKind.StaticConstructor:
                     nameBuilder.Append(".cctor");
                     break;
+
                 case MethodKind.AnonymousFunction:
-                    var containingMethod = RoslynHelper.GetContainingMethodOrSelf(method);
+                    var lambdaContainingMethod = RoslynHelper.GetContainingMethodOrSelf(method);
                     var location = method.Locations.First().SourceSpan;
 
-                    AppendUniqueNameWithinProject(nameBuilder, containingMethod);
-                    nameBuilder.Append($".lambda_{location.Start}-{location.End}");
+                    nameBuilder.Append($"$lambda-{location.Start}-{location.End}-of:");
+                    AppendUniqueNameWithinProject(nameBuilder, lambdaContainingMethod);
+                    break;
+
+                case MethodKind.LocalFunction:
+                    var localContainingMethod = RoslynHelper.GetContainingMethodOrSelf(method);
+
+                    nameBuilder.Append("$local-fn-of:");
+                    AppendUniqueNameWithinProject(nameBuilder, localContainingMethod);
                     break;
             }
         }
@@ -101,6 +110,13 @@ internal static class ElementIdProvider
                     $"{t.ContainingSymbol.ToDisplayString(_projectUniqueNameFormat)}.{t.Name}"));
 
             nameBuilder.Append($"[{typeParametersString}]");
+        }
+
+        if (symbol.ContainingSymbol is ITypeSymbol { IsAnonymousType: true } anonymousType)
+        {
+            var location = anonymousType.Locations.First().SourceSpan;
+
+            nameBuilder.Append($"$anon-{location.Start}-{location.End}");
         }
     }
 
