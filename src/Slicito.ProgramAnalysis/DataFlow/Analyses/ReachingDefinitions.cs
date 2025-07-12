@@ -7,7 +7,7 @@ namespace Slicito.ProgramAnalysis.DataFlow.Analyses;
 
 public static class ReachingDefinitions
 {
-    public readonly record struct Use(BasicBlock Block, Operation Operation, Expression Expression);
+    public readonly record struct Use(BasicBlock Block, Expression Expression);
 
     public record DefUse(Variable Variable, BasicBlock Definition, Use Use);
 
@@ -17,12 +17,7 @@ public static class ReachingDefinitions
     {
         foreach (var block in result.InputMap.Keys)
         {
-            if (block is not BasicBlock.Inner inner || inner.Operation is null)
-            {
-                continue;
-            }
-
-            var variableReferences = GetVariableReferences(inner.Operation);
+            var variableReferences = GetVariableReferences(block);
             
             foreach (var varRef in variableReferences)
             {
@@ -36,7 +31,7 @@ public static class ReachingDefinitions
                     yield return new DefUse(
                         varRef.Variable,
                         def,
-                        new Use(block, inner.Operation, varRef));
+                        new Use(block, varRef));
                 }
             }
         }
@@ -66,7 +61,18 @@ public static class ReachingDefinitions
         }
     }
 
-    private static IEnumerable<Expression.VariableReference> GetVariableReferences(Operation operation)
+    private static IEnumerable<Expression.VariableReference> GetVariableReferences(BasicBlock block)
+    {
+        return block switch
+        {
+            BasicBlock.Inner inner => GetVariableReferences(inner.Operation),
+            BasicBlock.Exit exit => exit.ReturnValues
+                .SelectMany(GetVariableReferences),
+            _ => []
+        };
+    }
+
+    private static IEnumerable<Expression.VariableReference> GetVariableReferences(Operation? operation)
     {
         return operation switch
         {
