@@ -190,6 +190,35 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
             : new Expression.VariableReference(returnVariableReference.Variable);
     }
 
+    public override Expression? VisitObjectCreation(IObjectCreationOperation operation, Empty argument)
+    {
+        var constructor = operation.Constructor;
+        if (constructor is null)
+        {
+            return new Expression.Unsupported("Object creation without referenced constructor.");
+        }
+
+        var arguments = operation.Arguments
+            .Select(a => VisitEnsureNonNull(a.Value))
+            .ToImmutableArray();
+
+        var targetMethodId = context.GetElement(constructor).Id;
+        var signature = ProcedureSignatureCreator.Create(constructor, targetMethodId);
+
+        var returnType = signature.ReturnTypes.Single();
+
+        var returnLocation = new SlicitoLocation.VariableReference(context.CreateTemporaryVariable(returnType));
+
+        context.AddInnerOperation(
+            new Operation.Call(
+                signature,
+                arguments,
+                [returnLocation]),
+            operation.Syntax);
+
+        return new Expression.VariableReference(returnLocation.Variable);
+    }
+
     public override Expression? VisitAwait(IAwaitOperation operation, Empty _)
     {
         return Visit(operation.Operation, default);
