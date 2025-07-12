@@ -62,6 +62,15 @@ internal class SliceCreator
 
     public ISymbol GetSymbol(ElementId elementId) => _elementCache.GetSymbol(elementId);
 
+    public Operation GetOperation(ElementId elementId)
+    {
+        var methodId = ElementIdProvider.GetMethodIdFromOperationId(elementId);
+
+        var method = _elementCache.GetMethod(methodId);
+
+        return _flowGraphCache[method]!.Value.OperationMapping.GetOperation(elementId);
+    }
+
     private ISlice CreateSlice()
     {
         var namespaceMemberTypes = _types.Namespace | _types.Type;

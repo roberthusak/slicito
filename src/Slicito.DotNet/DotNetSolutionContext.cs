@@ -13,6 +13,8 @@ public class DotNetSolutionContext(ImmutableArray<Solution> solutions, DotNetTyp
 {
     private readonly SliceCreator _sliceCreator = new(solutions, types, sliceManager);
 
+    public DotNetTypes Types => types;
+
     public ImmutableArray<Solution> Solutions => solutions;
 
     public ISlice Slice => _sliceCreator.Slice;
@@ -26,4 +28,6 @@ public class DotNetSolutionContext(ImmutableArray<Solution> solutions, DotNetTyp
     public Project GetProject(ElementId elementId) => _sliceCreator.GetProject(elementId);
 
     public ISymbol GetSymbol(ElementId elementId) => _sliceCreator.GetSymbol(elementId);
+
+    public Operation GetOperation(ElementId elementId) => _sliceCreator.GetOperation(elementId);
 }
