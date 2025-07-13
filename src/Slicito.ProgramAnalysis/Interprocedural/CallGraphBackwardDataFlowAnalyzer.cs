@@ -35,8 +35,20 @@ public class CallGraphBackwardDataFlowAnalyzer(CallGraph callGraph, IFlowGraphPr
         }
 
         var block = targetFlowGraph.Blocks.Single(b => b is BasicBlock.Inner inner && inner.Operation == targetOperation);
+        
+        var result = ProcessWorkQueue(targetProcedure, targetFlowGraph, block, targetExpression)
+            .ToList();
 
-        var workList = new Queue<WorkItem>([new (targetProcedure, targetFlowGraph, new (block, targetExpression))]);
+        return result;
+    }
+
+    private IEnumerable<ValueSource> ProcessWorkQueue(
+        CallGraph.Procedure targetProcedure,
+        IFlowGraph targetFlowGraph,
+        BasicBlock targetBlock,
+        Expression targetExpression)
+    {
+        var workList = new Queue<WorkItem>([new(targetProcedure, targetFlowGraph, new(targetBlock, targetExpression))]);
         var processed = new HashSet<WorkItem>();
 
         while (workList.Count > 0)
@@ -55,61 +67,86 @@ public class CallGraphBackwardDataFlowAnalyzer(CallGraph callGraph, IFlowGraphPr
                     continue;
                 }
 
-                switch (defUse.Definition)
+                foreach (var valueSource in ProcessDefinition(defUse, workItem, workList))
                 {
-                    case BasicBlock.Inner { Operation: Operation.Assignment assignment }:
-                        Debug.Assert(assignment.Location is Location.VariableReference varRef && varRef.Variable == defUse.Variable);
-                        if (assignment.Value is Expression.VariableReference { Variable: var valueVariable })
-                        {
-                            // var a = b;
-                            workList.Enqueue(
-                                new (
-                                    workItem.Procedure,
-                                    workItem.FlowGraph,
-                                    new (defUse.Definition, assignment.Value)));
-                        }
-                        else
-                        {
-                            // var a = ...; (complex expression - report as value source)
-                            yield return new ValueSource(workItem.Procedure, defUse.Definition, defUse.Variable);
-                        }
-                        break;
-
-                    case BasicBlock.Inner { Operation: Operation.Call call }:
-                        var returnLocation = call.ReturnLocations.Single(l =>
-                            l is Location.VariableReference { Variable: var returnVariable } && returnVariable == defUse.Variable);
-                        var returnLocationIndex = call.ReturnLocations.IndexOf(returnLocation);
-                        Debug.Assert(returnLocationIndex != -1);
-                    
-                        var calleeId = new ElementId(call.Signature.Name);
-                        var calleeProcedure = _callGraph.AllProcedures.SingleOrDefault(p => p.ProcedureElement.Id == calleeId);
-                        var calleeFlowGraph = _flowGraphProvider.TryGetFlowGraph(calleeId);
-
-                        if (calleeFlowGraph is null || calleeProcedure is null)
-                        {
-                            // Procedure outside analysis or call graph
-                            yield return new ValueSource(workItem.Procedure, defUse.Definition, defUse.Variable);
-                        }
-                        else
-                        {
-                            // Proceed to callee's return expression
-                            workList.Enqueue(
-                                new (
-                                    calleeProcedure,
-                                    calleeFlowGraph,
-                                    new (
-                                        calleeFlowGraph.Exit,
-                                        calleeFlowGraph.Exit.ReturnValues[returnLocationIndex])));
-                        }
-                        break;
-
-                    case BasicBlock.Entry entryBlock:
-                        throw new NotSupportedException("Crossing entry block boundary is not supported yet.");
-
-                    default:
-                        throw new NotSupportedException($"Unsupported basic block or operation: {defUse.Definition}");
+                    yield return valueSource;
                 }
             }
+        }
+    }
+
+    private IEnumerable<ValueSource> ProcessDefinition(
+        ReachingDefinitions.DefUse defUse,
+        WorkItem workItem,
+        Queue<WorkItem> workList)
+    {
+        return defUse.Definition switch
+        {
+            BasicBlock.Inner { Operation: Operation.Assignment assignment } => 
+                ProcessAssignmentDefinition(assignment, defUse, workItem, workList),
+            
+            BasicBlock.Inner { Operation: Operation.Call call } => 
+                ProcessCallDefinition(call, defUse, workItem, workList),
+            
+            BasicBlock.Entry => 
+                throw new NotSupportedException("Crossing entry block boundary is not supported yet."),
+            
+            _ => throw new NotSupportedException($"Unsupported basic block or operation: {defUse.Definition}")
+        };
+    }
+
+    private IEnumerable<ValueSource> ProcessAssignmentDefinition(
+        Operation.Assignment assignment,
+        ReachingDefinitions.DefUse defUse,
+        WorkItem workItem,
+        Queue<WorkItem> workList)
+    {
+        Debug.Assert(assignment.Location is Location.VariableReference varRef && varRef.Variable == defUse.Variable);
+        
+        if (assignment.Value is Expression.VariableReference { Variable: var valueVariable })
+        {
+            // var a = b; - continue tracing
+            workList.Enqueue(new(
+                workItem.Procedure,
+                workItem.FlowGraph,
+                new(defUse.Definition, assignment.Value)));
+        }
+        else
+        {
+            // var a = ...; (complex expression - report as value source)
+            yield return new ValueSource(workItem.Procedure, defUse.Definition, defUse.Variable);
+        }
+    }
+
+    private IEnumerable<ValueSource> ProcessCallDefinition(
+        Operation.Call call,
+        ReachingDefinitions.DefUse defUse,
+        WorkItem workItem,
+        Queue<WorkItem> workList)
+    {
+        var returnLocation = call.ReturnLocations.Single(l =>
+            l is Location.VariableReference { Variable: var returnVariable } && returnVariable == defUse.Variable);
+        var returnLocationIndex = call.ReturnLocations.IndexOf(returnLocation);
+        Debug.Assert(returnLocationIndex != -1);
+
+        var calleeId = new ElementId(call.Signature.Name);
+        var calleeProcedure = _callGraph.AllProcedures.SingleOrDefault(p => p.ProcedureElement.Id == calleeId);
+        var calleeFlowGraph = _flowGraphProvider.TryGetFlowGraph(calleeId);
+
+        if (calleeFlowGraph is null || calleeProcedure is null)
+        {
+            // Procedure outside analysis or call graph
+            yield return new ValueSource(workItem.Procedure, defUse.Definition, defUse.Variable);
+        }
+        else
+        {
+            // Proceed to callee's return expression
+            workList.Enqueue(new(
+                calleeProcedure,
+                calleeFlowGraph,
+                new(
+                    calleeFlowGraph.Exit,
+                    calleeFlowGraph.Exit.ReturnValues[returnLocationIndex])));
         }
     }
 
