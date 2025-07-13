@@ -6,6 +6,8 @@ namespace Slicito.ProgramAnalysis.Interprocedural;
 
 public sealed class CallGraph
 {
+    public delegate bool CallSiteFilterCallback(ElementInfo callerElement, ElementInfo callElement, ElementInfo calleeElement);
+
     private readonly Dictionary<ElementId, Procedure> _proceduresById;
     private readonly Dictionary<(ElementId, int), ElementId> _callTargets; // Maps call site ID and ordinal to target procedure ID
     private readonly IReadOnlyDictionary<ElementId, ImmutableArray<ElementId>>? _overrides;
@@ -55,10 +57,22 @@ public sealed class CallGraph
     {
         private readonly HashSet<ElementId> _rootProcedureIds = [];
         private IReadOnlyDictionary<ElementId, ImmutableArray<ElementId>>? _overrides;
+        private CallSiteFilterCallback? _callSiteFilter;
 
         public Builder AddCallerRoot(ElementId callerRoot)
         {
             _rootProcedureIds.Add(callerRoot);
+            return this;
+        }
+
+        public Builder AddCallSiteFilter(CallSiteFilterCallback filter)
+        {
+            if (_callSiteFilter is not null)
+            {
+                throw new InvalidOperationException("Call site filter already set.");
+            }
+
+            _callSiteFilter = filter;
             return this;
         }
 
@@ -114,7 +128,12 @@ public sealed class CallGraph
                 foreach (var callElement in operationElements)
                 {
                     var targetElements = await callsExplorer.GetTargetElementsAsync(callElement.Id);
-                    
+
+                    if (_callSiteFilter is not null)
+                    {
+                        targetElements = targetElements.Where(e => _callSiteFilter(procedureElement, callElement, e));
+                    }
+
                     foreach (var (targetElement, ordinal) in targetElements.Select((e, i) => (e, i)))
                     {
                         callSites.Add(new(procedureElement, callElement, ordinal));
