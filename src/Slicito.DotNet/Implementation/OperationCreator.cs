@@ -123,7 +123,18 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
             }
         }
 
-        return DefaultVisit(operation, default);
+        // Provide at least as a separate operation so that it can be analyzed better
+        var unsupportedValue = DefaultVisit(operation, default)!;
+        var type = TypeCreator.Create(operation.Property.Type);
+        var temporaryVariable = context.CreateTemporaryVariable(type);
+
+        context.AddInnerOperation(
+            new Operation.Assignment(
+                new SlicitoLocation.VariableReference(temporaryVariable),
+                unsupportedValue),
+            operation.Syntax);
+
+        return new Expression.VariableReference(temporaryVariable);
     }
 
     public override Expression? VisitInvocation(IInvocationOperation operation, Empty _)
