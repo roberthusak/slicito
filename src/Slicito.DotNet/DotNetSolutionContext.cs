@@ -29,5 +29,11 @@ public class DotNetSolutionContext(ImmutableArray<Solution> solutions, DotNetTyp
 
     public ISymbol GetSymbol(ElementId elementId) => _sliceCreator.GetSymbol(elementId);
 
+    public ISymbol GetSymbolAndRelatedProject(ElementId id, out Project relatedProject) =>
+        _sliceCreator.GetSymbolAndRelatedProject(id, out relatedProject);
+
     public Operation GetOperation(ElementId elementId) => _sliceCreator.GetOperation(elementId);
+
+    public SyntaxNode GetOperationSyntax(Operation operation, ElementId procedureId) =>
+        _sliceCreator.GetOperationSyntax(operation, procedureId);
 }
