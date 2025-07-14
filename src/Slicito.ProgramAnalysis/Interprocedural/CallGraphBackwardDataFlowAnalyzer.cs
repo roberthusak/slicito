@@ -42,6 +42,22 @@ public class CallGraphBackwardDataFlowAnalyzer(CallGraph callGraph, IFlowGraphPr
         return result;
     }
 
+    public IEnumerable<ValueSource> FindReturnValueSources(
+        CallGraph.Procedure targetProcedure,
+        int returnValueIndex = 0)
+    {
+        var targetFlowGraph = _flowGraphProvider.TryGetFlowGraph(targetProcedure.ProcedureElement)
+            ?? throw new ArgumentException("Target procedure cannot be analyzed.", nameof(targetProcedure));
+
+        var block = targetFlowGraph.Exit;
+        var expression = block.ReturnValues[returnValueIndex];
+
+        var result = ProcessWorkQueue(targetProcedure, targetFlowGraph, block, expression)
+            .ToList();
+
+        return result;
+    }
+
     private IEnumerable<ValueSource> ProcessWorkQueue(
         CallGraph.Procedure targetProcedure,
         IFlowGraph targetFlowGraph,
