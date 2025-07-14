@@ -36,7 +36,19 @@ internal class SliceCreator
         TypedSliceFragment = new DotNetSliceFragment(Slice, _types);
     }
 
-    public IFlowGraph? TryCreateFlowGraph(ElementId elementId) => TryCreateFlowGraphsAndMapping(elementId)?.FlowGraphGroup.RootFlowGraph;
+    public IFlowGraph? TryCreateFlowGraph(ElementId elementId)
+    {
+        var result = TryCreateFlowGraphsAndMapping(elementId);
+        if (result is null)
+        {
+            return null;
+        }
+
+        var (flowGraphGroup, _) = result.Value;
+
+        return flowGraphGroup.ElementIdToNestedFlowGraph
+            .GetValueOrDefault(elementId, flowGraphGroup.RootFlowGraph);
+    }
 
     private (FlowGraphGroup FlowGraphGroup, OperationMapping OperationMapping)? TryCreateFlowGraphsAndMapping(ElementId elementId)
     {
@@ -46,6 +58,13 @@ internal class SliceCreator
         if (symbol is not IMethodSymbol method || project is null)
         {
             return null;
+        }
+
+        while (method.MethodKind is MethodKind.LocalFunction or MethodKind.AnonymousFunction)
+        {
+            method = method.ContainingSymbol as IMethodSymbol
+                ?? throw new InvalidOperationException(
+                    $"Method '{method.Name}' is a nested procedure and does not have a containing method.");
         }
 
         return _flowGraphCache.GetOrAdd(method, _ => FlowGraphCreator.TryCreate(method, project, _elementCache));
@@ -181,15 +200,18 @@ internal class SliceCreator
 
     private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadMethodLocalFunctions(ElementId sourceId)
     {
-        return LoadMethodNestedProcedures(sourceId, MethodKind.LocalFunction);
+        return LoadMethodNestedProcedures(sourceId, MethodKind.LocalFunction, _types.LocalFunction);
     }
 
     private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadMethodLambdas(ElementId sourceId)
     {
-        return LoadMethodNestedProcedures(sourceId, MethodKind.AnonymousFunction);
+        return LoadMethodNestedProcedures(sourceId, MethodKind.AnonymousFunction, _types.Lambda);
     }
 
-    private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadMethodNestedProcedures(ElementId sourceId, MethodKind methodKind)
+    private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadMethodNestedProcedures(
+        ElementId sourceId,
+        MethodKind methodKind,
+        ElementType elementType)
     {
         var result = TryCreateFlowGraphsAndMapping(sourceId);
         if (result is null)
@@ -205,7 +227,7 @@ internal class SliceCreator
 
             if (nestedSymbol.MethodKind == methodKind)
             {
-                yield return ToPartialLinkInfo(new(nestedId, _types.LocalFunction));
+                yield return ToPartialLinkInfo(new(nestedId, elementType));
             }
         }
     }
