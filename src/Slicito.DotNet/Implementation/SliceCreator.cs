@@ -154,10 +154,14 @@ internal class SliceCreator
             ?? throw new InvalidOperationException(
                 $"The project '{project.FilePath}' could not be loaded into a Roslyn Compilation.");
 
-        if (compilation.GetDiagnostics().Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error))
+        var compilationErrors = compilation.GetDiagnostics()
+          .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
+          .ToList();
+
+        if (compilationErrors.Any())
         {
-            throw new InvalidOperationException(
-                $"The project '{project.FilePath}' has compilation errors and cannot be analyzed.");
+          throw new InvalidOperationException(
+              $"The project '{project.FilePath}' has compilation errors and cannot be analyzed.");
         }
 
         var module = compilation.SourceModule;
