@@ -48,7 +48,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Implementation\ScriptRunner.cs" />
     <Compile Include="Implementation\VisualStudioCodeNavigator.cs" />
     <Compile Include="Implementation\VisualStudioSlicitoContext.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -118,8 +117,6 @@
   <ItemGroup>
     <PackageReference Include="Community.VisualStudio.VSCT" PrivateAssets="all" />
     <PackageReference Include="Community.VisualStudio.Toolkit.17" ExcludeAssets="Runtime" />
-    <PackageReference Include="Dotnet.Script.Core" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" />
     <PackageReference Include="Microsoft.VisualStudio.LanguageServices" />
     <PackageReference Include="Microsoft.VSSDK.BuildTools" />
     <PackageReference Include="StrongNamer" />
