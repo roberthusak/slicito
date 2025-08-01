@@ -1,12 +1,9 @@
-using System.IO;
-using System.Threading.Tasks;
-
 using Dotnet.Script.Core;
 using Dotnet.Script.Core.Commands;
 
-namespace Slicito.VisualStudio.Implementation;
+namespace Slicito.Common.Extensibility;
 
-internal class ScriptRunner
+public class ScriptRunner
 {
     public static async Task<object> RunScriptAsync(string path)
     {

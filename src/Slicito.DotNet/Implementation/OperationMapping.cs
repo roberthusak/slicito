@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+
 using Microsoft.CodeAnalysis;
 using Slicito.Abstractions;
 using Slicito.ProgramAnalysis.Notation;
@@ -6,18 +8,23 @@ namespace Slicito.DotNet.Implementation;
 
 internal class OperationMapping
 {
+    public record AdditionalLinks(ImmutableArray<ElementInfo> CallTargets);
+
     private readonly Dictionary<ElementId, Operation> _idToOperation;
     private readonly Dictionary<ElementId, SyntaxNode> _idToSyntax;
     private readonly Dictionary<Operation, ElementId> _operationToId;
+    private readonly Dictionary<ElementId, AdditionalLinks> _idToAdditionalLinks;
 
     private OperationMapping(
         Dictionary<ElementId, Operation> idToOperation,
         Dictionary<ElementId, SyntaxNode> idToSyntax,
-        Dictionary<Operation, ElementId> operationToId)
+        Dictionary<Operation, ElementId> operationToId,
+        Dictionary<ElementId, AdditionalLinks> idToAdditionalLinks)
     {
         _idToOperation = idToOperation;
         _idToSyntax = idToSyntax;
         _operationToId = operationToId;
+        _idToAdditionalLinks = idToAdditionalLinks;
     }
 
     public Operation GetOperation(ElementId id)
@@ -47,6 +54,11 @@ internal class OperationMapping
         return id;
     }
 
+    public bool TryGetAdditionalLinks(ElementId id, out AdditionalLinks additionalLinks)
+    {
+        return _idToAdditionalLinks.TryGetValue(id, out additionalLinks);
+    }
+
     public class Builder(string operationIdPrefix)
     {
         private int _currentId = 0;
@@ -55,8 +67,9 @@ internal class OperationMapping
         private readonly Dictionary<ElementId, Operation> _idToOperation = [];
         private readonly Dictionary<ElementId, SyntaxNode> _idToSyntax = [];
         private readonly Dictionary<Operation, ElementId> _operationToId = [];
+        private readonly Dictionary<ElementId, AdditionalLinks> _idToAdditionalLinks = [];
 
-        public Builder AddOperation(Operation operation, SyntaxNode syntax)
+        public Builder AddOperation(Operation operation, SyntaxNode syntax, AdditionalLinks? additionalLinks = null)
         {
             if (_isBuilt)
             {
@@ -74,6 +87,11 @@ internal class OperationMapping
             _idToSyntax[elementId] = syntax;
             _operationToId[operation] = elementId;
 
+            if (additionalLinks is not null)
+            {
+                _idToAdditionalLinks[elementId] = additionalLinks;
+            }
+
             return this;
         }
 
@@ -86,7 +104,7 @@ internal class OperationMapping
 
             _isBuilt = true;
 
-            return new OperationMapping(_idToOperation, _idToSyntax, _operationToId);
+            return new OperationMapping(_idToOperation, _idToSyntax, _operationToId, _idToAdditionalLinks);
         }
     }
 }

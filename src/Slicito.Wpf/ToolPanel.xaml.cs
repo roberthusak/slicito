@@ -50,9 +50,16 @@ public partial class ToolPanel : UserControl
 
             _progressBar.IsIndeterminate = true;
 
-            var model = await _controller.InitAsync();
-
-            ShowModel(model);
+            try
+            {
+                var model = await _controller.InitAsync();
+    
+                ShowModel(model);
+            }
+            catch (Exception ex)
+            {
+                ShowModel(CreateExceptionModel(ex));
+            }
 
             _progressBar.IsIndeterminate = false;
 
@@ -68,6 +75,19 @@ public partial class ToolPanel : UserControl
         }
 
         if (item.DoubleClickCommand is not null)
+        {
+            await ProcessCommand(item.DoubleClickCommand);
+        }
+    }
+
+    private async void TreeView_KeyDownAsync(object sender, KeyEventArgs e)
+    {
+        if ((sender as TreeView)?.SelectedItem is not TreeItem item)
+        {
+            return;
+        }
+
+        if (e.Key == Key.Enter && item.DoubleClickCommand is not null)
         {
             await ProcessCommand(item.DoubleClickCommand);
         }
@@ -97,15 +117,24 @@ public partial class ToolPanel : UserControl
     {
         _progressBar.IsIndeterminate = true;
 
-        var model = await _controller.ProcessCommandAsync(command);
-
-        if (model is not null)
+        try
         {
-            ShowModel(model);
+            var model = await _controller.ProcessCommandAsync(command);
+    
+            if (model is not null)
+            {
+                ShowModel(model);
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowModel(CreateExceptionModel(ex));
         }
 
         _progressBar.IsIndeterminate = false;
     }
+
+    private IModel CreateExceptionModel(Exception ex) => new Tree([new(ex.ToString(), [])]);
 
     private void ShowModel(IModel model)
     {

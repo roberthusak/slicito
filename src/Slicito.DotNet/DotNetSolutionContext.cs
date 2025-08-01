@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+
 using Microsoft.CodeAnalysis;
 
 using Slicito.Abstractions;
@@ -7,13 +9,17 @@ using Slicito.ProgramAnalysis.Notation;
 
 namespace Slicito.DotNet;
 
-public class DotNetSolutionContext(Solution solution, DotNetTypes types, ISliceManager sliceManager) : IFlowGraphProvider
+public class DotNetSolutionContext(ImmutableArray<Solution> solutions, DotNetTypes types, ISliceManager sliceManager) : IFlowGraphProvider
 {
-    private readonly SliceCreator _sliceCreator = new(solution, types, sliceManager);
+    private readonly SliceCreator _sliceCreator = new(solutions, types, sliceManager);
 
-    public Solution Solution => solution;
+    public DotNetTypes Types => types;
+
+    public ImmutableArray<Solution> Solutions => solutions;
 
     public ISlice Slice => _sliceCreator.Slice;
+
+    public IDotNetSliceFragment TypedSliceFragment => _sliceCreator.TypedSliceFragment;
 
     public IFlowGraph? TryGetFlowGraph(ElementId elementId) => _sliceCreator.TryCreateFlowGraph(elementId);
 
@@ -22,4 +28,12 @@ public class DotNetSolutionContext(Solution solution, DotNetTypes types, ISliceM
     public Project GetProject(ElementId elementId) => _sliceCreator.GetProject(elementId);
 
     public ISymbol GetSymbol(ElementId elementId) => _sliceCreator.GetSymbol(elementId);
+
+    public ISymbol GetSymbolAndRelatedProject(ElementId id, out Project relatedProject) =>
+        _sliceCreator.GetSymbolAndRelatedProject(id, out relatedProject);
+
+    public Operation GetOperation(ElementId elementId) => _sliceCreator.GetOperation(elementId);
+
+    public SyntaxNode GetOperationSyntax(Operation operation, ElementId procedureId) =>
+        _sliceCreator.GetOperationSyntax(operation, procedureId);
 }

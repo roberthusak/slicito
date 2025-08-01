@@ -17,17 +17,24 @@ public class DependencyManager
     private readonly string _solutionPath;
     private readonly ITypeSystem _typeSystem;
     private readonly ISliceManager _sliceManager;
-    
+    private readonly ICodeNavigator _codeNavigator;
+
     private DotNetTypes? _dotNetTypes;
     private DotNetExtractor? _dotNetExtractor;
     private DotNetSolutionContext? _dotNetSolutionContext;
     private ISlice? _slice;
 
-    public DependencyManager(string solutionPath)
+    private readonly ICache _cache;
+    private readonly IWindowOpener _windowOpener;
+
+    public DependencyManager(string solutionPath, IWindowOpener windowOpener)
     {
         _solutionPath = solutionPath;
         _typeSystem = new TypeSystem();
         _sliceManager = new SliceManager(_typeSystem);
+        _codeNavigator = new ExternalVisualStudioCodeNavigator();
+        _cache = new Cache();
+        _windowOpener = windowOpener;
     }
 
     public async Task<object?[]> ResolveDependenciesAsync(ConstructorInfo constructor)
@@ -51,8 +58,11 @@ public class DependencyManager
             var t when t == typeof(DotNetExtractor) => GetDotNetExtractor(),
             var t when t == typeof(DotNetSolutionContext) => await TryGetDotNetSolutionContextAsync(),
             var t when t == typeof(ISlice) => await TryLoadSliceAsync(),
+            var t when t == typeof(ISliceManager) => _sliceManager,
             var t when t == typeof(IFlowGraph) => null,
-            var t when t == typeof(ICodeNavigator) => null,
+            var t when t == typeof(ICodeNavigator) => _codeNavigator,
+            var t when t == typeof(ICache) => _cache,
+            var t when t == typeof(IWindowOpener) => _windowOpener,
             _ => throw new ApplicationException($"Unsupported parameter type {parameterType.Name}.")
         };
     }
@@ -74,7 +84,7 @@ public class DependencyManager
         if (_dotNetSolutionContext == null && File.Exists(_solutionPath))
         {
             var solution = await MSBuildWorkspace.Create().OpenSolutionAsync(_solutionPath);
-            _dotNetSolutionContext = GetDotNetExtractor().Extract(solution);
+            _dotNetSolutionContext = GetDotNetExtractor().Extract([solution]);
         }
 
         return _dotNetSolutionContext;

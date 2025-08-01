@@ -8,7 +8,9 @@ public interface IProgramTypes
     LinkType Calls { get; }
         
     ElementType Procedure { get; }
+    ElementType NestedProcedures { get; }
 
+    ElementType Operation { get; }
     ElementType Call { get; }
 
     bool HasName(ElementType elementType);

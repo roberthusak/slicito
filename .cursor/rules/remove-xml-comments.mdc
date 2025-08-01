@@ -1,0 +1,24 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Remove XML Comments from C# Files
+
+When asked to remove XML comments (comments starting with `///`) from C# files, use the following approach:
+
+1. Read the entire file to understand its structure
+2. Delete the original file
+3. Create a new file with the same name containing the same code but without XML comments
+
+Example of XML comments to remove:
+
+```csharp
+/// <summary>
+/// Description of the class/method
+/// </summary>
+/// <param name="paramName">Description of the parameter</param>
+/// <returns>Description of the return value</returns>
+```
+
+This approach avoids formatting issues that can occur when trying to use search/replace operations to remove individual comment blocks.

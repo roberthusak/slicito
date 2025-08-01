@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net8.0-windows;net48</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net9.0-windows;net48</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -9,7 +9,7 @@
     <ProjectReference Include="..\Slicito.DotNet\Slicito.DotNet.csproj" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0-windows' Or '$(TargetFramework)' == 'net48'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0-windows' Or '$(TargetFramework)' == 'net48'">
     <ProjectReference Include="..\Slicito.Wpf\Slicito.Wpf.csproj" />
   </ItemGroup>
 

@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 
 using Microsoft.VisualStudio.LanguageServices;
 
@@ -27,7 +28,7 @@ internal class VisualStudioSlicitoContext : ProgramAnalysisContextBase
         VisualStudioWorkspace workspace) : base(typeSystem, sliceManager, dotNetTypes)
     {
         _workspace = workspace;
-        _lastDotNetSolutionContext = new DotNetSolutionContext(workspace.CurrentSolution, dotNetTypes, sliceManager);
+        _lastDotNetSolutionContext = new DotNetSolutionContext([workspace.CurrentSolution], dotNetTypes, sliceManager);
 
         SetService(codeNavigator);
         SetService(solverFactory);
@@ -58,9 +59,9 @@ internal class VisualStudioSlicitoContext : ProgramAnalysisContextBase
     private DotNetSolutionContext GetCurrentDotNetSolutionContext()
     {
         var currentSolution = _workspace.CurrentSolution;
-        if (currentSolution != _lastDotNetSolutionContext.Solution)
+        if (currentSolution != _lastDotNetSolutionContext.Solutions.Single())
         {
-            _lastDotNetSolutionContext = new DotNetSolutionContext(currentSolution, ProgramTypes, SliceManager);
+            _lastDotNetSolutionContext = new DotNetSolutionContext([currentSolution], ProgramTypes, SliceManager);
         }
 
         return _lastDotNetSolutionContext;

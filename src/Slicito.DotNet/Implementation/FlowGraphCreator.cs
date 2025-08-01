@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.FlowAnalysis;
 
 using Slicito.Abstractions;
@@ -17,6 +18,7 @@ namespace Slicito.DotNet.Implementation;
 internal class FlowGraphCreator
 {
     private readonly ControlFlowGraph _roslynCfg;
+    private readonly Project _project;
     private readonly ElementCache _elementCache;
 
     private readonly Dictionary<RoslynBasicBlock, (SlicitoBasicBlock First, SlicitoBasicBlock Last)> _roslynToSlicitoBasicBlocksMap = [];
@@ -26,12 +28,17 @@ internal class FlowGraphCreator
     private readonly OperationMapping.Builder _operationMappingBuilder;
     private readonly Variable? _returnVariable;
 
-    private FlowGraphCreator(IMethodSymbol methodSymbol, ControlFlowGraph roslynCfg, ElementCache elementCache)
+    private FlowGraphCreator(
+        IMethodSymbol methodSymbol,
+        ControlFlowGraph roslynCfg,
+        Project project,
+        ElementCache elementCache,
+        OperationMapping.Builder operationMappingBuilder)
     {
         _roslynCfg = roslynCfg;
+        _project = project;
         _elementCache = elementCache;
-
-        _operationMappingBuilder = new(ElementIdProvider.GetOperationIdPrefix(methodSymbol));
+        _operationMappingBuilder = operationMappingBuilder;
 
         IEnumerable<Variable> instanceEnumerable =
             methodSymbol.IsStatic
@@ -57,22 +64,60 @@ internal class FlowGraphCreator
         _builder = new(parameters, returnValues);
     }
 
-    public static (IFlowGraph FlowGraph, OperationMapping OperationMapping)? TryCreate(IMethodSymbol method, Solution solution, ElementCache elementCache)
+    public static (FlowGraphGroup FlowGraphGroup, OperationMapping OperationMapping)? TryCreate(
+        IMethodSymbol method,
+        Project project,
+        ElementCache elementCache)
     {
-        var roslynCfg = TryCreateRoslynControlFlowGraph(method, solution);
+        var roslynCfg = TryCreateRoslynControlFlowGraph(method, project);
         if (roslynCfg is null)
         {
             return null;
         }
 
-        var creator = new FlowGraphCreator(method, roslynCfg, elementCache);
-        var flowGraph = creator.CreateFlowGraph();
-        var operationMapping = creator._operationMappingBuilder.Build();
+        var operationMappingBuilder = new OperationMapping.Builder(ElementIdProvider.GetOperationIdPrefix(project, method));
 
-        return (flowGraph, operationMapping);
+        var rootFlowGraph = new FlowGraphCreator(method, roslynCfg, project, elementCache, operationMappingBuilder)
+            .CreateFlowGraph();
+
+        var elementIdToNestedFlowGraphBuilder = ImmutableDictionary.CreateBuilder<ElementId, IFlowGraph>();
+
+        CreateNestedFlowGraphsRecursively(roslynCfg, project, elementCache, operationMappingBuilder, elementIdToNestedFlowGraphBuilder);
+
+        return (new(rootFlowGraph, elementIdToNestedFlowGraphBuilder.ToImmutable()), operationMappingBuilder.Build());
     }
 
-    private static ControlFlowGraph? TryCreateRoslynControlFlowGraph(IMethodSymbol method, Solution solution)
+    private static void CreateNestedFlowGraphsRecursively(
+        ControlFlowGraph roslynCfg,
+        Project project,
+        ElementCache elementCache,
+        OperationMapping.Builder operationMappingBuilder,
+        ImmutableDictionary<ElementId, IFlowGraph>.Builder elementIdToNestedFlowGraphBuilder)
+    {
+        var localFunctionsWithCfgs = roslynCfg.LocalFunctions
+            .Select(localFunction => (localFunction, roslynCfg.GetLocalFunctionControlFlowGraph(localFunction)));
+
+        var lambdasWithCfgs = LambdaFinder.FindLambdas(roslynCfg)
+            .Select(lambda => (lambda.Symbol, roslynCfg.GetAnonymousFunctionControlFlowGraph(lambda)));
+
+        foreach (var (nestedProcedure, nestedRoslynCfg) in localFunctionsWithCfgs.Concat(lambdasWithCfgs))
+        {
+            var flowGraph = new FlowGraphCreator(nestedProcedure, nestedRoslynCfg, project, elementCache, operationMappingBuilder)
+                .CreateFlowGraph();
+
+            var nestedProcedureElementTask = elementCache.GetElementAsync(project, nestedProcedure);
+            if (!nestedProcedureElementTask.IsCompleted)
+            {
+                throw new InvalidOperationException($"Storing nested procedure '{nestedProcedure.Name}' in cache was unexpectedly asynchronous.");
+            }
+
+            elementIdToNestedFlowGraphBuilder[nestedProcedureElementTask.Result.Id] = flowGraph;
+
+            CreateNestedFlowGraphsRecursively(nestedRoslynCfg, project, elementCache, operationMappingBuilder, elementIdToNestedFlowGraphBuilder);
+        }
+    }
+
+    private static ControlFlowGraph? TryCreateRoslynControlFlowGraph(IMethodSymbol method, Project project)
     {
         var location = method.Locations.FirstOrDefault();
         if (location is null || !location.IsInSource)
@@ -87,13 +132,20 @@ internal class FlowGraphCreator
             return null;
         }
 
-        var compilation = solution.Projects
-            .Select(p =>
-                p.TryGetCompilation(out var compilation) ? compilation : null)
-            .FirstOrDefault(c =>
-                method.ContainingAssembly.Equals(c?.Assembly, SymbolEqualityComparer.Default));
+        while (syntaxNode.Parent is not null &&
+            syntaxNode is not (
+                MethodDeclarationSyntax or
+                ConstructorDeclarationSyntax or
+                DestructorDeclarationSyntax or
+                ConversionOperatorDeclarationSyntax or
+                OperatorDeclarationSyntax or
+                BlockSyntax or
+                ArrowExpressionClauseSyntax))
+        {
+            syntaxNode = syntaxNode.Parent;
+        }
 
-        if (compilation is null)
+        if (!project.TryGetCompilation(out var compilation))
         {
             return null;
         }
@@ -153,30 +205,30 @@ internal class FlowGraphCreator
 
             additionalOperation = new Operation.ConditionalJump(condition);
 
-            _operationMappingBuilder.AddOperation(additionalOperation, conditionOperation.Syntax);
+            _operationMappingBuilder.AddOperation(additionalOperation, conditionOperation.Syntax, context.ExtractAdditionalLinks());
         }
         else if (roslynBlock.FallThroughSuccessor?.Semantics == ControlFlowBranchSemantics.Return)
         {
-            var returnValue = creator.Visit(roslynBlock.BranchValue, default);
-
             if (_returnVariable is not null)
             {
-                if (returnValue is null)
-                {
-                    throw new InvalidOperationException("Unexpectedly produced empty return value.");
-                }
+                var returnValue = creator.Visit(roslynBlock.BranchValue, default)
+                    ?? throw new InvalidOperationException("Unexpectedly produced empty return value.");
 
                 additionalOperation = new Operation.Assignment(
                     new SlicitoLocation.VariableReference(_returnVariable),
                     returnValue);
 
-                _operationMappingBuilder.AddOperation(additionalOperation, roslynBlock.BranchValue!.Syntax);
+                _operationMappingBuilder.AddOperation(additionalOperation, roslynBlock.BranchValue!.Syntax, context.ExtractAdditionalLinks());
+            }
+            else if (roslynBlock.BranchValue is not null)
+            {
+                throw new InvalidOperationException("Unexpected return value in a void method.");
             }
         }
 
-        foreach (var (operation, syntax) in context.InnerOperations)
+        foreach (var (operation, syntax, additionalLinks) in context.InnerOperations)
         {
-            _operationMappingBuilder.AddOperation(operation, syntax);
+            _operationMappingBuilder.AddOperation(operation, syntax, additionalLinks);
         }
 
         SlicitoBasicBlock.Inner? firstBlock = null;
@@ -224,27 +276,35 @@ internal class FlowGraphCreator
 
         if (lastBlock is SlicitoBasicBlock.Inner { Operation: Operation.ConditionalJump })
         {
-            var roslynConditionalSuccessor = roslynBlock.ConditionalSuccessor?.Destination
-                ?? throw new InvalidOperationException("Block with a conditional jump must have a conditional successor.");
+            var conditionalSuccessor = TranslateRoslynSuccessor(roslynBlock.ConditionalSuccessor);
 
-            var conditionalSuccessor = _roslynToSlicitoBasicBlocksMap[roslynConditionalSuccessor].First;
-
-            var roslynFallThroughSuccessor = roslynBlock.FallThroughSuccessor?.Destination
-                ?? throw new InvalidOperationException("Block with a conditional jump must have a fall-through successor.");
-
-            var fallThroughSuccessor = _roslynToSlicitoBasicBlocksMap[roslynFallThroughSuccessor].First;
+            var fallThroughSuccessor = TranslateRoslynSuccessor(roslynBlock.FallThroughSuccessor);
 
             if (roslynBlock.ConditionKind == ControlFlowConditionKind.WhenTrue)
             {
-                _builder.AddTrueEdge(lastBlock, conditionalSuccessor);
-                _builder.AddFalseEdge(lastBlock, fallThroughSuccessor);
+                if (conditionalSuccessor is not null)
+                {
+                    _builder.AddTrueEdge(lastBlock, conditionalSuccessor);
+                }
+
+                if (fallThroughSuccessor is not null)
+                {
+                    _builder.AddFalseEdge(lastBlock, fallThroughSuccessor);
+                }
             }
             else
             {
                 Debug.Assert(roslynBlock.ConditionKind == ControlFlowConditionKind.WhenFalse);
 
-                _builder.AddFalseEdge(lastBlock, conditionalSuccessor);
-                _builder.AddTrueEdge(lastBlock, fallThroughSuccessor);
+                if (conditionalSuccessor is not null)
+                {
+                    _builder.AddFalseEdge(lastBlock, conditionalSuccessor);
+                }
+
+                if (fallThroughSuccessor is not null)
+                {
+                    _builder.AddTrueEdge(lastBlock, fallThroughSuccessor);
+                }
             }
         }
         else
@@ -255,6 +315,24 @@ internal class FlowGraphCreator
                 _builder.AddUnconditionalEdge(lastBlock, _roslynToSlicitoBasicBlocksMap[fallThroughSuccessor].First);
             }
         }
+    }
+
+    private SlicitoBasicBlock? TranslateRoslynSuccessor(ControlFlowBranch? roslynSuccessor)
+    {
+        var roslynDestination = roslynSuccessor?.Destination;
+        if (roslynDestination is null
+            && roslynSuccessor?.Semantics != ControlFlowBranchSemantics.StructuredExceptionHandling
+            && roslynSuccessor?.Semantics != ControlFlowBranchSemantics.Throw
+            && roslynSuccessor?.Semantics != ControlFlowBranchSemantics.Rethrow)
+        {
+            throw new InvalidOperationException(
+                "Roslyn successor must have a destination unless it's the last block of finally or filter region, throw, or rethrow.");
+        }
+
+        return
+            roslynDestination is not null
+            ? _roslynToSlicitoBasicBlocksMap[roslynDestination].First
+            : null;
     }
 
     private Variable GetOrCreateVariable(ILocalSymbol local) => GetOrCreateVariable(local, local.Type);
@@ -283,14 +361,33 @@ internal class FlowGraphCreator
 
     public class BlockTranslationContext(FlowGraphCreator creator)
     {
-        private List<(Operation, SyntaxNode)>? _innerOperations;
+        private record PendingAdditionalLinks(List<ElementInfo> CallTargets)
+        {
+            public OperationMapping.AdditionalLinks ToAdditionalLinks() => new([.. CallTargets]);
+        }
 
-        public IReadOnlyList<(Operation Operation, SyntaxNode Syntax)> InnerOperations => _innerOperations ?? [];
+        private List<(Operation, SyntaxNode, OperationMapping.AdditionalLinks?)>? _innerOperations;
+        private PendingAdditionalLinks? _pendingAdditionalLinks;
+
+        public IReadOnlyList<(Operation Operation, SyntaxNode Syntax, OperationMapping.AdditionalLinks?)> InnerOperations => _innerOperations ?? [];
+
+        public void AddCallTarget(ElementInfo callTarget)
+        {
+            _pendingAdditionalLinks ??= new([]);
+            _pendingAdditionalLinks.CallTargets.Add(callTarget);
+        }
 
         public void AddInnerOperation(Operation operation, SyntaxNode syntax)
         {
             _innerOperations ??= [];
-            _innerOperations.Add((operation, syntax));
+            _innerOperations.Add((operation, syntax, ExtractAdditionalLinks()));
+        }
+
+        public OperationMapping.AdditionalLinks? ExtractAdditionalLinks()
+        {
+            var additionalLinks = _pendingAdditionalLinks;
+            _pendingAdditionalLinks = null;
+            return additionalLinks?.ToAdditionalLinks();
         }
 
         public Variable GetOrCreateVariable(ILocalSymbol local) => creator.GetOrCreateVariable(local);
@@ -299,6 +396,8 @@ internal class FlowGraphCreator
 
         public Variable CreateTemporaryVariable(DataType type) => creator.CreateTemporaryVariable(type);
 
-        public ElementInfo GetElement(ISymbol symbol) => creator._elementCache.GetElement(symbol);
+        // FIXME: The blocking call is bad, but turning the whole creator into async would be a large change.
+        //        A reasonable solution would be to pre-compute all contained elements in the first step which would be async.
+        public ElementInfo GetElement(ISymbol symbol) => creator._elementCache.GetElementAsync(creator._project, symbol).Result;
     }
 }

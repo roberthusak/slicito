@@ -112,22 +112,10 @@ public sealed class SlicitoPackage : ToolkitPackage
 
         var result = await ScriptRunner.RunScriptAsync(path);
 
-        if (result is IController controller)
+        var controller = SlicitoContext.ConvertToController(result);
+        if (controller is not null)
         {
             await CreateToolWindowAsync(controller);
-        }
-        else if (result is IModel model)
-        {
-            await CreateToolWindowAsync(new ModelDisplayer(model));
-        }
-        else if (SlicitoContext.TryCreateModel(result, out var createdModel))
-        {
-            await CreateToolWindowAsync(new ModelDisplayer(createdModel));
-        }
-        else if (result is object obj)
-        {
-            var textModel = new Tree([new(obj.ToString(), [])]);
-            await CreateToolWindowAsync(new ModelDisplayer(textModel));
         }
     }
 

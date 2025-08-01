@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Operations;
 
 using Slicito.ProgramAnalysis.Notation;
@@ -18,12 +19,16 @@ namespace Slicito.DotNet.Implementation;
 
 internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context) : OperationVisitor<Empty, Expression>
 {
+    private readonly AdditionalLinkFinder _additionalLinkFinder = new(context);
+
     public override Expression? DefaultVisit(IOperation operation, Empty _)
     {
         if (operation.ConstantValue.HasValue)
         {
             return TranslateConstantValue(operation.ConstantValue.Value);
         }
+
+        _additionalLinkFinder.Visit(operation);
 
         return new Expression.Unsupported($"Operation: {operation.Kind} (type: {operation.GetType().Name})");
     }
@@ -38,6 +43,16 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
         Debug.Assert(operation.ConstantValue.HasValue);
 
         return TranslateConstantValue(operation.ConstantValue.Value);
+    }
+
+    public override Expression? VisitConversion(IConversionOperation operation, Empty _)
+    {
+        if (operation.Type?.Equals(operation.Operand.Type, SymbolEqualityComparer.IncludeNullability) == true)
+        {
+            return VisitEnsureNonNull(operation.Operand);
+        }
+
+        return DefaultVisit(operation, default);
     }
 
     public override Expression? VisitParameterReference(IParameterReferenceOperation operation, Empty _)
@@ -65,6 +80,8 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
 
         if (variable is null)
         {
+            _additionalLinkFinder.Visit(operation.Target);
+
             return new Expression.Unsupported($"Assignment target: {operation.Target.Kind} (type: {operation.Target.GetType().Name})");
         }
 
@@ -106,7 +123,18 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
             }
         }
 
-        return DefaultVisit(operation, default);
+        // Provide at least as a separate operation so that it can be analyzed better
+        var unsupportedValue = DefaultVisit(operation, default)!;
+        var type = TypeCreator.Create(operation.Property.Type);
+        var temporaryVariable = context.CreateTemporaryVariable(type);
+
+        context.AddInnerOperation(
+            new Operation.Assignment(
+                new SlicitoLocation.VariableReference(temporaryVariable),
+                unsupportedValue),
+            operation.Syntax);
+
+        return new Expression.VariableReference(temporaryVariable);
     }
 
     public override Expression? VisitInvocation(IInvocationOperation operation, Empty _)
@@ -171,6 +199,35 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
         return returnLocations.IsEmpty || returnLocations[0] is not SlicitoLocation.VariableReference returnVariableReference
             ? null
             : new Expression.VariableReference(returnVariableReference.Variable);
+    }
+
+    public override Expression? VisitObjectCreation(IObjectCreationOperation operation, Empty argument)
+    {
+        var constructor = operation.Constructor;
+        if (constructor is null)
+        {
+            return new Expression.Unsupported("Object creation without referenced constructor.");
+        }
+
+        var arguments = operation.Arguments
+            .Select(a => VisitEnsureNonNull(a.Value))
+            .ToImmutableArray();
+
+        var targetMethodId = context.GetElement(constructor).Id;
+        var signature = ProcedureSignatureCreator.Create(constructor, targetMethodId);
+
+        var returnType = signature.ReturnTypes.Single();
+
+        var returnLocation = new SlicitoLocation.VariableReference(context.CreateTemporaryVariable(returnType));
+
+        context.AddInnerOperation(
+            new Operation.Call(
+                signature,
+                arguments,
+                [returnLocation]),
+            operation.Syntax);
+
+        return new Expression.VariableReference(returnLocation.Variable);
     }
 
     public override Expression? VisitAwait(IAwaitOperation operation, Empty _)
@@ -242,6 +299,12 @@ internal class OperationCreator(FlowGraphCreator.BlockTranslationContext context
         IOperation operation,
         [CallerMemberName] string? callerName = null)
     {
+        // Would return null and it's not possible to override it
+        if (operation.Kind == OperationKind.None)
+        {
+            return new Expression.Unsupported($"Operation not supported by Roslyn (syntax kind: {operation.Syntax.Kind()}).");
+        }
+
         return operation.Accept(this, default)
             ?? throw new InvalidOperationException(
                 $"Visiting operation {operation.Kind} (type: {operation.GetType().Name}) in {callerName} returned null.");

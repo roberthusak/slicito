@@ -1,7 +1,8 @@
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <RoslynVersion>4.12.0</RoslynVersion>
+    <RoslynVersion>4.14.0</RoslynVersion>
+    <MsBuildPackagesVersion>17.13.26</MsBuildPackagesVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="AutomaticGraphLayout.WpfGraphControl" Version="1.1.12" />
@@ -10,14 +11,20 @@
     <PackageVersion Include="Dotnet.Script.Core" Version="1.6.0" />
     <PackageVersion Include="FluentAssertions" Version="6.12.0" />
     <PackageVersion Include="FluentAssertions.Analyzers" Version="0.31.0" />
+    <PackageVersion Include="Octokit" Version="14.0.0" />
     <PackageVersion Include="PolySharp" Version="1.15.0" />
     <PackageVersion Include="System.Collections.Immutable" Version="8.0.0" />
+    <PackageVersion Include="System.Text.Json" Version="9.0.5" />
     <PackageVersion Include="AutomaticGraphLayout" Version="1.1.12" />
     <PackageVersion Include="AutomaticGraphLayout.Drawing" Version="1.1.12" />
     <PackageVersion Include="coverlet.collector" Version="6.0.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Html.Abstractions" Version="2.2.0" />
     <PackageVersion Include="Microsoft.AspNetCore.WebUtilities" Version="2.2.0" />
-    <PackageVersion Include="Microsoft.Build.Locator" Version="1.7.8" />
+    <PackageVersion Include="Microsoft.Bcl.HashCode" Version="6.0.0" />
+    <PackageVersion Include="Microsoft.Build" Version="$(MsBuildPackagesVersion)" />
+    <PackageVersion Include="Microsoft.Build.Framework" Version="$(MsBuildPackagesVersion)" />
+    <PackageVersion Include="Microsoft.Build.Tasks.Core" Version="$(MsBuildPackagesVersion)" />
+    <PackageVersion Include="Microsoft.Build.Utilities.Core" Version="$(MsBuildPackagesVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis" Version="$(RoslynVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="$(RoslynVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="$(RoslynVersion)" />
@@ -28,7 +35,7 @@
     <PackageVersion Include="Microsoft.VSSDK.BuildTools" Version="17.9.3168" />
     <PackageVersion Include="MSTest.TestAdapter" Version="3.1.1" />
     <PackageVersion Include="MSTest.TestFramework" Version="3.1.1" />
-    <PackageVersion Include="Slicito.Microsoft.CodeAnalysis.EmbeddedLanguages" Version="$(RoslynVersion)" />
+    <PackageVersion Include="Slicito.Microsoft.CodeAnalysis.EmbeddedLanguages" Version="4.12.0" />
     <PackageVersion Include="StrongNamer" Version="0.2.5" />
     <PackageVersion Include="System.Drawing.Common" Version="6.0.0" />
     <PackageVersion Include="System.Reflection.Emit" Version="4.7.0" />

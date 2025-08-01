@@ -25,7 +25,7 @@ public class DotNetExtractorTests
         _dotNetTypes = new DotNetTypes(typeSystem);
         var sliceManager = new SliceManager(typeSystem);
         
-        _solutionContext = new DotNetSolutionContext(solution, _dotNetTypes, sliceManager);
+        _solutionContext = new DotNetSolutionContext([solution], _dotNetTypes, sliceManager);
         
         _methods = await DotNetMethodHelper.GetAllMethodsWithDisplayNamesAsync(
             _solutionContext.Slice, 
@@ -85,7 +85,7 @@ public class DotNetExtractorTests
 
         // Assert
 
-        signature.Name.Should().Be("AnalysisSamples.AnalysisSamples.Samples.BasicSymbolicExecutionSample(int, int)");
+        signature.Name.Should().Be("AnalysisSamples.AnalysisSamples.AnalysisSamples.Samples.BasicSymbolicExecutionSample(int, int)");
 
         signature.ParameterTypes.Should().BeEquivalentTo([
             new DataType.Integer(Signed: true, 32),

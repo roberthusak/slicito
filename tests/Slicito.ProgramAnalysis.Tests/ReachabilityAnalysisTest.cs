@@ -27,7 +27,7 @@ public class ReachabilityAnalysisTest
         _types = new DotNetTypes(typeSystem);
         var sliceManager = new SliceManager(typeSystem);
 
-        _solutionContext = new DotNetSolutionContext(solution, _types, sliceManager);
+        _solutionContext = new DotNetSolutionContext([solution], _types, sliceManager);
     }
 
     [TestMethod]

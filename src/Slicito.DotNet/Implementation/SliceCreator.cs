@@ -1,48 +1,73 @@
 using System.Collections.Concurrent;
+using System.Collections.Immutable;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 using Slicito.Abstractions;
 using Slicito.Abstractions.Interaction;
+using Slicito.DotNet.Facts;
 using Slicito.ProgramAnalysis.Notation;
 
 namespace Slicito.DotNet.Implementation;
 internal class SliceCreator
 {
-    private readonly Solution _solution;
+    private readonly ImmutableArray<Solution> _solutions;
     private readonly DotNetTypes _types;
     private readonly ISliceManager _sliceManager;
 
     private readonly ElementCache _elementCache;
-    private readonly ConcurrentDictionary<IMethodSymbol, (IFlowGraph FlowGraph, OperationMapping OperationMapping)?> _flowGraphCache = [];
+    private readonly ConcurrentDictionary<IMethodSymbol, (FlowGraphGroup FlowGraphGroup, OperationMapping OperationMapping)?> _flowGraphCache = [];
     private readonly ConcurrentDictionary<IMethodSymbol, ProcedureSignature> _procedureSignatureCache = [];
 
     public ISlice Slice { get; }
 
-    public SliceCreator(Solution solution, DotNetTypes types, ISliceManager sliceManager)
+    public IDotNetSliceFragment TypedSliceFragment { get; }
+
+    public SliceCreator(ImmutableArray<Solution> solutions, DotNetTypes types, ISliceManager sliceManager)
     {
-        _solution = solution;
+        _solutions = solutions;
         _types = types;
         _sliceManager = sliceManager;
 
         _elementCache = new(types);
 
         Slice = CreateSlice();
+        TypedSliceFragment = new DotNetSliceFragment(Slice, _types);
     }
 
-    public IFlowGraph? TryCreateFlowGraph(ElementId elementId) => TryCreateFlowGraphAndMapping(elementId)?.FlowGraph;
-
-    private (IFlowGraph FlowGraph, OperationMapping OperationMapping)? TryCreateFlowGraphAndMapping(ElementId elementId)
+    public IFlowGraph? TryCreateFlowGraph(ElementId elementId)
     {
-        var element = _elementCache.TryGetSymbol(elementId);
-
-        if (element is not IMethodSymbol method)
+        var result = TryCreateFlowGraphsAndMapping(elementId);
+        if (result is null)
         {
             return null;
         }
 
-        return _flowGraphCache.GetOrAdd(method, _ => FlowGraphCreator.TryCreate(method, _solution, _elementCache));
+        var (flowGraphGroup, _) = result.Value;
+
+        return flowGraphGroup.ElementIdToNestedFlowGraph
+            .GetValueOrDefault(elementId, flowGraphGroup.RootFlowGraph);
+    }
+
+    private (FlowGraphGroup FlowGraphGroup, OperationMapping OperationMapping)? TryCreateFlowGraphsAndMapping(ElementId elementId)
+    {
+        var symbol = _elementCache.TryGetSymbol(elementId);
+        var project = _elementCache.TryGetProject(elementId);
+
+        if (symbol is not IMethodSymbol method || project is null)
+        {
+            return null;
+        }
+
+        while (method.MethodKind is MethodKind.LocalFunction or MethodKind.AnonymousFunction)
+        {
+            method = method.ContainingSymbol as IMethodSymbol
+                ?? throw new InvalidOperationException(
+                    $"Method '{method.Name}' is a nested procedure and does not have a containing method.");
+        }
+
+        return _flowGraphCache.GetOrAdd(method, _ => FlowGraphCreator.TryCreate(method, project, _elementCache));
     }
 
     public ProcedureSignature GetProcedureSignature(ElementId elementId)
@@ -56,30 +81,70 @@ internal class SliceCreator
 
     public ISymbol GetSymbol(ElementId elementId) => _elementCache.GetSymbol(elementId);
 
+    public ISymbol GetSymbolAndRelatedProject(ElementId id, out Project relatedProject) =>
+        _elementCache.GetSymbolAndRelatedProject(id, out relatedProject);
+
+    public Operation GetOperation(ElementId elementId)
+    {
+        var methodId = ElementIdProvider.GetMethodIdFromOperationId(elementId);
+
+        var method = _elementCache.GetMethod(methodId);
+
+        return _flowGraphCache[method]!.Value.OperationMapping.GetOperation(elementId);
+    }
+
+    public SyntaxNode GetOperationSyntax(Operation operation, ElementId procedureId)
+    {
+        var method = _elementCache.GetMethod(procedureId);
+
+        var operationMapping = _flowGraphCache[method]!.Value.OperationMapping;
+        var id = operationMapping.GetId(operation);
+
+        return operationMapping.GetSyntax(id);
+    }
+
     private ISlice CreateSlice()
     {
         var namespaceMemberTypes = _types.Namespace | _types.Type;
         var typeMemberTypes = _types.Type | _types.Property | _types.Field | _types.Method;
 
-        var symbolTypes = _types.Namespace | _types.Type | _types.Property | _types.Field | _types.Method;
+        var namedSymbolTypes = _types.Namespace | _types.Type | _types.Property | _types.Field | _types.Method | _types.LocalFunction;
+        var symbolTypes = namedSymbolTypes | _types.Lambda;
 
         return _sliceManager.CreateBuilder()
-            .AddRootElements(_types.Project, LoadProjects)
+            .AddRootElements(_types.Solution, LoadSolutions)
+            .AddHierarchyLinks(_types.Contains, _types.Solution, _types.Project, LoadSolutionProjects)
             .AddHierarchyLinks(_types.Contains, _types.Project, _types.Namespace, LoadProjectNamespacesAsync)
-            .AddHierarchyLinks(_types.Contains, _types.Namespace, namespaceMemberTypes, LoadNamespaceMembers)
-            .AddHierarchyLinks(_types.Contains, _types.Type, typeMemberTypes, LoadTypeMembers)
+            .AddHierarchyLinks(_types.Contains, _types.Namespace, namespaceMemberTypes, LoadNamespaceMembersAsync)
+            .AddHierarchyLinks(_types.Contains, _types.Type, typeMemberTypes, LoadTypeMembersAsync)
+            .AddHierarchyLinks(_types.Contains, _types.Method, _types.LocalFunction, LoadMethodLocalFunctions)
+            .AddHierarchyLinks(_types.Contains, _types.Method, _types.Lambda, LoadMethodLambdas)
             .AddHierarchyLinks(_types.Contains, _types.Method, _types.Operation, LoadMethodOperations)
+            .AddHierarchyLinks(_types.Contains, _types.NestedProcedures, _types.Operation, LoadNestedProcedureOperations)
+            .AddLinks(_types.References, _types.Project, _types.Project, LoadProjectReferences)
+            .AddLinks(_types.Overrides, _types.Method, _types.Method, LoadMethodOverridesAsync)
             .AddLinks(_types.Calls, _types.Operation, _types.Method, LoadCallees)
+            .AddElementAttribute(_types.Solution, DotNetAttributeNames.Name, LoadSolutionName)
             .AddElementAttribute(_types.Project, DotNetAttributeNames.Name, LoadProjectName)
-            .AddElementAttribute(symbolTypes, DotNetAttributeNames.Name, LoadSymbolName)
+            .AddElementAttribute(_types.Project, DotNetAttributeNames.OutputKind, LoadProjectOutputKind)
+            .AddElementAttribute(namedSymbolTypes, DotNetAttributeNames.Name, LoadSymbolName)
             .AddElementAttribute(_types.Operation, DotNetAttributeNames.Name, LoadOperationName)
-            .AddElementAttribute(symbolTypes, CommonAttributeNames.CodeLocation, LoadCodeLocation)
+            .AddElementAttribute(symbolTypes, CommonAttributeNames.CodeLocation, LoadSymbolCodeLocation)
+            .AddElementAttribute(_types.Operation, CommonAttributeNames.CodeLocation, LoadOperationCodeLocation)
             .Build();
     }
 
-    private IEnumerable<ISliceBuilder.PartialElementInfo> LoadProjects() =>
-        _solution.Projects
-            .Select(project => ToPartialElementInfo(_elementCache.GetElement(project)));
+    private IEnumerable<ISliceBuilder.PartialElementInfo> LoadSolutions() =>
+        _solutions
+            .Select(solution => ToPartialElementInfo(_elementCache.GetElement(solution)));
+
+    private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadSolutionProjects(ElementId sourceId)
+    {
+        var solution = _elementCache.GetSolution(sourceId);
+
+        return solution.Projects
+            .Select(project => ToPartialLinkInfo(_elementCache.GetElement(project)));
+    }
 
     private async ValueTask<IEnumerable<ISliceBuilder.PartialLinkInfo>> LoadProjectNamespacesAsync(ElementId sourceId)
     {
@@ -89,37 +154,129 @@ internal class SliceCreator
             ?? throw new InvalidOperationException(
                 $"The project '{project.FilePath}' could not be loaded into a Roslyn Compilation.");
 
-        return compilation.SourceModule.GlobalNamespace.GetMembers()
-            .OfType<INamespaceSymbol>()
-            .Select(namespaceSymbol => ToPartialLinkInfo(_elementCache.GetElement(namespaceSymbol)));
+        var compilationErrors = compilation.GetDiagnostics()
+          .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
+          .ToList();
+
+        if (compilationErrors.Any())
+        {
+          throw new InvalidOperationException(
+              $"The project '{project.FilePath}' has compilation errors and cannot be analyzed.");
+        }
+
+        var module = compilation.SourceModule;
+
+        return await Task.WhenAll(
+            module.GlobalNamespace.GetMembers()
+                .OfType<INamespaceSymbol>()
+                .Select(async namespaceSymbol =>
+                {
+                    var element = await _elementCache.GetElementAsync(project, namespaceSymbol);
+                    return ToPartialLinkInfo(element);
+                }));
     }
 
-    private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadNamespaceMembers(ElementId sourceId)
+    private async ValueTask<IEnumerable<ISliceBuilder.PartialLinkInfo>> LoadNamespaceMembersAsync(ElementId sourceId)
     {
-        var @namespace = _elementCache.GetNamespace(sourceId);
+        var @namespace = _elementCache.GetNamespaceAndRelatedProject(sourceId, out var project);
 
-        return @namespace.GetMembers()
-            .Select(member => ToPartialLinkInfo(_elementCache.GetElement(member)));
+        return await Task.WhenAll(
+            @namespace.GetMembers()
+                .Select(async member =>
+                {
+                    var element = await _elementCache.GetElementAsync(project, member);
+                    return ToPartialLinkInfo(element);
+                }));
     }
 
-    private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadTypeMembers(ElementId sourceId)
+    private async ValueTask<IEnumerable<ISliceBuilder.PartialLinkInfo>> LoadTypeMembersAsync(ElementId sourceId)
     {
-        var type = _elementCache.GetType(sourceId);
+        var type = _elementCache.GetTypeAndRelatedProject(sourceId, out var project);
 
-        return type.GetMembers()
-            .Select(member => ToPartialLinkInfo(_elementCache.GetElement(member)));
+        return await Task.WhenAll(
+            type.GetMembers()
+                .Select(async member =>
+                {
+                    var element = await _elementCache.GetElementAsync(project, member);
+                    return ToPartialLinkInfo(element);
+                }));
     }
 
-    private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadMethodOperations(ElementId sourceId)
+    private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadMethodLocalFunctions(ElementId sourceId)
     {
-        var result = TryCreateFlowGraphAndMapping(sourceId);
+        return LoadMethodNestedProcedures(sourceId, MethodKind.LocalFunction, _types.LocalFunction);
+    }
+
+    private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadMethodLambdas(ElementId sourceId)
+    {
+        return LoadMethodNestedProcedures(sourceId, MethodKind.AnonymousFunction, _types.Lambda);
+    }
+
+    private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadMethodNestedProcedures(
+        ElementId sourceId,
+        MethodKind methodKind,
+        ElementType elementType)
+    {
+        var result = TryCreateFlowGraphsAndMapping(sourceId);
         if (result is null)
         {
             yield break;
         }
 
-        var (flowGraph, mapping) = result.Value;
+        var flowGraphGroup = result.Value.FlowGraphGroup;
 
+        foreach (var nestedId in flowGraphGroup.ElementIdToNestedFlowGraph.Keys)
+        {
+            var nestedSymbol = _elementCache.GetMethod(nestedId);
+
+            if (nestedSymbol.MethodKind == methodKind)
+            {
+                yield return ToPartialLinkInfo(new(nestedId, elementType));
+            }
+        }
+    }
+
+    private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadMethodOperations(ElementId sourceId)
+    {
+        var result = TryCreateFlowGraphsAndMapping(sourceId);
+        if (result is null)
+        {
+            return [];
+        }
+
+        var (flowGraphGroup, mapping) = result.Value;
+
+        return LoadFlowGraphOperations(flowGraphGroup.RootFlowGraph, mapping);
+    }
+
+    private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadNestedProcedureOperations(ElementId sourceId)
+    {
+        var method = _elementCache.GetMethodAndRelatedProject(sourceId, out var project);
+
+        var rootMethod = RoslynHelper.GetContainingMethodOrSelf(method);
+
+        var rootMethodIdTask = _elementCache.GetElementAsync(project, rootMethod);
+        if (!rootMethodIdTask.IsCompleted)
+        {
+            throw new InvalidOperationException(
+                $"The containing method '{rootMethod.Name}' of '{method.Name}' was unexpectedly not present in the cache and was restored asynchronously.");
+        }
+
+        var rootMethodId = rootMethodIdTask.Result.Id;
+
+        var result = TryCreateFlowGraphsAndMapping(rootMethodId);
+        if (result is null)
+        {
+            return [];
+        }
+
+        var (flowGraphGroup, mapping) = result.Value;
+
+        return LoadFlowGraphOperations(flowGraphGroup.ElementIdToNestedFlowGraph[sourceId], mapping);
+    }
+
+    private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadFlowGraphOperations(IFlowGraph flowGraph, OperationMapping mapping)
+    {
         foreach (var block in flowGraph.Blocks.OfType<BasicBlock.Inner>())
         {
             if (block.Operation is null)
@@ -139,39 +296,117 @@ internal class SliceCreator
         }
     }
 
+    private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadProjectReferences(ElementId sourceId)
+    {
+        var project = _elementCache.GetProject(sourceId);
+
+        foreach (var reference in project.ProjectReferences)
+        {
+            var referencedProject = project.Solution.GetProject(reference.ProjectId)
+                ?? throw new InvalidOperationException(
+                    $"Project '{project.FilePath}' references project '{reference.ProjectId}' which could not be found in the solution.");
+
+            yield return ToPartialLinkInfo(_elementCache.GetElement(referencedProject));
+        }
+    }
+
+    private async ValueTask<IEnumerable<ISliceBuilder.PartialLinkInfo>> LoadMethodOverridesAsync(ElementId sourceId)
+    {
+        var method = _elementCache.GetMethodAndRelatedProject(sourceId, out var project);
+
+        if (method.ContainingType is not ITypeSymbol type)
+        {
+            return [];
+        }
+
+        var interfaceMemberQuery =
+            from iface in type.AllInterfaces
+            from interfaceMember in iface.GetMembers()
+            let impl = type.FindImplementationForInterfaceMember(interfaceMember)
+            where method.Equals(impl, SymbolEqualityComparer.Default)
+            select interfaceMember;
+
+        var interfaceMembers = await Task.WhenAll(interfaceMemberQuery.Select(async interfaceMember =>
+        {
+            var element = await _elementCache.GetElementAsync(project, interfaceMember);
+            return ToPartialLinkInfo(element);
+        }));
+
+        var result = interfaceMembers.ToList();
+
+        if (method.OverriddenMethod is not null)
+        {
+            var overriddenMethodElement = await _elementCache.GetElementAsync(project, method.OverriddenMethod);
+
+            result.Add(ToPartialLinkInfo(overriddenMethodElement));
+        }
+
+        return result;
+    }
+
     private IEnumerable<ISliceBuilder.PartialLinkInfo> LoadCallees(ElementId sourceId)
     {
         var methodId = ElementIdProvider.GetMethodIdFromOperationId(sourceId);
 
         var method = _elementCache.GetMethod(methodId);
 
-        var operation = _flowGraphCache[method]!.Value.OperationMapping.GetOperation(sourceId);
+        var operationMapping = _flowGraphCache[method]!.Value.OperationMapping;
 
+        var operation = operationMapping.GetOperation(sourceId);
         if (operation is Operation.Call call)
         {
             var calleeId = new ElementId(call.Signature.Name);
 
             yield return ToPartialLinkInfo(new(calleeId, _types.Method));
         }
+
+        if (operationMapping.TryGetAdditionalLinks(sourceId, out var additionalLinks))
+        {
+            foreach (var callTarget in additionalLinks.CallTargets)
+            {
+                yield return ToPartialLinkInfo(callTarget);
+            }
+        }
     }
 
+    private string LoadSolutionName(ElementId elementId) => Path.GetFileName(elementId.Value);
+
     private string LoadProjectName(ElementId elementId) => Path.GetFileName(elementId.Value);
+
+    private string LoadProjectOutputKind(ElementId elementId)
+    {
+        var project = _elementCache.GetProject(elementId);
+
+        var roslynOutputKind = project.CompilationOptions?.OutputKind
+            ?? throw new InvalidOperationException($"Project '{project.FilePath}' has no compilation options.");
+
+        var outputKind = roslynOutputKind switch
+        {
+            OutputKind.ConsoleApplication or
+            OutputKind.WindowsApplication or
+            OutputKind.WindowsRuntimeApplication => ProjectOutputKind.Executable,
+
+            OutputKind.DynamicallyLinkedLibrary or
+            OutputKind.NetModule or
+            OutputKind.WindowsRuntimeMetadata => ProjectOutputKind.Library,
+
+            _ => throw new InvalidOperationException($"Unsupported project output kind: {roslynOutputKind}"),
+        };
+
+        return outputKind.ToString();
+    }
 
     private string LoadSymbolName(ElementId elementId) =>
         _elementCache.GetSymbol(elementId).Name;
 
     private string LoadOperationName(ElementId elementId)
     {
-        var methodId = ElementIdProvider.GetMethodIdFromOperationId(elementId);
-
-        var method = _elementCache.GetMethod(methodId);
-
-        var syntax = _flowGraphCache[method]!.Value.OperationMapping.GetSyntax(elementId);
+        var syntax = GetOperationSyntax(elementId);
 
         return syntax.ToString();
     }
 
-    private string LoadCodeLocation(ElementId elementId)
+    private string LoadSymbolCodeLocation(ElementId elementId)
     {
         var symbol = _elementCache.GetSymbol(elementId);
 
@@ -188,7 +423,28 @@ internal class SliceCreator
             return "";
         }
 
-        var lineSpan = syntax?.SyntaxTree.GetLocation(span.Value).GetLineSpan();
+        return ConvertSyntaxToCodeLocation(syntax, span.Value);
+    }
+
+    private string LoadOperationCodeLocation(ElementId elementId)
+    {
+        var syntax = GetOperationSyntax(elementId);
+
+        return ConvertSyntaxToCodeLocation(syntax, syntax.Span);
+    }
+
+    private SyntaxNode GetOperationSyntax(ElementId elementId)
+    {
+        var methodId = ElementIdProvider.GetMethodIdFromOperationId(elementId);
+
+        var method = _elementCache.GetMethod(methodId);
+
+        return _flowGraphCache[method]!.Value.OperationMapping.GetSyntax(elementId);
+    }
+
+    private static string ConvertSyntaxToCodeLocation(SyntaxNode? syntax, Microsoft.CodeAnalysis.Text.TextSpan span)
+    {
+        var lineSpan = syntax?.SyntaxTree.GetLocation(span).GetLineSpan();
         if (lineSpan is null)
         {
             return "";
