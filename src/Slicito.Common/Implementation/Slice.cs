@@ -1,11 +1,11 @@
 using System.Collections.Concurrent;
 
 using Slicito.Abstractions;
-using Slicito.Abstractions.Queries;
+using Slicito.Abstractions.Facts;
 
 namespace Slicito.Common.Implementation;
 
-internal class LazySlice : ILazySlice
+internal class Slice : ISlice
 {
     private readonly Dictionary<ElementType, ISliceBuilder.LoadRootElementsAsyncCallback> _rootElementsLoaders;
     private readonly Dictionary<ElementTypeAttribute, ISliceBuilder.LoadElementAttributeAsyncCallback> _elementAttributeLoaders;
@@ -15,7 +15,7 @@ internal class LazySlice : ILazySlice
 
     public SliceSchema Schema { get; }
 
-    public LazySlice(
+    public Slice(
         SliceSchema schema,
         Dictionary<ElementType, ISliceBuilder.LoadRootElementsAsyncCallback> rootElementsLoaders,
         Dictionary<ElementTypeAttribute, ISliceBuilder.LoadElementAttributeAsyncCallback> elementAttributeLoaders,
@@ -137,12 +137,12 @@ internal class LazySlice : ILazySlice
 
     private class LazyLinkExplorer : ILazyLinkExplorer
     {
-        private readonly LazySlice _slice;
+        private readonly Slice _slice;
         private readonly Dictionary<LinkLoaderTypes, ISliceBuilder.LoadLinksAsyncCallback> _linksLoaders;
         private readonly LinkType? _linkTypeFilter;
 
         public LazyLinkExplorer(
-            LazySlice slice,
+            Slice slice,
             Dictionary<LinkLoaderTypes, ISliceBuilder.LoadLinksAsyncCallback> linksLoaders,
             LinkType? linkTypeFilter)
         {

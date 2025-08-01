@@ -3,8 +3,8 @@ using System.IO;
 using Microsoft.VisualStudio.LanguageServices;
 
 using Slicito.Abstractions;
+using Slicito.Abstractions.Facts;
 using Slicito.Abstractions.Interaction;
-using Slicito.Abstractions.Queries;
 using Slicito.Common;
 using Slicito.Common.Extensibility;
 using Slicito.DotNet;
@@ -36,7 +36,7 @@ internal class VisualStudioSlicitoContext : ProgramAnalysisContextBase
     public static VisualStudioSlicitoContext Create(VisualStudioWorkspace workspace)
     {
         var typeSystem = new TypeSystem();
-        var sliceManager = new SliceManager();
+        var sliceManager = new SliceManager(typeSystem);
 
         var dotNetTypes = new DotNetTypes(typeSystem);
 
@@ -49,7 +49,7 @@ internal class VisualStudioSlicitoContext : ProgramAnalysisContextBase
         return new VisualStudioSlicitoContext(typeSystem, sliceManager, dotNetTypes, codeNavigator, solverFactory, workspace);
     }
 
-    public override ILazySlice WholeSlice => GetCurrentDotNetSolutionContext().LazySlice;
+    public override ISlice WholeSlice => GetCurrentDotNetSolutionContext().Slice;
 
     public override IFlowGraphProvider FlowGraphProvider => GetCurrentDotNetSolutionContext();
 

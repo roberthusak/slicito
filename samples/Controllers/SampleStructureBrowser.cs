@@ -1,11 +1,11 @@
 using Slicito.Abstractions;
+using Slicito.Abstractions.Facts;
 using Slicito.Abstractions.Models;
-using Slicito.Abstractions.Queries;
 using Slicito.Common.Controllers;
 
 namespace Controllers;
 
-public class SampleStructureBrowser(ITypeSystem typeSystem, ILazySlice? slice = null) : IController
+public class SampleStructureBrowser(ITypeSystem typeSystem, ISlice? slice = null) : IController
 {
     private readonly StructureBrowser _browser = new(slice ?? SliceHelper.CreateSampleSlice(typeSystem));
 

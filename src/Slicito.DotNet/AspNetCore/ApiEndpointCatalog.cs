@@ -7,7 +7,7 @@ using Slicito.Abstractions.Models;
 
 namespace Slicito.DotNet.AspNetCore;
 
-public class ApiEndpointCatalog(ILazySlice slice, DotNetSolutionContext dotnetContext, DotNetTypes dotnetTypes, ICodeNavigator? navigator) : IController
+public class ApiEndpointCatalog(ISlice slice, DotNetSolutionContext dotnetContext, DotNetTypes dotnetTypes, ICodeNavigator? navigator) : IController
 {
     private const string _navigateToActionName = "NavigateTo";
 

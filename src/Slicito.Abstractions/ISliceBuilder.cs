@@ -36,5 +36,5 @@ public interface ISliceBuilder
         ElementType targetType,
         LoadLinkAsyncCallback loader);
 
-    ILazySlice BuildLazy();
+    ISlice Build();
 }

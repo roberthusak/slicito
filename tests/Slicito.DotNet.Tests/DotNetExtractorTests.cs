@@ -21,13 +21,14 @@ public class DotNetExtractorTests
         const string solutionPath = @"..\..\..\..\inputs\AnalysisSamples\AnalysisSamples.sln";
         var solution = await MSBuildWorkspace.Create().OpenSolutionAsync(solutionPath);
         
-        _dotNetTypes = new DotNetTypes(new TypeSystem());
-        var sliceManager = new SliceManager();
+        var typeSystem = new TypeSystem();
+        _dotNetTypes = new DotNetTypes(typeSystem);
+        var sliceManager = new SliceManager(typeSystem);
         
         _solutionContext = new DotNetSolutionContext(solution, _dotNetTypes, sliceManager);
         
         _methods = await DotNetMethodHelper.GetAllMethodsWithDisplayNamesAsync(
-            _solutionContext.LazySlice, 
+            _solutionContext.Slice, 
             _dotNetTypes);
     }
 
@@ -53,7 +54,7 @@ public class DotNetExtractorTests
         _solutionContext.Should().NotBeNull("Solution context should be initialized");
 
         // Act
-        var callGraph = await new CallGraph.Builder(_solutionContext!.LazySlice, _dotNetTypes!)
+        var callGraph = await new CallGraph.Builder(_solutionContext!.Slice, _dotNetTypes!)
             .AddCallerRoot(method.Id)
             .BuildAsync();
 

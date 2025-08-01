@@ -1,7 +1,8 @@
 using Microsoft.CodeAnalysis.MSBuild;
+
 using Slicito.Abstractions;
+using Slicito.Abstractions.Facts;
 using Slicito.Abstractions.Interaction;
-using Slicito.Abstractions.Queries;
 using Slicito.Common;
 using Slicito.DotNet;
 using Slicito.ProgramAnalysis.Notation;
@@ -20,13 +21,13 @@ public class DependencyManager
     private DotNetTypes? _dotNetTypes;
     private DotNetExtractor? _dotNetExtractor;
     private DotNetSolutionContext? _dotNetSolutionContext;
-    private ILazySlice? _lazySlice;
+    private ISlice? _slice;
 
     public DependencyManager(string solutionPath)
     {
         _solutionPath = solutionPath;
         _typeSystem = new TypeSystem();
-        _sliceManager = new SliceManager();
+        _sliceManager = new SliceManager(_typeSystem);
     }
 
     public async Task<object?[]> ResolveDependenciesAsync(ConstructorInfo constructor)
@@ -49,7 +50,7 @@ public class DependencyManager
             var t when t == typeof(DotNetTypes) => GetDotNetTypes(),
             var t when t == typeof(DotNetExtractor) => GetDotNetExtractor(),
             var t when t == typeof(DotNetSolutionContext) => await TryGetDotNetSolutionContextAsync(),
-            var t when t == typeof(ILazySlice) => await TryLoadLazySliceAsync(),
+            var t when t == typeof(ISlice) => await TryLoadSliceAsync(),
             var t when t == typeof(IFlowGraph) => null,
             var t when t == typeof(ICodeNavigator) => null,
             _ => throw new ApplicationException($"Unsupported parameter type {parameterType.Name}.")
@@ -79,9 +80,9 @@ public class DependencyManager
         return _dotNetSolutionContext;
     }
 
-    private async Task<ILazySlice?> TryLoadLazySliceAsync()
+    private async Task<ISlice?> TryLoadSliceAsync()
     {
-        _lazySlice ??= (await TryGetDotNetSolutionContextAsync())?.LazySlice;
-        return _lazySlice;
+        _slice ??= (await TryGetDotNetSolutionContextAsync())?.Slice;
+        return _slice;
     }
 } 

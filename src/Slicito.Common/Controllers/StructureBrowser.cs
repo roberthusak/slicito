@@ -1,12 +1,12 @@
 using System.Collections.Immutable;
 
 using Slicito.Abstractions;
+using Slicito.Abstractions.Facts;
 using Slicito.Abstractions.Models;
-using Slicito.Abstractions.Queries;
 
 namespace Slicito.Common.Controllers;
 
-public class StructureBrowser(ILazySlice slice) : IController
+public class StructureBrowser(ISlice slice) : IController
 {
     private const string _openActionName = "Open";
     private const string _idActionParameterName = "Id";

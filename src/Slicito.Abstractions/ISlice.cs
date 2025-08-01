@@ -1,6 +1,6 @@
 namespace Slicito.Abstractions;
 
-public interface ILazySlice
+public interface ISlice
 {
     SliceSchema Schema { get; }
 

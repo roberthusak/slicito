@@ -23,8 +23,9 @@ public class ReachabilityAnalysisTest
         const string solutionPath = @"..\..\..\..\inputs\AnalysisSamples\AnalysisSamples.sln";
         var solution = await MSBuildWorkspace.Create().OpenSolutionAsync(solutionPath);
 
-        _types = new DotNetTypes(new TypeSystem());
-        var sliceManager = new SliceManager();
+        var typeSystem = new TypeSystem();
+        _types = new DotNetTypes(typeSystem);
+        var sliceManager = new SliceManager(typeSystem);
 
         _solutionContext = new DotNetSolutionContext(solution, _types, sliceManager);
     }
@@ -37,7 +38,7 @@ public class ReachabilityAnalysisTest
         _solutionContext.Should().NotBeNull("Solution context should be initialized");
         _types.Should().NotBeNull(".NET link and element types should be initialized");
 
-        var methods = await DotNetMethodHelper.GetAllMethodsWithDisplayNamesAsync(_solutionContext!.LazySlice, _types!);
+        var methods = await DotNetMethodHelper.GetAllMethodsWithDisplayNamesAsync(_solutionContext!.Slice, _types!);
         var method = methods.Single(m => m.DisplayName == "AnalysisSamples.Samples.ConditionalReachabilitySample").Method;
 
         // Act
@@ -80,7 +81,7 @@ public class ReachabilityAnalysisTest
         _solutionContext.Should().NotBeNull("Solution context should be initialized");
         _types.Should().NotBeNull(".NET link and element types should be initialized");
 
-        var methods = await DotNetMethodHelper.GetAllMethodsWithDisplayNamesAsync(_solutionContext!.LazySlice, _types!);
+        var methods = await DotNetMethodHelper.GetAllMethodsWithDisplayNamesAsync(_solutionContext!.Slice, _types!);
         var method = methods.Single(m => m.DisplayName == "AnalysisSamples.Samples.StringValidationSample").Method;
 
         // Act
@@ -119,7 +120,7 @@ public class ReachabilityAnalysisTest
         _solutionContext.Should().NotBeNull("Solution context should be initialized");
         _types.Should().NotBeNull(".NET link and element types should be initialized");
 
-        var methods = await DotNetMethodHelper.GetAllMethodsWithDisplayNamesAsync(_solutionContext!.LazySlice, _types!);
+        var methods = await DotNetMethodHelper.GetAllMethodsWithDisplayNamesAsync(_solutionContext!.Slice, _types!);
         var method = methods.Single(m => m.DisplayName == "AnalysisSamples.Samples.RegexValidationSample").Method;
 
         // Act

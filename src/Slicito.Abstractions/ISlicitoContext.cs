@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 
-using Slicito.Abstractions.Queries;
+using Slicito.Abstractions.Facts;
 
 namespace Slicito.Abstractions;
 
@@ -10,7 +10,7 @@ public interface ISlicitoContext
 
     ISliceManager SliceManager { get; }
 
-    ILazySlice WholeSlice { get; }
+    ISlice WholeSlice { get; }
 
     T GetService<T>();
 

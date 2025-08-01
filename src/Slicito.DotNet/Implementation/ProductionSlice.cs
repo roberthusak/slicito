@@ -2,7 +2,7 @@ using Slicito.Abstractions;
 
 namespace Slicito.DotNet.Implementation;
 
-internal class ProductionSlice(ILazySlice originalSlice, DotNetSolutionContext solutionContext) : ILazySlice
+internal class ProductionSlice(ISlice originalSlice, DotNetSolutionContext solutionContext) : ISlice
 {
     public SliceSchema Schema => originalSlice.Schema;
 
