@@ -2,8 +2,8 @@
   <Import Project="../Directory.Build.props" />
   <PropertyGroup>
     <IsPackable>true</IsPackable>
-    <Version>0.2.1</Version>
-    <AssemblyVersion>0.2.0.0</AssemblyVersion>
+    <Version>0.3.0</Version>
+    <AssemblyVersion>0.3.0.0</AssemblyVersion>
     <Authors>Robert Husák</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Title>Slicito - a set of tools for program comprehension</Title>
