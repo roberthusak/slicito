@@ -1,5 +1,3 @@
-_Work in progress._ The [paper from the doctoral consortium at ICSOFT 2022](docs/icsoft_dc_2022_paper.pdf) explains the motivation behind the project.
-
 Slicito - Visual Studio Extension for Analysis of C# Code
 =========================================================
 
@@ -7,11 +5,17 @@ Slicito - Visual Studio Extension for Analysis of C# Code
 
 Understanding a complex codebase is time-consuming and difficult.
 Slicito aims to be a toolbox of program analysis and visualization techniques which you can use to make this task much faster and simpler.
-It's currently in the research prototype stage, so only a subset of C# features is supported.
+**It's currently in the research prototype stage, so only a subset of C# features is supported.**
 
-> **Note:**
-> The tool was overhauled since its [publication at ICPC 2023](https://ieeexplore.ieee.org/document/10174103) where we presented it as an extension to computational notebooks in VS Code (see the corresponding version at the [`v0.1.0` tag](https://github.com/roberthusak/slicito/tree/v0.1.0)).
-> Although the support for computational notebooks and other IDEs can be added in the future, Slicito is now primarily a Visual Studio extension.
+Publications
+------------
+
+Although there's currently no web-based documentation, the most important ideas behind the tool are explained in the following publications:
+
+- [Towards Efficient Software Comprehension with Code Analysis](docs/icsoft_dc_2022_paper.pdf) (ICSOFT 2022 doctoral consortium): The motivation behind the project.
+- [Slicito: Using Computational Notebooks for Program Comprehension](https://ieeexplore.ieee.org/document/10174103) (ICPC 2023): The initial version of the tool which was originally based on computational notebooks and implemented as a VS Code extension (tag [`v0.1.0`](https://github.com/roberthusak/slicito/tree/v0.1.0)).
+- [Combining Static Analysis Techniques for Program Comprehension Using Slicito](https://arxiv.org/pdf/2503.15675) (ICPC 2025 preprint): The current version of the tool which is a Visual Studio extension (tag [`v0.2.1`](https://github.com/roberthusak/slicito/tree/v0.2.1)).
+- [Using Combination of Static Program Analysis Techniques for Program Comprehension of Large Systems](docs/doctoral_thesis.pdf) (doctoral thesis): The current version of the tool in more detail and its evaluation on a real-life project (tag [`v0.3.0`](https://github.com/roberthusak/slicito/tree/v0.3.0)).
 
 Sample usage
 ------------
