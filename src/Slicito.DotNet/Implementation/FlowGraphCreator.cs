@@ -139,9 +139,14 @@ internal class FlowGraphCreator
                 DestructorDeclarationSyntax or
                 ConversionOperatorDeclarationSyntax or
                 OperatorDeclarationSyntax or
-                BlockSyntax or
                 ArrowExpressionClauseSyntax))
         {
+            if (syntaxNode is AnonymousObjectMemberDeclaratorSyntax)
+            {
+                // Anonymous object member have no bodies
+                return null;
+            }
+
             syntaxNode = syntaxNode.Parent;
         }
 
