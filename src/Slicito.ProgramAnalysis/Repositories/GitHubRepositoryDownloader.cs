@@ -8,7 +8,7 @@ namespace Slicito.ProgramAnalysis.Repositories;
 
 public class GitHubRepositoryDownloader
 {
-    public record Repository(string Name, string Tag);
+    public record Repository(string Name, string? Tag);
 
     public record Organization(string Name, string PatEnvironmentVariable, ContentEquatableArray<Repository> Repositories);
 
@@ -31,7 +31,9 @@ public class GitHubRepositoryDownloader
 
             foreach (var repo in org.Repositories)
             {
-                var targetPath = Path.Combine(options.BasePath, org.Name, repo.Name, "tags", repo.Tag);
+                var effectiveTag = repo.Tag ?? await GetLatestReleaseTagAsync(client, org.Name, repo.Name);
+
+                var targetPath = Path.Combine(options.BasePath, org.Name, repo.Name, "tags", effectiveTag);
                 
                 if (Directory.Exists(targetPath) && Directory.EnumerateFileSystemEntries(targetPath).Any())
                 {
@@ -49,17 +51,31 @@ public class GitHubRepositoryDownloader
 
                 try
                 {
-                    var zipBallContent = await client.Repository.Content.GetArchive(org.Name, repo.Name, ArchiveFormat.Zipball, repo.Tag);
+                        var zipBallContent = await client.Repository.Content.GetArchive(org.Name, repo.Name, ArchiveFormat.Zipball, effectiveTag);
 
                     ExtractZipBall(targetPath, zipBallContent);
                 }
                 catch (Exception ex)
                 {
-                    throw new InvalidOperationException($"Failed to download repository {org.Name}/{repo.Name} tag {repo.Tag}.", ex);
+                        throw new InvalidOperationException($"Failed to download repository {org.Name}/{repo.Name} tag {effectiveTag}.", ex);
                 }
             }
         }
     }
+
+        private static async Task<string> GetLatestReleaseTagAsync(GitHubClient client, string owner, string repositoryName)
+        {
+            try
+            {
+                var release = await client.Repository.Release.GetLatest(owner, repositoryName);
+
+                return release.TagName;
+            }
+            catch (NotFoundException ex)
+            {
+                throw new InvalidOperationException($"No releases found for repository {owner}/{repositoryName}. Specify a tag explicitly in configuration.", ex);
+            }
+        }
 
     private static void ExtractZipBall(string targetPath, byte[] zipBallContent)
     {
@@ -96,4 +112,3 @@ public class GitHubRepositoryDownloader
         }
     }
 }
-
