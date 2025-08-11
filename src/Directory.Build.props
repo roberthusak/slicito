@@ -2,7 +2,7 @@
   <Import Project="../Directory.Build.props" />
   <PropertyGroup>
     <IsPackable>true</IsPackable>
-    <Version>0.3.0</Version>
+    <Version>0.3.1</Version>
     <AssemblyVersion>0.3.0.0</AssemblyVersion>
     <Authors>Robert Husák</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

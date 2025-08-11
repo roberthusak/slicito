@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="Slicito.e85dcab9-29e0-4e2e-8168-7e1550afb6c4" Version="0.3.0" Language="en-US" Publisher="Robert Husak" />
+        <Identity Id="Slicito.e85dcab9-29e0-4e2e-8168-7e1550afb6c4" Version="0.3.1" Language="en-US" Publisher="Robert Husak" />
         <DisplayName>Slicito</DisplayName>
         <Description xml:space="preserve">Slicito enables you to analyze your C# code and create interactive visualizations from it.</Description>
         <MoreInfo>https://www.slicito.com</MoreInfo>
